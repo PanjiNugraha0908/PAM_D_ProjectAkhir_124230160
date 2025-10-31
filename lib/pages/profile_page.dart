@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'edit_profile_page.dart'; // Import halaman edit
-import 'dart:io'; // Import untuk File
+import 'edit_profile_page.dart';
+import 'dart:io';
 
 class ProfilePage extends StatelessWidget {
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -15,7 +15,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Untuk gradient
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Profil Pembuat', style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
@@ -27,31 +27,25 @@ class ProfilePage extends StatelessWidget {
             icon: Icon(Icons.edit, color: textColor),
             tooltip: 'Edit Profil',
             onPressed: () {
-              // Pindah ke halaman Edit Profil
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => EditProfilePage()),
               );
-              // TIDAK PERLU .then() atau reassemble
-              // ValueListenableBuilder akan otomatis update
             },
           ),
         ],
       ),
-      // Gunakan ValueListenableBuilder agar halaman otomatis update
       body: ValueListenableBuilder(
         valueListenable: Hive.box('profile').listenable(),
         builder: (context, Box box, _) {
-          // Ambil data dari Hive.
           String nama = box.get('nama', defaultValue: 'Nama Belum Diatur');
           String noHp = box.get('noHp', defaultValue: 'No. HP Belum Diatur');
           String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
           String email = box.get('email', defaultValue: 'Email Belum Diatur');
-          // Ganti 'fotoUrl' menjadi 'fotoPath'
           String? fotoPath = box.get('fotoPath'); 
 
           return Container(
-            // Background Gradient
+            // Background Gradient (DIPERBARUI)
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -60,22 +54,22 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             width: double.infinity,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 24.0),
+            // Menggunakan SingleChildScrollView untuk menghindari overflow
+            child: SingleChildScrollView( 
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center, // Center horizontal
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(height: 32),
                   // Foto profil
                   CircleAvatar(
                     radius: 80,
                     backgroundColor: tertiaryColor,
-                    // Tampilkan foto dari PATH jika ada
                     backgroundImage: (fotoPath != null && fotoPath.isNotEmpty)
                         ? FileImage(File(fotoPath))
                         : null,
                     child: (fotoPath == null || fotoPath.isEmpty)
-                        ? Icon(Icons.person, size: 80, color: hintColor)
+                        // Kontras ikon diperbaiki
+                        ? Icon(Icons.person, size: 80, color: textColor.withOpacity(0.8)) 
                         : null,
                   ),
                   SizedBox(height: 24),
@@ -84,7 +78,7 @@ class ProfilePage extends StatelessWidget {
                   Text(
                     nama,
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
-                    textAlign: TextAlign.center, // <-- PERBAIKAN TATA LETAK
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 8),
                   
@@ -95,18 +89,32 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 32),
                   
-                  // Informasi tambahan (menggunakan layout baru)
-                  _buildInfoTile(
-                    'Program Studi',
-                    prodi.isEmpty ? 'Belum Diatur' : prodi,
-                    Icons.school,
+                  // Card Informasi Detail
+                  Card(
+                    color: cardColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                      child: Column(
+                        children: [
+                          _buildInfoTile(
+                            'Program Studi',
+                            prodi.isEmpty ? 'Belum Diatur' : prodi,
+                            Icons.school,
+                          ),
+                          Divider(color: tertiaryColor.withOpacity(0.5)),
+                          _buildInfoTile(
+                            'Email',
+                            email.isEmpty ? 'Belum Diatur' : email,
+                            Icons.email,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  _buildInfoTile(
-                    'Email',
-                    email.isEmpty ? 'Belum Diatur' : email,
-                    Icons.email,
-                  ),
-                  SizedBox(height: 32),
+
+                  SizedBox(height: 40), // Ruang ekstra di bawah
                 ],
               ),
             ),
@@ -116,7 +124,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Widget helper baru sesuai screenshot
   Widget _buildInfoTile(String label, String value, IconData icon) {
     return ListTile(
       leading: Icon(icon, color: secondaryColor, size: 28),
@@ -128,7 +135,7 @@ class ProfilePage extends StatelessWidget {
         value,
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor),
       ),
-      contentPadding: EdgeInsets.zero, // Hapus padding default ListTile
+      contentPadding: EdgeInsets.zero,
     );
   }
 }

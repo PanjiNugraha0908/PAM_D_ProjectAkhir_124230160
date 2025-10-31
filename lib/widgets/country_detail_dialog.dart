@@ -36,6 +36,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
       return DropdownMenuItem<String>(
         value: timezone,
         child: Text(
+          // Panggilan ini sekarang sudah benar
           '${timezone} (${TimezoneService.getTimezoneName(timezone)})',
           style: TextStyle(color: textColor),
         ),
@@ -48,7 +49,9 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     try {
       if (widget.country.currencies.containsKey(code)) {
         final v = widget.country.currencies[code];
-        if (v is Map && v['symbol'] != null && v['symbol'].toString().isNotEmpty) {
+        if (v is Map &&
+            v['symbol'] != null &&
+            v['symbol'].toString().isNotEmpty) {
           return v['symbol'].toString();
         }
       }
@@ -57,9 +60,19 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     }
     // Fallback jika simbol tidak ada di data API
     const fallbacks = {
-      'USD': '\$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'IDR': 'Rp',
-      'AUD': 'A\$', 'CAD': 'C\$', 'SGD': 'S\$', 'MYR': 'RM', 'THB': '฿',
-      'CNY': '¥', 'KRW': '₩', 'INR': '₹',
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'IDR': 'Rp',
+      'AUD': 'A\$',
+      'CAD': 'C\$',
+      'SGD': 'S\$',
+      'MYR': 'RM',
+      'THB': '฿',
+      'CNY': '¥',
+      'KRW': '₩',
+      'INR': '₹',
     };
     return fallbacks[code] ?? code;
   }
@@ -83,8 +96,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   }
 
   void _updateTimes() {
-    // Guard ini sekarang akan aman karena _parseOffset sudah diperbaiki
-    if (widget.country.timezones.isEmpty) return; 
+    if (widget.country.timezones.isEmpty) return;
     setState(() {
       countryTime = TimezoneService.getCurrentTimeForCountry(
         widget.country.timezones[0],
@@ -135,15 +147,10 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
         .join(', ');
   }
 
-  // =================================================================
-  // ===== PERBAIKAN 3: Batasi daftar mata uang =====
-  // =================================================================
+  // Daftar mata uang konversi yang dibatasi: IDR, USD, EUR
   List<String> _getAvailableCurrencies() {
     return ['IDR', 'USD', 'EUR'];
   }
-  // =================================================================
-  // ===== AKHIR PERBAIKAN =====
-  // =================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -152,8 +159,9 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-            maxWidth: 600),
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxWidth: 600,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -206,14 +214,20 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                           ),
                           SizedBox(height: 12),
                           _buildDetailRow(
-                              'Nama Resmi', widget.country.officialName),
+                            'Nama Resmi',
+                            widget.country.officialName,
+                          ),
                           _buildDetailRow('Ibu Kota', widget.country.capital),
                           _buildDetailRow('Region', widget.country.region),
                           _buildDetailRow(
-                              'Sub-region', widget.country.subregion),
+                            'Sub-region',
+                            widget.country.subregion,
+                          ),
                           _buildDetailRow(
                             'Populasi',
-                            widget.country.population.toString().replaceAllMapped(
+                            widget.country.population
+                                .toString()
+                                .replaceAllMapped(
                                   RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
                                   (Match m) => '${m[1]}.',
                                 ),
@@ -223,15 +237,25 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                             '${widget.country.area.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} km²',
                           ),
                           _buildDetailRow(
-                              'Bahasa', widget.country.languages.join(', ')),
+                            'Bahasa',
+                            widget.country.languages.join(', '),
+                          ),
                           _buildDetailRow('Mata Uang', _getCurrencyString()),
 
-                          Divider(height: 32, thickness: 1, color: tertiaryColor),
+                          Divider(
+                            height: 32,
+                            thickness: 1,
+                            color: tertiaryColor,
+                          ),
 
                           // Konversi Mata Uang
                           _buildCurrencyConverter(),
 
-                          Divider(height: 32, thickness: 1, color: tertiaryColor),
+                          Divider(
+                            height: 32,
+                            thickness: 1,
+                            color: tertiaryColor,
+                          ),
 
                           // Waktu Real-time
                           _buildTimezone(),
@@ -264,35 +288,38 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
               style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
             ),
           ),
-          Expanded(child: Text(value.isEmpty ? 'N/A' : value, style: TextStyle(color: textColor))),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'N/A' : value,
+              style: TextStyle(color: textColor),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // =================================================================
-  // ===== PERBAIKAN 2: Modifikasi _buildCustomTextField =====
-  // =================================================================
   // Helper untuk input field kustom
   Widget _buildCustomTextField({
     TextEditingController? controller,
     String? label,
     IconData? icon,
-    String? prefixText, // <-- TAMBAHKAN INI
-    bool readOnly = false
+    String? prefixText,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
       style: TextStyle(color: textColor),
-      keyboardType:
-          readOnly ? TextInputType.none : TextInputType.number,
+      keyboardType: readOnly ? TextInputType.none : TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: hintColor),
-        prefixIcon: icon != null ? Icon(icon, color: hintColor, size: 20) : null,
-        prefixText: prefixText, // <-- TAMBAHKAN INI
-        prefixStyle: TextStyle(color: textColor, fontSize: 16), // <-- TAMBAHKAN INI
+        prefixIcon: icon != null
+            ? Icon(icon, color: hintColor, size: 20)
+            : null,
+        prefixText: prefixText,
+        prefixStyle: TextStyle(color: textColor, fontSize: 16),
         filled: true,
         fillColor: tertiaryColor.withOpacity(0.3),
         enabledBorder: OutlineInputBorder(
@@ -308,11 +335,12 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   }
 
   // Helper untuk dropdown kustom
-  Widget _buildCustomDropdown(
-      {String? value,
-      String? label,
-      List<DropdownMenuItem<String>>? items,
-      void Function(String?)? onChanged}) {
+  Widget _buildCustomDropdown({
+    String? value,
+    String? label,
+    List<DropdownMenuItem<String>>? items,
+    void Function(String?)? onChanged,
+  }) {
     return DropdownButtonFormField<String>(
       value: value,
       items: items,
@@ -365,7 +393,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                     );
                   }).toList(),
                   onChanged: (value) {
-                    // Update state agar simbol mata uang di textfield ikut berubah
                     setState(() => selectedFromCurrency = value);
                   },
                 ),
@@ -389,17 +416,13 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
             ],
           ),
           SizedBox(height: 12),
-          // =================================================================
-          // ===== PERBAIKAN 2: Ganti 'icon' menjadi 'prefixText' =====
-          // =================================================================
+
           _buildCustomTextField(
             controller: _amountController,
             label: 'Jumlah',
-            prefixText: _getCurrencySymbol(selectedFromCurrency) + ' ', // Ganti dari icon
+            prefixText: _getCurrencySymbol(selectedFromCurrency) + ' ',
           ),
-          // =================================================================
-          // ===== AKHIR PERBAIKAN =====
-          // =================================================================
+
           SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -439,7 +462,11 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.red.shade200,
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(

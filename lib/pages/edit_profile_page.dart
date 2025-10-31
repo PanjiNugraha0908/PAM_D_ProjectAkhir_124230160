@@ -14,10 +14,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late Box _profileBox;
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -80,7 +80,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Untuk gradient
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('Edit Profil', style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
@@ -95,7 +95,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        // Background Gradient (DIPERBARUI)
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -105,9 +105,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         child: Form(
           key: _formKey,
-          // ===== PERBAIKAN 1: MENGGANTI LISTVIEW MENJADI SINGLECHILDSCROLLVIEW + COLUMN =====
-          // Ini akan menghilangkan peringatan overflow (hitam di bawah)
-          child: SingleChildScrollView(
+          // Menggunakan SingleChildScrollView untuk mencegah overflow
+          child: SingleChildScrollView( 
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -128,8 +127,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 ? Icon(
                                     Icons.person_add_alt_1, 
                                     size: 80, 
-                                    // ===== PERBAIKAN 2: WARNA IKON AGAR TERLIHAT =====
-                                    color: textColor, // Diubah dari hintColor
+                                    // Ikon sekarang kontras (putih terang)
+                                    color: textColor, 
                                   )
                                 : null,
                           ),
@@ -181,13 +180,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: secondaryColor,
-                      minimumSize: Size(double.infinity, 50), // Pastikan tombol lebar
+                      minimumSize: Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)
                       )
                     ),
                     child: Text('Simpan Perubahan', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
                   ),
+                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 0 : 20), // Padding aman saat keyboard hilang
                 ],
               ),
             ),
@@ -209,25 +209,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor), // Warna teks yang diketik
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor), // Warna label "Nama Lengkap"
+        labelStyle: TextStyle(color: hintColor),
         hintText: hint,
         hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
         
-        // ===== PERBAIKAN 3: WARNA IKON FIELD AGAR TERLIHAT =====
-        prefixIcon: Icon(icon, color: hintColor), // Diubah dari secondaryColor
+        // Ikon field kontras (abu-abu)
+        prefixIcon: Icon(icon, color: hintColor), 
         
         filled: true,
-        fillColor: tertiaryColor.withOpacity(0.3), // Latar belakang field
+        fillColor: tertiaryColor.withOpacity(0.3),
         
-        // ===== PERBAIKAN 4: WARNA GARIS PINGGIR AGAR TERLIHAT =====
+        // Garis pinggir kontras (abu-abu)
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor), // Diubah dari tertiaryColor
+          borderSide: BorderSide(color: hintColor), 
         ),
-        // =======================================================
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-// import 'login_page.dart'; // <--- DIHAPUS
+// import 'login_page.dart'; // DIHAPUS
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -13,10 +13,10 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);

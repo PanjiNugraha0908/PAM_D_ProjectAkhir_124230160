@@ -11,10 +11,10 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   List<HistoryItem> _history = [];
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -92,16 +92,12 @@ class _HistoryPageState extends State<HistoryPage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        // Background Gradient (DIPERBARUI)
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              primaryColor,
-              secondaryColor,
-              tertiaryColor,
-            ],
+            colors: [primaryColor, secondaryColor, tertiaryColor],
           ),
         ),
         child: _history.isEmpty
@@ -118,7 +114,10 @@ class _HistoryPageState extends State<HistoryPage> {
                     SizedBox(height: 8),
                     Text(
                       'Cari negara untuk menambah history',
-                      style: TextStyle(fontSize: 14, color: hintColor.withOpacity(0.7)),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: hintColor.withOpacity(0.7),
+                      ),
                     ),
                   ],
                 ),
@@ -151,8 +150,14 @@ class _HistoryPageState extends State<HistoryPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(height: 4),
-                            Text('Ibu Kota: ${item.capital}', style: TextStyle(color: hintColor)),
-                            Text('Region: ${item.region}', style: TextStyle(color: hintColor)),
+                            Text(
+                              'Ibu Kota: ${item.capital}',
+                              style: TextStyle(color: hintColor),
+                            ),
+                            Text(
+                              'Region: ${item.region}',
+                              style: TextStyle(color: hintColor),
+                            ),
                             SizedBox(height: 4),
                             Text(
                               _formatDate(item.viewedAt),
@@ -166,7 +171,12 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         isThreeLine: true,
                       ),
-                      Divider(color: tertiaryColor.withOpacity(0.5), height: 16, indent: 16, endIndent: 16),
+                      Divider(
+                        color: tertiaryColor.withOpacity(0.5),
+                        height: 16,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
                     ],
                   );
                 },

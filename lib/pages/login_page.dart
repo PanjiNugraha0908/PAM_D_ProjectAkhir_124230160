@@ -13,10 +13,10 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
-          backgroundColor: Colors.red, // Biarkan merah untuk error
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -56,8 +56,12 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            // Menggunakan warna gradient dari register_page
-            colors: [primaryColor, secondaryColor, tertiaryColor],
+            // Menggunakan warna gradient baru
+            colors: [
+              primaryColor,
+              secondaryColor,
+              tertiaryColor,
+            ],
           ),
         ),
         child: Center(
@@ -65,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
             padding: EdgeInsets.all(24.0),
             child: Card(
               elevation: 8,
-              color: cardColor, // Warna background card
+              color: cardColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -83,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
                           'assets/Logoprojek.png',
                           height: 40,
                           width: 40,
-                          color: textColor, // Sesuaikan warna logo jika perlu
+                          color: textColor,
                         ),
                         SizedBox(width: 12),
                         Text(
@@ -122,7 +126,8 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(color: textColor),
                       decoration: InputDecoration(
                         hintText: 'Username',
-                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                        hintStyle:
+                            TextStyle(color: hintColor.withOpacity(0.5)),
                         prefixIcon: Icon(Icons.person, color: secondaryColor),
                         filled: true,
                         fillColor: tertiaryColor.withOpacity(0.3),
@@ -132,10 +137,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: secondaryColor,
-                            width: 2,
-                          ),
+                          borderSide:
+                              BorderSide(color: secondaryColor, width: 2),
                         ),
                       ),
                     ),
@@ -154,7 +157,8 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(color: textColor),
                       decoration: InputDecoration(
                         hintText: 'Password',
-                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                        hintStyle:
+                            TextStyle(color: hintColor.withOpacity(0.5)),
                         prefixIcon: Icon(Icons.lock, color: secondaryColor),
                         filled: true,
                         fillColor: tertiaryColor.withOpacity(0.3),
@@ -164,10 +168,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: secondaryColor,
-                            width: 2,
-                          ),
+                          borderSide:
+                              BorderSide(color: secondaryColor, width: 2),
                         ),
                       ),
                       onSubmitted: (_) => _login(),
@@ -187,8 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RegisterPage(),
-                              ),
+                                  builder: (context) => RegisterPage()),
                             );
                           },
                           style: TextButton.styleFrom(

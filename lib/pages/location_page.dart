@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http; // <-- DIHAPUS
-// import 'dart:convert'; // <-- DIHAPUS
-// import '../models/country.dart'; // <-- DIHAPUS
 import '../services/location_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -13,6 +10,7 @@ import 'history_page.dart';
 import 'profile_page.dart';
 import 'feedback_page.dart';
 import 'settings_page.dart';
+// import 'package:intl/intl.dart'; <-- Import ini sudah dihapus atau tidak diperlukan
 
 class LocationPage extends StatefulWidget {
   @override
@@ -24,10 +22,10 @@ class _LocationPageState extends State<LocationPage> {
   Map<String, dynamic>? _locationData;
   String _errorMessage = '';
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (Sudah Gelap)
+  final Color primaryColor = Color(0xFF010A1E); 
+  final Color secondaryColor = Color(0xFF103070); 
+  final Color tertiaryColor = Color(0xFF2A364B); 
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -102,7 +100,6 @@ class _LocationPageState extends State<LocationPage> {
 
   // --- Handler untuk Bottom Nav Bar ---
   void _onItemTapped(int index) {
-    // Hanya pindah jika item BUKAN item saat ini (Lokasi = 2)
     switch (index) {
       case 0:
         _openProfile();
@@ -127,8 +124,8 @@ class _LocationPageState extends State<LocationPage> {
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: secondaryColor, // Lokasi akan aktif
-        currentIndex: 2, // Index 'Lokasi'
+        selectedItemColor: secondaryColor,
+        currentIndex: 2,
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -242,8 +239,8 @@ class _LocationPageState extends State<LocationPage> {
                         ),
                       )
                     : _errorMessage.isNotEmpty
-                        ? _buildErrorWidget() // Widget error
-                        : _buildLocationContent(), // Widget konten utama
+                        ? _buildErrorWidget()
+                        : _buildLocationContent(),
               ),
             ],
           ),
@@ -442,7 +439,8 @@ class _LocationPageState extends State<LocationPage> {
             style: TextStyle(
               fontSize: 16, 
               color: textColor,
-              fontWeight: FontWeight.w600,
+              // FIX TYPO: w60 -> w600
+              fontWeight: FontWeight.w600, 
             ),
           ),
         ],

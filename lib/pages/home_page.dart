@@ -31,10 +31,10 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -231,14 +231,9 @@ class _HomePageState extends State<HomePage> {
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
         
-        // ===============================================
-        // ==== PERBAIKAN ADA DI SINI ====
-        // ===============================================
-        selectedItemColor: hintColor, // Diubah dari secondaryColor ke hintColor
-        // ===============================================
+        // Diubah dari secondaryColor ke hintColor agar tidak ada yang aktif secara default
+        selectedItemColor: hintColor, 
 
-        // Kita biarkan currentIndex: 0 agar item tetap bisa diklik,
-        // tapi warnanya sekarang akan sama dengan yang lain.
         currentIndex: 0, 
         
         showUnselectedLabels: true,
@@ -265,7 +260,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        // Background Gradient (DIPERBARUI)
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,

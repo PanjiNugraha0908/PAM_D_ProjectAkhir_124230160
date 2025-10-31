@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 class EditFeedbackPage extends StatefulWidget {
   final String username;
-  final int? feedbackKey; // Null jika baru
+  final int? feedbackKey; 
   final String initialFeedback;
 
   EditFeedbackPage({
@@ -21,10 +21,10 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
   late TextEditingController _feedbackController;
   late Box _feedbackBox;
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF041C4A);
-  final Color secondaryColor = Color(0xFF214894);
-  final Color tertiaryColor = Color(0xFF394461);
+  // Palet Warna (DIPERBARUI)
+  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
+  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
+  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -43,14 +43,12 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
       final feedbackData = {
         'username': widget.username,
         'feedback': _feedbackController.text,
-        'timestamp': DateTime.now(), // Gunakan waktu saat disimpan
+        'timestamp': DateTime.now(), 
       };
 
       if (isEditing) {
-        // Edit feedback yang sudah ada
         _feedbackBox.put(widget.feedbackKey, feedbackData);
       } else {
-        // Tambah feedback baru (Hive akan memberi key otomatis jika menggunakan add)
         _feedbackBox.add(feedbackData);
       }
 
@@ -85,7 +83,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        // Background Gradient (DIPERBARUI)
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -95,7 +93,8 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
         ),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
+          // Menggunakan SingleChildScrollView untuk mencegah overflow
+          child: SingleChildScrollView( 
             padding: EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,10 +115,14 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                     labelStyle: TextStyle(color: hintColor),
                     filled: true,
                     fillColor: tertiaryColor.withOpacity(0.3),
-                    prefixIcon: Icon(Icons.comment, color: hintColor),
-                    border: OutlineInputBorder(
+                    
+                    // Ikon kontras (abu-abu)
+                    prefixIcon: Icon(Icons.comment, color: hintColor), 
+                    
+                    // Garis pinggir kontras (abu-abu)
+                    enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: hintColor), 
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -149,6 +152,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                     style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
                   ),
                 ),
+                SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 0 : 20), // Padding aman saat keyboard hilang
               ],
             ),
           ),
