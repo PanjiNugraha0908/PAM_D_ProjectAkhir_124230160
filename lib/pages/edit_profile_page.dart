@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart'; // Import package
+import 'package:path_provider/path_provider.dart'; // Import package
+import 'package:path/path.dart' as path; // Import package
+import 'dart:io'; // Import untuk File
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -10,12 +14,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late Box _profileBox;
 
+  // Palet Warna
+  final Color primaryColor = Color(0xFF041C4A);
+  final Color secondaryColor = Color(0xFF214894);
+  final Color tertiaryColor = Color(0xFF394461);
+  final Color cardColor = Color(0xFF21252F);
+  final Color textColor = Color(0xFFD9D9D9);
+  final Color hintColor = Color(0xFF898989);
+
   // Controllers untuk setiap field
   late TextEditingController _namaController;
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  late TextEditingController _fotoUrlController;
+  
+  // State untuk menyimpan path gambar yang dipilih
+  String? _imagePath;
 
   @override
   void initState() {
@@ -27,7 +41,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _noHpController = TextEditingController(text: _profileBox.get('noHp', defaultValue: ''));
     _prodiController = TextEditingController(text: _profileBox.get('prodi', defaultValue: ''));
     _emailController = TextEditingController(text: _profileBox.get('email', defaultValue: ''));
-    _fotoUrlController = TextEditingController(text: _profileBox.get('fotoUrl', defaultValue: ''));
+    // Ambil path gambar, bukan URL
+    _imagePath = _profileBox.get('fotoPath'); 
+  }
+
+  // --- Fungsi untuk memilih gambar ---
+  Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    // Ambil gambar dari galeri
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Dapatkan direktori dokumen aplikasi
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      // Buat nama file yang unik (atau gunakan nama aslinya)
+      final String fileName = path.basename(pickedFile.path);
+      final String newPath = path.join(appDir.path, fileName);
+
+      // Salin file ke direktori aplikasi
+      final File newImage = await File(pickedFile.path).copy(newPath);
+
+      // Update state untuk menampilkan gambar baru
+      setState(() {
+        _imagePath = newImage.path;
+      });
+    }
   }
 
   // Fungsi untuk menyimpan data
@@ -37,7 +75,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _profileBox.put('noHp', _noHpController.text);
       _profileBox.put('prodi', _prodiController.text);
       _profileBox.put('email', _emailController.text);
-      _profileBox.put('fotoUrl', _fotoUrlController.text);
+      // Simpan path gambar ke Hive
+      _profileBox.put('fotoPath', _imagePath);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -46,7 +85,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       );
       
-      // Kembali ke halaman profil
       Navigator.pop(context);
     }
   }
@@ -54,91 +92,151 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent, // Untuk gradient
       appBar: AppBar(
-        title: Text('Edit Profil'),
+        title: Text('Edit Profil', style: TextStyle(color: textColor)),
+        backgroundColor: primaryColor,
+        iconTheme: IconThemeData(color: textColor),
+        elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.save),
+            icon: Icon(Icons.save, color: textColor),
             onPressed: _saveProfile,
             tooltip: 'Simpan',
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: EdgeInsets.all(16.0),
-          children: [
-            _buildTextField(
-              controller: _namaController,
-              label: 'Nama Lengkap',
-              icon: Icons.person,
-            ),
-            SizedBox(height: 16),
-            _buildTextField(
-              controller: _noHpController,
-              label: 'No. HP',
-              icon: Icons.phone,
-              keyboardType: TextInputType.phone,
-            ),
-            SizedBox(height: 16),
-            _buildTextField(
-              controller: _prodiController,
-              label: 'Program Studi',
-              icon: Icons.school,
-            ),
-            SizedBox(height: 16),
-            _buildTextField(
-              controller: _emailController,
-              label: 'Email',
-              icon: Icons.email,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            SizedBox(height: 16),
-            _buildTextField(
-              controller: _fotoUrlController,
-              label: 'URL Foto Profil',
-              hint: 'https://...',
-              icon: Icons.image,
-              keyboardType: TextInputType.url,
-            ),
-            SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveProfile,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
+      body: Container(
+        // Background Gradient
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, secondaryColor, tertiaryColor],
+          ),
+        ),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.all(24.0),
+            children: [
+              // --- Image Picker ---
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 80,
+                        backgroundColor: tertiaryColor,
+                        backgroundImage: (_imagePath != null && _imagePath!.isNotEmpty)
+                            ? FileImage(File(_imagePath!))
+                            : null,
+                        child: (_imagePath == null || _imagePath!.isEmpty)
+                            ? Icon(Icons.person_add_alt_1, size: 80, color: hintColor)
+                            : null,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Ketuk gambar untuk mengubah',
+                        style: TextStyle(color: hintColor),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Text('Simpan Perubahan'),
-            ),
-          ],
+              SizedBox(height: 32),
+              
+              // --- Text Fields ---
+              _buildTextField(
+                controller: _namaController,
+                label: 'Nama Lengkap',
+                icon: Icons.person,
+                mustBeFilled: true, // Nama wajib diisi
+              ),
+              SizedBox(height: 16),
+              _buildTextField(
+                controller: _noHpController,
+                label: 'No. HP',
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                mustBeFilled: true, // No. HP wajib diisi
+              ),
+              SizedBox(height: 16),
+              _buildTextField(
+                controller: _prodiController,
+                label: 'Program Studi',
+                icon: Icons.school,
+                mustBeFilled: true, // Prodi wajib diisi
+              ),
+              SizedBox(height: 16),
+              _buildTextField(
+                controller: _emailController,
+                label: 'Email',
+                icon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+                mustBeFilled: true, // Email wajib diisi
+              ),
+              
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: secondaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)
+                  )
+                ),
+                child: Text('Simpan Perubahan', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // Helper widget untuk membuat TextField
+  // Helper widget untuk membuat TextField (dengan style gelap)
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     String? hint,
     TextInputType? keyboardType,
+    bool mustBeFilled = false, // Parameter untuk validasi
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: TextStyle(color: hintColor),
         hintText: hint,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
+        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: secondaryColor),
+        filled: true,
+        fillColor: tertiaryColor.withOpacity(0.3),
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: tertiaryColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: secondaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.redAccent, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.redAccent, width: 2),
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          // Khusus URL Foto boleh kosong
-          if (label == 'URL Foto Profil') return null;
+        if (mustBeFilled && (value == null || value.isEmpty)) {
           return '$label tidak boleh kosong';
         }
         return null;
@@ -148,12 +246,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   void dispose() {
-    // Selalu dispose controller
     _namaController.dispose();
     _noHpController.dispose();
     _prodiController.dispose();
     _emailController.dispose();
-    _fotoUrlController.dispose();
     super.dispose();
   }
 }

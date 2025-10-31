@@ -94,8 +94,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // (di dalam file lib/pages/home_page.dart)
-
   // 燥 FUNGSI YANG DIPERBAIKI 燥
   void _showCountryDetail(Country country) async {
     // 1. Dapatkan username (sudah ada)
@@ -134,10 +132,9 @@ class _HomePageState extends State<HomePage> {
 
       // Hitung jumlah negara unik
       var negaraUnik = <String>{};
-
+      
       // ===== PERBAIKAN DI SINI =====
-      for (var item in historySesudah) {
-        // <-- Typo 'historySesah' diperbaiki
+      for (var item in historySesudah) { // <-- Typo 'historySesah' diperbaiki
         negaraUnik.add(item.countryName);
       }
       // =============================
@@ -233,19 +230,26 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: secondaryColor,
-        // Kita tidak melacak state, jadi set ke 0.
-        // Atau bisa juga tidak diset (biarkan default)
-        currentIndex: 0,
-        // Kita set 'selectedFontSize' ke 0 agar label 'Home' tidak muncul
-        // dan hanya label item lain yang ditekan yang akan muncul.
-        // Atau, kita bisa set `showUnselectedLabels: true`
+        
+        // ===============================================
+        // ==== PERBAIKAN ADA DI SINI ====
+        // ===============================================
+        selectedItemColor: hintColor, // Diubah dari secondaryColor ke hintColor
+        // ===============================================
+
+        // Kita biarkan currentIndex: 0 agar item tetap bisa diklik,
+        // tapi warnanya sekarang akan sama dengan yang lain.
+        currentIndex: 0, 
+        
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.feedback),
             label: 'Feedback',
@@ -254,7 +258,10 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.my_location),
             label: 'Lokasi',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'History',
+          ),
         ],
       ),
       body: Container(
@@ -263,7 +270,11 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
+            colors: [
+              primaryColor,
+              secondaryColor,
+              tertiaryColor,
+            ],
           ),
         ),
         child: SafeArea(
@@ -342,10 +353,8 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         CircularProgressIndicator(color: textColor),
                         SizedBox(height: 16),
-                        Text(
-                          'Mencari negara...',
-                          style: TextStyle(color: textColor),
-                        ),
+                        Text('Mencari negara...',
+                            style: TextStyle(color: textColor)),
                       ],
                     ),
                   ),
