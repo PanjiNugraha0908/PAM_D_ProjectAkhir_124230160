@@ -7,13 +7,15 @@ import '../widgets/country_card.dart';
 import '../widgets/country_detail_dialog.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
-import '../services/activity_tracker.dart';  // BARU
+import '../services/activity_tracker.dart';
 import 'login_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'profile_page.dart';
 import 'feedback_page.dart';
 import 'settings_page.dart';
+// 👇 IMPORT SERVICE NOTIFIKASI
+import '../services/notification_service.dart';
 
 class HomePage extends StatefulWidget {
   final String username;
@@ -37,6 +39,7 @@ class _HomePageState extends State<HomePage> {
     ActivityTracker.updateLastActive();
   }
 
+  // MENJADI SEPERTI INI:
   Future<void> _searchCountries() async {
     if (_searchController.text.isEmpty) return;
 
@@ -47,9 +50,12 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
+      // 👇 PERUBAHAN DI SINI: Membersihkan spasi sebelum mencari
+      final String query = _searchController.text.trim();
+
       final response = await http.get(
         Uri.parse(
-          'https://restcountries.com/v3.1/name/${_searchController.text}',
+          'https://restcountries.com/v3.1/name/$query', // Gunakan query yang sudah bersih
         ),
       );
 
@@ -72,7 +78,6 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-
   Future<void> _logout() async {
     await AuthService.logout();
     Navigator.pushReplacement(
@@ -81,10 +86,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // 👇 FUNGSI INI KITA MODIFIKASI 👇
   void _showCountryDetail(Country country) async {
+    // 1. Dapatkan username (sudah ada)
+    String? username = widget.username; // Menggunakan widget.username
+
+    // 2. Cek history SEBELUM menambah
+    List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
+      username,
+    );
+    bool sudahDilihat = historySebelum.any(
+      (item) => item.countryName == country.name,
+    );
+
+    // 3. Tambah history (sudah ada)
     await DatabaseService.addHistory(
       HistoryItem(
-        username: widget.username,
+        username: username,
         countryName: country.name,
         flagUrl: country.flagUrl,
         capital: country.capital,
@@ -93,9 +111,36 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    // Update aktivitas
+    // 4. Update aktivitas (sudah ada)
     ActivityTracker.updateLastActive();
 
+    // 5. LOGIKA NOTIFIKASI BARU
+    // Cek jika ini adalah negara BARU yang dilihat
+    if (!sudahDilihat) {
+      // Ambil history LAGI (setelah ditambah) untuk menghitung jumlah unik
+      List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
+        username,
+      );
+
+      // Hitung jumlah negara unik
+      var negaraUnik = <String>{};
+      for (var item in historySesudah) {
+        negaraUnik.add(item.countryName);
+      }
+
+      print('DEBUG: Negara unik baru terdeteksi. Jumlah unik sekarang: ${negaraUnik.length}');
+
+      // Jika jumlah unik TEPAT 3, kirim notifikasi
+      if (negaraUnik.length == 3) {
+        NotificationService.showNotification(
+          id: 3, // ID unik untuk notifikasi ini
+          title: 'Wawasan Bertambah!',
+          body: 'Selamat kamu telah menambah wawasanmu!',
+        );
+      }
+    }
+
+    // 6. Tampilkan dialog (sudah ada)
     showDialog(
       context: context,
       builder: (context) => CountryDetailDialog(country: country),
@@ -284,7 +329,9 @@ class _HomePageState extends State<HomePage> {
               child: GridView.builder(
                 padding: EdgeInsets.all(16.0),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 1,
+                  crossAxisCount: MediaQuery.of(context).size.width > 600
+                      ? 3
+                      : 1,
                   childAspectRatio: 1.2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
@@ -319,8 +366,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-
 
   @override
   void dispose() {

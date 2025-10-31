@@ -6,6 +6,8 @@ class DatabaseService {
   static const String _userBoxName = 'users';
   static const String _historyBoxName = 'history';
   static const String _currentUserKey = 'current_user';
+  // 👇 1. TAMBAHKAN BARIS INI
+  static const String _profileBoxName = 'profile';
 
   // Initialize Hive
   static Future<void> init() async {
@@ -19,6 +21,8 @@ class DatabaseService {
     await Hive.openBox<User>(_userBoxName);
     await Hive.openBox<HistoryItem>(_historyBoxName);
     await Hive.openBox<String>(_currentUserKey);
+    // 👇 2. TAMBAHKAN BARIS INI
+    await Hive.openBox(_profileBoxName);
   }
 
   // User Box

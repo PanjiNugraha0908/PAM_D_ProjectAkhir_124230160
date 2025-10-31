@@ -1,163 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // Import Hive
+import 'edit_feedback_page.dart'; // Import halaman edit
 
 class FeedbackPage extends StatelessWidget {
-  // ============================================================
-  // ISI SARAN DAN KESAN ANDA DI BAWAH INI
-  // ============================================================
-
-  // SARAN (Bisa berupa list atau paragraf panjang)
-  final List<String> saranList = [
-    "Tulis saran pertama Anda di sini", // ← ISI SARAN 1
-    "Tulis saran kedua Anda di sini", // ← ISI SARAN 2
-    "Tulis saran ketiga Anda di sini", // ← ISI SARAN 3
-    // Tambahkan lebih banyak saran jika diperlukan
-  ];
-
-  // KESAN (Bisa berupa list atau paragraf panjang)
-  final List<String> kesanList = [
-    "Tulis kesan pertama Anda di sini", // ← ISI KESAN 1
-    "Tulis kesan kedua Anda di sini", // ← ISI KESAN 2
-    "Tulis kesan ketiga Anda di sini", // ← ISI KESAN 3
-    // Tambahkan lebih banyak kesan jika diperlukan
-  ];
-
-  // ============================================================
-  // ATAU JIKA INGIN FORMAT PARAGRAF PANJANG:
-  // ============================================================
-
-  final String saranParagraf = """
-Tulis saran Anda dalam bentuk paragraf panjang di sini.
-Anda bisa menulis beberapa baris.
-Dan akan ditampilkan seperti ini.
-
-Paragraf kedua juga bisa ditambahkan.
-  """; // ← ISI SARAN PARAGRAF
-
-  final String kesanParagraf = """
-Tulis kesan Anda dalam bentuk paragraf panjang di sini.
-Anda bisa menulis beberapa baris.
-Dan akan ditampilkan seperti ini.
-
-Paragraf kedua juga bisa ditambahkan.
-  """; // ← ISI KESAN PARAGRAF
-
-  // ============================================================
-  // PILIH FORMAT: true = List, false = Paragraf
-  // ============================================================
-  final bool useListFormat = true; // ← UBAH KE false JIKA INGIN FORMAT PARAGRAF
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Saran & Kesan'), elevation: 0),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.blue.shade600, Colors.purple.shade600],
-                ),
+    // Gunakan ValueListenableBuilder untuk auto-update
+    return ValueListenableBuilder(
+      valueListenable: Hive.box('feedback').listenable(),
+      builder: (context, Box box, _) {
+        // Ambil data dari Hive, beri nilai default jika kosong
+        final String saranParagraf = box.get('saran',
+            defaultValue: 'Saran belum diatur. Tekan tombol edit (✏️) di kanan atas untuk menambahkan.');
+        final String kesanParagraf = box.get('kesan',
+            defaultValue: 'Kesan belum diatur. Tekan tombol edit (✏️) di kanan atas untuk menambahkan.');
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Saran & Kesan'),
+            elevation: 0,
+            actions: [
+              // Tombol Edit
+              IconButton(
+                icon: Icon(Icons.edit),
+                tooltip: 'Edit Saran & Kesan',
+                onPressed: () {
+                  // Pindah ke halaman Edit Feedback
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EditFeedbackPage()),
+                  );
+                },
               ),
-              child: Column(
-                children: [
-                  Icon(Icons.feedback, size: 60, color: Colors.white),
-                  SizedBox(height: 12),
-                  Text(
-                    'Saran & Kesan',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+            ],
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header (Ini tetap sama)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue.shade600, Colors.purple.shade600],
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Pengalaman dalam mengembangkan aplikasi ini',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SARAN
-                  _buildSectionCard(
-                    icon: Icons.lightbulb,
-                    title: 'Saran',
-                    color: Colors.orange,
-                    content: useListFormat
-                        ? _buildListContent(saranList)
-                        : _buildParagraphContent(saranParagraf),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // KESAN
-                  _buildSectionCard(
-                    icon: Icons.emoji_emotions,
-                    title: 'Kesan',
-                    color: Colors.green,
-                    content: useListFormat
-                        ? _buildListContent(kesanList)
-                        : _buildParagraphContent(kesanParagraf),
-                  ),
-
-                  SizedBox(height: 24),
-
-                  // Catatan Footer
-                  Card(
-                    elevation: 1,
-                    color: Colors.blue.shade50,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Colors.blue.shade700,
-                            size: 20,
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Terima kasih telah menggunakan Country Explorer!',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
+                  child: Column(
+                    children: [
+                      Icon(Icons.feedback, size: 60, color: Colors.white),
+                      SizedBox(height: 12),
+                      Text(
+                        'Saran & Kesan',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Pengalaman dalam mengembangkan aplikasi ini',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+
+                Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // SARAN (Kita hanya pakai format paragraf)
+                      _buildSectionCard(
+                        icon: Icons.lightbulb,
+                        title: 'Saran',
+                        color: Colors.orange,
+                        content: _buildParagraphContent(saranParagraf),
+                      ),
+
+                      SizedBox(height: 16),
+
+                      // KESAN (Kita hanya pakai format paragraf)
+                      _buildSectionCard(
+                        icon: Icons.emoji_emotions,
+                        title: 'Kesan',
+                        color: Colors.green,
+                        content: _buildParagraphContent(kesanParagraf),
+                      ),
+
+                      SizedBox(height: 24),
+
+                      // Catatan Footer (Ini tetap sama)
+                      Card(
+                        elevation: 1,
+                        color: Colors.blue.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Terima kasih telah menggunakan Country Explorer!',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blue.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
+  // Helper widget (Ini tetap sama)
   Widget _buildSectionCard({
     required IconData icon,
     required String title,
@@ -204,44 +187,7 @@ Paragraf kedua juga bisa ditambahkan.
     );
   }
 
-  Widget _buildListContent(List<String> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: items.asMap().entries.map((entry) {
-        int index = entry.key;
-        String item = entry.value;
-        return Padding(
-          padding: EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: EdgeInsets.only(top: 6),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade600,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.6,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
+  // Helper widget (Ini tetap sama)
   Widget _buildParagraphContent(String text) {
     return Text(
       text.trim(),
