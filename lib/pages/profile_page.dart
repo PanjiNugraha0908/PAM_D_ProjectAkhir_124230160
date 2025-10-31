@@ -4,10 +4,10 @@ import 'edit_profile_page.dart';
 import 'dart:io';
 
 class ProfilePage extends StatelessWidget {
-  // Palet Warna (DIPERBARUI)
-  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
-  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
-  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
+  // Palet Warna (Sudah Gelap)
+  final Color primaryColor = Color(0xFF010A1E); 
+  final Color secondaryColor = Color(0xFF103070); 
+  final Color tertiaryColor = Color(0xFF2A364B); 
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -45,7 +45,7 @@ class ProfilePage extends StatelessWidget {
           String? fotoPath = box.get('fotoPath'); 
 
           return Container(
-            // Background Gradient (DIPERBARUI)
+            // Background Gradient
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -54,8 +54,9 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             width: double.infinity,
-            // Menggunakan SingleChildScrollView untuk menghindari overflow
+            // Menggunakan SingleChildScrollView untuk mencegah overflow
             child: SingleChildScrollView( 
+              // Tambahkan padding vertikal yang lebih banyak
               padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -114,7 +115,8 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: 40), // Ruang ekstra di bawah
+                  // Tambahkan ruang di bawah agar pasti bisa di-scroll dan tidak overflow
+                  SizedBox(height: 40), 
                 ],
               ),
             ),

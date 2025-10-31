@@ -21,10 +21,10 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
   late TextEditingController _feedbackController;
   late Box _feedbackBox;
 
-  // Palet Warna (DIPERBARUI)
-  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
-  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
-  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
+  // Palet Warna (Sudah Gelap)
+  final Color primaryColor = Color(0xFF010A1E); 
+  final Color secondaryColor = Color(0xFF103070); 
+  final Color tertiaryColor = Color(0xFF2A364B); 
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -65,6 +65,9 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Ambil tinggi keyboard (0 jika keyboard tidak muncul)
+    final double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -83,7 +86,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
         ],
       ),
       body: Container(
-        // Background Gradient (DIPERBARUI)
+        // Background Gradient
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -95,7 +98,8 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
           key: _formKey,
           // Menggunakan SingleChildScrollView untuk mencegah overflow
           child: SingleChildScrollView( 
-            padding: EdgeInsets.all(24.0),
+            // Padding bawah dinamis
+            padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + (bottomPadding > 0 ? bottomPadding : 0)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -116,7 +120,6 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                     filled: true,
                     fillColor: tertiaryColor.withOpacity(0.3),
                     
-                    // Ikon kontras (abu-abu)
                     prefixIcon: Icon(Icons.comment, color: hintColor), 
                     
                     // Garis pinggir kontras (abu-abu)
@@ -152,7 +155,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                     style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
                   ),
                 ),
-                SizedBox(height: MediaQuery.of(context).viewInsets.bottom > 0 ? 0 : 20), // Padding aman saat keyboard hilang
+                // Padding di sini dihilangkan/disesuaikan dengan padding di SingleChildScrollView
               ],
             ),
           ),
