@@ -14,6 +14,14 @@ class CountryDetailDialog extends StatefulWidget {
 }
 
 class _CountryDetailDialogState extends State<CountryDetailDialog> {
+  // Palet Warna
+  final Color primaryColor = Color(0xFF041C4A);
+  final Color secondaryColor = Color(0xFF214894);
+  final Color tertiaryColor = Color(0xFF394461);
+  final Color cardColor = Color(0xFF21252F);
+  final Color textColor = Color(0xFFD9D9D9);
+  final Color hintColor = Color(0xFF898989);
+
   // Currency Converter
   String? selectedFromCurrency;
   String? selectedToCurrency;
@@ -29,6 +37,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
         value: timezone,
         child: Text(
           '${timezone} (${TimezoneService.getTimezoneName(timezone)})',
+          style: TextStyle(color: textColor),
         ),
       );
     }).toList();
@@ -46,20 +55,10 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     } catch (e) {
       // ignore and fallback
     }
-
     const fallbacks = {
-      'USD': '\$',
-      'EUR': '€',
-      'GBP': '£',
-      'JPY': '¥',
-      'IDR': 'Rp',
-      'AUD': 'A\$',
-      'CAD': 'C\$',
-      'SGD': 'S\$',
-      'MYR': 'RM',
-      'THB': '฿',
+      'USD': '\$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'IDR': 'Rp',
+      'AUD': 'A\$', 'CAD': 'C\$', 'SGD': 'S\$', 'MYR': 'RM', 'THB': '฿',
     };
-
     return fallbacks[code] ?? code;
   }
 
@@ -72,31 +71,21 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   @override
   void initState() {
     super.initState();
-
-    // Set default currency jika ada
     if (widget.country.currencies.isNotEmpty) {
       selectedFromCurrency = widget.country.currencies.keys.first;
-      selectedToCurrency = 'USD';
+      selectedToCurrency = 'IDR'; // Default ke IDR
     }
-
-    // Set default timezone
     selectedTimezone = 'WIB';
-
-    // Mulai timer untuk update waktu real-time
     _updateTimes();
     _timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTimes());
   }
 
   void _updateTimes() {
     if (widget.country.timezones.isEmpty) return;
-
     setState(() {
-      // Update waktu negara
       countryTime = TimezoneService.getCurrentTimeForCountry(
         widget.country.timezones[0],
       );
-
-      // Update waktu konversi jika ada timezone yang dipilih
       if (selectedTimezone != null) {
         convertedTime = TimezoneService.getTimeForSelectedTimezone(
           widget.country.timezones[0],
@@ -113,7 +102,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
       });
       return;
     }
-
     setState(() {
       isLoadingConversion = true;
       conversionError = '';
@@ -145,31 +133,23 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   }
 
   List<String> _getAvailableCurrencies() {
-    return [
-      'USD',
-      'EUR',
-      'GBP',
-      'JPY',
-      'IDR',
-      'AUD',
-      'CAD',
-      'SGD',
-      'MYR',
-      'THB',
-    ];
+    return ['IDR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD', 'MYR', 'THB'];
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        constraints: BoxConstraints(maxHeight: 700, maxWidth: 600),
+        constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxWidth: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -179,17 +159,19 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        color: textColor,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close),
+                    icon: Icon(Icons.close, color: hintColor),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
-            Expanded(
+            Divider(color: tertiaryColor, height: 1),
+            Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
@@ -210,25 +192,19 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
+                              color: secondaryColor,
                             ),
                           ),
                           SizedBox(height: 12),
                           _buildDetailRow(
-                            'Nama Resmi',
-                            widget.country.officialName,
-                          ),
+                              'Nama Resmi', widget.country.officialName),
                           _buildDetailRow('Ibu Kota', widget.country.capital),
                           _buildDetailRow('Region', widget.country.region),
                           _buildDetailRow(
-                            'Sub-region',
-                            widget.country.subregion,
-                          ),
+                              'Sub-region', widget.country.subregion),
                           _buildDetailRow(
                             'Populasi',
-                            widget.country.population
-                                .toString()
-                                .replaceAllMapped(
+                            widget.country.population.toString().replaceAllMapped(
                                   RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
                                   (Match m) => '${m[1]}.',
                                 ),
@@ -238,293 +214,18 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                             '${widget.country.area.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} km²',
                           ),
                           _buildDetailRow(
-                            'Bahasa',
-                            widget.country.languages.join(', '),
-                          ),
+                              'Bahasa', widget.country.languages.join(', ')),
                           _buildDetailRow('Mata Uang', _getCurrencyString()),
 
-                          Divider(height: 32, thickness: 2),
+                          Divider(height: 32, thickness: 1, color: tertiaryColor),
 
                           // Konversi Mata Uang
-                          Text(
-                            '💱 Konversi Mata Uang',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                          SizedBox(height: 12),
+                          _buildCurrencyConverter(),
 
-                          if (widget.country.currencies.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Dari:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      DropdownButtonFormField<String>(
-                                        value: selectedFromCurrency,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                        ),
-                                        items: widget.country.currencies.keys
-                                            .map((currency) {
-                                              return DropdownMenuItem(
-                                                value: currency,
-                                                child: Text(currency),
-                                              );
-                                            })
-                                            .toList(),
-                                        onChanged: (value) {
-                                          setState(
-                                            () => selectedFromCurrency = value,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Ke:',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      DropdownButtonFormField<String>(
-                                        value: selectedToCurrency,
-                                        decoration: InputDecoration(
-                                          border: OutlineInputBorder(),
-                                          contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 8,
-                                          ),
-                                        ),
-                                        items: _getAvailableCurrencies().map((
-                                          currency,
-                                        ) {
-                                          return DropdownMenuItem(
-                                            value: currency,
-                                            child: Text(currency),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(
-                                            () => selectedToCurrency = value,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            TextField(
-                              controller: _amountController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'Jumlah',
-                                border: OutlineInputBorder(),
-                                prefix: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  child: Text(
-                                    _getCurrencySymbol(selectedFromCurrency),
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: isLoadingConversion
-                                    ? null
-                                    : _convertCurrency,
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 12),
-                                  backgroundColor: Colors.green,
-                                ),
-                                child: isLoadingConversion
-                                    ? SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : Text(
-                                        'Konversi',
-                                        style: TextStyle(fontSize: 16),
-                                      ),
-                              ),
-                            ),
-
-                            if (conversionError.isNotEmpty) ...[
-                              SizedBox(height: 12),
-                              Container(
-                                padding: EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.red.shade200,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: Colors.red.shade700,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        conversionError,
-                                        style: TextStyle(
-                                          color: Colors.red.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-
-                            if (convertedAmount > 0) ...[
-                              SizedBox(height: 12),
-                              Container(
-                                padding: EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.green.shade200,
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          '${_getCurrencySymbol(selectedFromCurrency)}${_amountController.text} = ',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                        Text(
-                                          '${_getCurrencySymbol(selectedToCurrency)}${convertedAmount.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Rate: 1 $selectedFromCurrency = ${exchangeRate.toStringAsFixed(4)} $selectedToCurrency',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ] else
-                            Text(
-                              'Tidak ada informasi mata uang',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-
-                          Divider(height: 32, thickness: 2),
+                          Divider(height: 32, thickness: 1, color: tertiaryColor),
 
                           // Waktu Real-time
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '🕐 Waktu Real-time',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange.shade700,
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              if (widget.country.timezones.isNotEmpty) ...[
-                                // Waktu negara saat ini
-                                _buildTimeCard(
-                                  widget.country.timezones[0],
-                                  'Waktu ${widget.country.name}',
-                                  countryTime,
-                                  Colors.blue,
-                                ),
-                                SizedBox(height: 16),
-
-                                // Dropdown untuk memilih timezone
-                                DropdownButtonFormField<String>(
-                                  value: selectedTimezone,
-                                  decoration: InputDecoration(
-                                    labelText: 'Pilih Zona Waktu',
-                                    border: OutlineInputBorder(),
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                  items: _buildTimezoneItems(),
-                                  onChanged: (value) {
-                                    setState(() => selectedTimezone = value);
-                                    _updateTimes();
-                                  },
-                                ),
-
-                                if (selectedTimezone != null &&
-                                    convertedTime.isNotEmpty) ...[
-                                  SizedBox(height: 16),
-                                  _buildTimeCard(
-                                    selectedTimezone!,
-                                    TimezoneService.getTimezoneName(
-                                      selectedTimezone!,
-                                    ),
-                                    convertedTime,
-                                    Colors.orange,
-                                  ),
-                                ],
-                              ] else
-                                Text(
-                                  'Tidak ada informasi timezone untuk negara ini',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                            ],
-                          ),
+                          _buildTimezone(),
 
                           SizedBox(height: 16),
                         ],
@@ -540,6 +241,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
+  // Widget Kustom untuk Baris Info
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.0),
@@ -550,12 +252,279 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
             width: 120,
             child: Text(
               '$label:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
             ),
           ),
-          Expanded(child: Text(value.isEmpty ? 'N/A' : value)),
+          Expanded(child: Text(value.isEmpty ? 'N/A' : value, style: TextStyle(color: textColor))),
         ],
       ),
+    );
+  }
+
+  // Helper untuk input field kustom
+  Widget _buildCustomTextField(
+      {TextEditingController? controller,
+      String? label,
+      IconData? icon,
+      bool readOnly = false}) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      style: TextStyle(color: textColor),
+      keyboardType:
+          readOnly ? TextInputType.none : TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: hintColor),
+        prefixIcon: icon != null ? Icon(icon, color: hintColor, size: 20) : null,
+        filled: true,
+        fillColor: tertiaryColor.withOpacity(0.3),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: tertiaryColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: secondaryColor, width: 2),
+        ),
+      ),
+    );
+  }
+
+  // Helper untuk dropdown kustom
+  Widget _buildCustomDropdown(
+      {String? value,
+      String? label,
+      List<DropdownMenuItem<String>>? items,
+      void Function(String?)? onChanged}) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      dropdownColor: cardColor,
+      style: TextStyle(color: textColor),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: hintColor),
+        filled: true,
+        fillColor: tertiaryColor.withOpacity(0.3),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: tertiaryColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: secondaryColor, width: 2),
+        ),
+      ),
+    );
+  }
+
+  // Widget untuk Konversi Mata Uang
+  Widget _buildCurrencyConverter() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '💱 Konversi Mata Uang',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: secondaryColor,
+          ),
+        ),
+        SizedBox(height: 16),
+        if (widget.country.currencies.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildCustomDropdown(
+                  label: 'Dari',
+                  value: selectedFromCurrency,
+                  items: widget.country.currencies.keys.map((currency) {
+                    return DropdownMenuItem(
+                      value: currency,
+                      child: Text(currency, style: TextStyle(color: textColor)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => selectedFromCurrency = value);
+                  },
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _buildCustomDropdown(
+                  label: 'Ke',
+                  value: selectedToCurrency,
+                  items: _getAvailableCurrencies().map((currency) {
+                    return DropdownMenuItem(
+                      value: currency,
+                      child: Text(currency, style: TextStyle(color: textColor)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => selectedToCurrency = value);
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _buildCustomTextField(
+            controller: _amountController,
+            label: 'Jumlah',
+            icon: Icons.attach_money,
+          ),
+          SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: isLoadingConversion ? null : _convertCurrency,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: secondaryColor,
+                disabledBackgroundColor: tertiaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: isLoadingConversion
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: textColor,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Konversi',
+                      style: TextStyle(fontSize: 16, color: textColor),
+                    ),
+            ),
+          ),
+          if (conversionError.isNotEmpty) ...[
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade900.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade700),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      conversionError,
+                      style: TextStyle(color: Colors.red.shade200),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (convertedAmount > 0) ...[
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: tertiaryColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${_getCurrencySymbol(selectedFromCurrency)}${_amountController.text} = ',
+                        style: TextStyle(fontSize: 16, color: textColor),
+                      ),
+                      Text(
+                        '${_getCurrencySymbol(selectedToCurrency)}${convertedAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.greenAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Rate: 1 $selectedFromCurrency = ${exchangeRate.toStringAsFixed(4)} $selectedToCurrency',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: hintColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ] else
+          Text(
+            'Tidak ada informasi mata uang',
+            style: TextStyle(color: hintColor),
+          ),
+      ],
+    );
+  }
+
+  // Widget untuk Waktu Real-time
+  Widget _buildTimezone() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '🕐 Waktu Real-time',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: secondaryColor,
+          ),
+        ),
+        SizedBox(height: 16),
+        if (widget.country.timezones.isNotEmpty) ...[
+          // Waktu negara saat ini
+          _buildTimeCard(
+            widget.country.timezones[0],
+            'Waktu ${widget.country.name}',
+            countryTime,
+            secondaryColor,
+          ),
+          SizedBox(height: 16),
+          // Dropdown untuk memilih timezone
+          _buildCustomDropdown(
+            label: 'Pilih Zona Waktu Konversi',
+            value: selectedTimezone,
+            items: _buildTimezoneItems(),
+            onChanged: (value) {
+              setState(() => selectedTimezone = value);
+              _updateTimes();
+            },
+          ),
+          if (selectedTimezone != null && convertedTime.isNotEmpty) ...[
+            SizedBox(height: 12),
+            _buildTimeCard(
+              selectedTimezone!,
+              TimezoneService.getTimezoneName(selectedTimezone!),
+              convertedTime,
+              tertiaryColor,
+            ),
+          ],
+        ] else
+          Text(
+            'Tidak ada informasi timezone untuk negara ini',
+            style: TextStyle(color: hintColor),
+          ),
+      ],
     );
   }
 
@@ -563,7 +532,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
@@ -591,14 +560,14 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
               children: [
                 Text(
                   name,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 12, color: hintColor),
                 ),
                 Text(
                   time,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: color,
+                    color: textColor,
                   ),
                 ),
               ],

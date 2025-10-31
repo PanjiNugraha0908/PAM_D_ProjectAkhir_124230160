@@ -13,6 +13,14 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  // Palet Warna
+  final Color primaryColor = Color(0xFF041C4A);
+  final Color secondaryColor = Color(0xFF214894);
+  final Color tertiaryColor = Color(0xFF394461);
+  final Color cardColor = Color(0xFF21252F);
+  final Color textColor = Color(0xFFD9D9D9);
+  final Color hintColor = Color(0xFF898989);
+
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
@@ -34,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red, // Biarkan merah untuk error
         ),
       );
     }
@@ -48,7 +56,8 @@ class _LoginPageState extends State<LoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blue.shade500, Colors.purple.shade600],
+            // Menggunakan warna gradient dari register_page
+            colors: [primaryColor, secondaryColor, tertiaryColor],
           ),
         ),
         child: Center(
@@ -56,6 +65,7 @@ class _LoginPageState extends State<LoginPage> {
             padding: EdgeInsets.all(24.0),
             child: Card(
               elevation: 8,
+              color: cardColor, // Warna background card
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -63,60 +73,149 @@ class _LoginPageState extends State<LoginPage> {
                 padding: EdgeInsets.all(32.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.public,
-                      size: 64,
-                      color: Colors.blue.shade600,
+                    // Logo dan Judul Aplikasi
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/Logoprojek.png',
+                          height: 40,
+                          width: 40,
+                          color: textColor, // Sesuaikan warna logo jika perlu
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'ExploreUnity',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 24),
+
+                    // Judul Halaman
                     Text(
-                      'Country Explorer',
+                      'Login',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Jelajahi informasi negara di dunia',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
+                        color: textColor,
                       ),
                     ),
                     SizedBox(height: 32),
+
+                    // Label Username
+                    Text(
+                      'Masukkan Username',
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    // Field Username
                     TextField(
                       controller: _usernameController,
+                      style: TextStyle(color: textColor),
                       decoration: InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(
+                        hintText: 'Username',
+                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                        prefixIcon: Icon(Icons.person, color: secondaryColor),
+                        filled: true,
+                        fillColor: tertiaryColor.withOpacity(0.3),
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: tertiaryColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: secondaryColor,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(height: 16),
+
+                    // Label Password
+                    Text(
+                      'Masukkan Password',
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    // Field Password
                     TextField(
                       controller: _passwordController,
                       obscureText: true,
+                      style: TextStyle(color: textColor),
                       decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(
+                        hintText: 'Password',
+                        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+                        prefixIcon: Icon(Icons.lock, color: secondaryColor),
+                        filled: true,
+                        fillColor: tertiaryColor.withOpacity(0.3),
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: tertiaryColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: secondaryColor,
+                            width: 2,
+                          ),
                         ),
                       ),
                       onSubmitted: (_) => _login(),
                     ),
+                    SizedBox(height: 16),
+
+                    // Link Daftar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Belum punya akun? ',
+                          style: TextStyle(color: hintColor),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RegisterPage(),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Daftar di sini!',
+                            style: TextStyle(
+                              color: secondaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 24),
+
+                    // Tombol Login
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: secondaryColor,
+                          disabledBackgroundColor: tertiaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -126,25 +225,19 @@ class _LoginPageState extends State<LoginPage> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: textColor,
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
-                                'Login',
-                                style: TextStyle(fontSize: 16),
+                                'Masuk',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => RegisterPage()),
-                        );
-                      },
-                      child: Text('Belum punya akun? Daftar di sini'),
                     ),
                   ],
                 ),

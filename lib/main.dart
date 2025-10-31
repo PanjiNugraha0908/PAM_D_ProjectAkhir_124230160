@@ -9,7 +9,7 @@ void main() async {
     print('Starting app initialization...');
     WidgetsFlutterBinding.ensureInitialized();
     print('Flutter binding initialized');
-    
+
     // Initialize Hive Database
     print('Initializing Hive...');
     await DatabaseService.init();
@@ -32,41 +32,42 @@ void main() async {
     } catch (e) {
       print('Warning: Error initializing optional services: $e');
     }
-    
+
     print('Starting app UI...');
     runApp(MyApp());
-    
   } catch (e, stackTrace) {
     print('Fatal error during initialization: $e');
     print('Stack trace: $stackTrace');
     // Show error UI instead of crashing
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.red),
-                SizedBox(height: 16),
-                Text(
-                  'Terjadi kesalahan saat memulai aplikasi',
-                  style: TextStyle(fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  e.toString(),
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Terjadi kesalahan saat memulai aplikasi',
+                    style: TextStyle(fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    e.toString(),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 

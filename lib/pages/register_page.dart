@@ -108,13 +108,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     SizedBox(height: 8),
                     Text(
                       'Buat akun baru untuk melanjutkan',
-                      style: TextStyle(
-                        color: Color(0xFF898989),
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Color(0xFF898989), fontSize: 14),
                     ),
                     SizedBox(height: 32),
-                    
+
                     // Username Field
                     TextField(
                       controller: _usernameController,
@@ -123,8 +120,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         labelText: 'Masukkan Username',
                         labelStyle: TextStyle(color: Color(0xFF898989)),
                         hintText: 'Username',
-                        hintStyle: TextStyle(color: Color(0xFF898989).withOpacity(0.5)),
-                        prefixIcon: Icon(Icons.person, color: Color(0xFF214894)),
+                        hintStyle: TextStyle(
+                          color: Color(0xFF898989).withOpacity(0.5),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.person,
+                          color: Color(0xFF214894),
+                        ),
                         filled: true,
                         fillColor: Color(0xFF394461).withOpacity(0.3),
                         enabledBorder: OutlineInputBorder(
@@ -133,12 +135,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF214894), width: 2),
+                          borderSide: BorderSide(
+                            color: Color(0xFF214894),
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Password Field
                     TextField(
                       controller: _passwordController,
@@ -148,7 +153,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         labelText: 'Masukkan Password',
                         labelStyle: TextStyle(color: Color(0xFF898989)),
                         hintText: 'Password',
-                        hintStyle: TextStyle(color: Color(0xFF898989).withOpacity(0.5)),
+                        hintStyle: TextStyle(
+                          color: Color(0xFF898989).withOpacity(0.5),
+                        ),
                         prefixIcon: Icon(Icons.lock, color: Color(0xFF214894)),
                         filled: true,
                         fillColor: Color(0xFF394461).withOpacity(0.3),
@@ -158,12 +165,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF214894), width: 2),
+                          borderSide: BorderSide(
+                            color: Color(0xFF214894),
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Confirm Password Field
                     TextField(
                       controller: _confirmPasswordController,
@@ -173,8 +183,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         labelText: 'Masukkan Kembali Password',
                         labelStyle: TextStyle(color: Color(0xFF898989)),
                         hintText: 'Konfirmasi Password',
-                        hintStyle: TextStyle(color: Color(0xFF898989).withOpacity(0.5)),
-                        prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF214894)),
+                        hintStyle: TextStyle(
+                          color: Color(0xFF898989).withOpacity(0.5),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFF214894),
+                        ),
                         filled: true,
                         fillColor: Color(0xFF394461).withOpacity(0.3),
                         enabledBorder: OutlineInputBorder(
@@ -183,13 +198,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF214894), width: 2),
+                          borderSide: BorderSide(
+                            color: Color(0xFF214894),
+                            width: 2,
+                          ),
                         ),
                       ),
                       onSubmitted: (_) => _register(),
                     ),
                     SizedBox(height: 24),
-                    
+
                     // Register Button
                     SizedBox(
                       width: double.infinity,
@@ -223,7 +241,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Link to Login
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -236,7 +254,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: () {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (context) => LoginPage()),
+                              MaterialPageRoute(
+                                builder: (context) => LoginPage(),
+                              ),
                             );
                           },
                           child: Text(
