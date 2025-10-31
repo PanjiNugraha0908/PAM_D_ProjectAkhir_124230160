@@ -1,101 +1,92 @@
+import 'package:intl/intl.dart';
+
 class TimezoneService {
-  // Zona waktu Indonesia dan Inggris dengan offset UTC
-  static const Map<String, int> timezoneOffsets = {
-    'WIB': 7, // UTC+7
-    'WITA': 8, // UTC+8
-    'WIT': 9, // UTC+9
-    'GMT': 0, // UTC+0
+  // Daftar offset jam dari UTC
+  static final Map<String, int> _timezoneOffsets = {
+    'UTC': 0, 'WIB': 7, 'WITA': 8, 'WIT': 9,
+    'PDT': -7, 'EDT': -4, 'CET': 1, 'EET': 2,
+    'JST': 9, 'KST': 9, 'AEST': 10, 'NZST': 12,
+    'IST': 5, // India Standard Time (UTC+5:30) - Disederhanakan ke 5
   };
 
-  // List zona waktu yang tersedia untuk dipilih
+  // Nama lengkap untuk zona waktu
+  static final Map<String, String> _timezoneNames = {
+    'WIB': 'Waktu Indonesia Barat',
+    'WITA': 'Waktu Indonesia Tengah',
+    'WIT': 'Waktu Indonesia Timur',
+    'UTC': 'Universal Terkoordinasi',
+    'PDT': 'Waktu Siang Pasifik',
+    'EDT': 'Waktu Siang Timur',
+    'CET': 'Waktu Eropa Tengah',
+    'EET': 'Waktu Eropa Timur',
+    'JST': 'Waktu Standar Jepang',
+    'KST': 'Waktu Standar Korea',
+    'AEST': 'Waktu Standar Australia Timur',
+    'NZST': 'Waktu Standar Selandia Baru',
+    'IST': 'Waktu Standar India',
+  };
+
   static List<String> getAvailableTimezones() {
-    return ['WIB', 'WITA', 'WIT', 'GMT'];
+    return _timezoneOffsets.keys.toList();
   }
 
-  // Mengekstrak offset UTC dari string timezone
-  static int getTimezoneOffset(String timezone) {
-    // Format timezone bisa "UTC+XX:XX" atau "UTC-XX:XX" atau "+XX:XX" atau "-XX:XX"
-    String normalizedTimezone = timezone.toUpperCase();
-    if (normalizedTimezone.startsWith('UTC')) {
-      normalizedTimezone = normalizedTimezone.substring(3);
-    }
+  static String getTimezoneName(String timezone) {
+    return _timezoneNames[timezone] ?? timezone;
+  }
 
+  // Helper untuk format HH:mm:ss
+  static String _formatTime(DateTime time) {
+    return DateFormat('HH:mm:ss').format(time);
+  }
+
+  // =================================================================
+  // ===== FUNGSI INI DIPERBAIKI AGAR LEBIH AMAN (ROBUST) =====
+  // =================================================================
+  static int _parseOffset(String timezone) {
+    // Contoh: "UTC+09:00", "UTC-05:00", "UTC"
     try {
-      // Cari tanda + atau -
-      int sign = normalizedTimezone.startsWith('-') ? -1 : 1;
-      String offsetStr = normalizedTimezone.replaceAll(RegExp(r'[^\d:]'), '');
-
-      if (offsetStr.contains(':')) {
+      if (timezone == 'UTC') {
+        return 0;
+      }
+      if (timezone.startsWith('UTC')) {
+        // Hapus "UTC", sisa: "+09:00" atau "-05:00"
+        String offsetStr = timezone.substring(3); 
+        // Pisahkan berdasarkan ':' -> ["+09", "00"]
         List<String> parts = offsetStr.split(':');
-        int hours = int.parse(parts[0]);
-        return sign * hours;
-      } else if (offsetStr.isNotEmpty) {
-        return sign * int.parse(offsetStr);
+        // Ambil bagian jam
+        if (parts.isNotEmpty) {
+          // int.parse("+09") -> 9
+          // int.parse("-05") -> -5
+          // Ini aman karena int.parse bisa menangani tanda '+' atau '-'
+          return int.parse(parts[0]); 
+        }
       }
     } catch (e) {
-      // Jika gagal parse, coba cek apakah ini timezone Indonesia
-      if (normalizedTimezone.contains('WIB')) return 7;
-      if (normalizedTimezone.contains('WITA')) return 8;
-      if (normalizedTimezone.contains('WIT')) return 9;
+      print('Error parsing timezone offset "$timezone": $e');
+      // Kembali ke 0 jika gagal
     }
-
-    return 0; // Default ke GMT
+    return 0; // Default ke UTC jika parsing gagal
   }
+  // =================================================================
+  // ===== AKHIR PERBAIKAN =====
+  // =================================================================
 
-  // Mendapatkan waktu berdasarkan timezone negara
+
   static String getCurrentTimeForCountry(String countryTimezone) {
-    DateTime utcNow = DateTime.now().toUtc();
-    int offset = getTimezoneOffset(countryTimezone);
-    DateTime localTime = utcNow.add(Duration(hours: offset));
-    return formatTime(localTime);
+    // countryTimezone looks like "UTC+09:00"
+    final offset = _parseOffset(countryTimezone);
+    final now = DateTime.now().toUtc().add(Duration(hours: offset));
+    return _formatTime(now);
   }
 
-  // Mendapatkan waktu untuk timezone yang dipilih
-  static String getTimeForSelectedTimezone(
-    String countryTimezone,
-    String selectedTimezone,
-  ) {
-    // Untuk mendapatkan waktu di timezone yang dipilih pada saat yang sama
-    // cukup tambahkan offset timezone yang dipilih ke waktu UTC saat ini.
-    // Contoh: jika saat ini di Jepang (UTC+9) jam 18:25, maka UTC = 09:25.
-    // Untuk WIB (UTC+7) waktu yang sama = UTC + 7 = 16:25.
-    DateTime utcNow = DateTime.now().toUtc();
-    int selectedOffset = timezoneOffsets[selectedTimezone] ?? 0;
-    DateTime localTime = utcNow.add(Duration(hours: selectedOffset));
-    return formatTime(localTime);
-  }
-
-  // Format waktu ke string
-  static String formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
-  }
-
-  // Mendapatkan waktu saat ini untuk semua zona waktu
-  static Map<String, String> getCurrentTimes() {
-    DateTime utcNow = DateTime.now().toUtc();
-    Map<String, String> results = {};
-
-    timezoneOffsets.forEach((timezone, offset) {
-      DateTime localTime = utcNow.add(Duration(hours: offset));
-      results[timezone] = formatTime(localTime);
-    });
-
-    return results;
-  }
-
-  // Mendapatkan nama lengkap zona waktu
-  static String getTimezoneName(String code) {
-    switch (code) {
-      case 'WIB':
-        return 'Waktu Indonesia Barat';
-      case 'WITA':
-        return 'Waktu Indonesia Tengah';
-      case 'WIT':
-        return 'Waktu Indonesia Timur';
-      case 'GMT':
-        return 'Greenwich Mean Time (Inggris)';
-      default:
-        return code;
-    }
+  static String getTimeForSelectedTimezone(String countryTimezone, String selectedTimezone) {
+    // Fungsi ini BUKAN mengkonversi dari waktu negara,
+    // tapi menampilkan waktu SAAT INI di zona waktu yang dipilih (WIB, WITA, dll)
+    
+    final selectedOffset = _timezoneOffsets[selectedTimezone] ?? 0;
+    
+    final nowUtc = DateTime.now().toUtc();
+    final convertedTime = nowUtc.add(Duration(hours: selectedOffset));
+    return _formatTime(convertedTime);
   }
 }

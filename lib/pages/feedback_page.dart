@@ -1,197 +1,273 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // Import Hive
-import 'edit_feedback_page.dart'; // Import halaman edit
+import 'package:hive_flutter/hive_flutter.dart';
+import 'edit_feedback_Page.dart';
+import '../services/auth_service.dart';
+import 'package:intl/intl.dart'; // <--- PERBAIKAN: TAMBAHKAN IMPORT INI
 
-class FeedbackPage extends StatelessWidget {
+class FeedbackPage extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    // Gunakan ValueListenableBuilder untuk auto-update
-    return ValueListenableBuilder(
-      valueListenable: Hive.box('feedback').listenable(),
-      builder: (context, Box box, _) {
-        // Ambil data dari Hive, beri nilai default jika kosong
-        final String saranParagraf = box.get('saran',
-            defaultValue: 'Saran belum diatur. Tekan tombol edit (✏️) di kanan atas untuk menambahkan.');
-        final String kesanParagraf = box.get('kesan',
-            defaultValue: 'Kesan belum diatur. Tekan tombol edit (✏️) di kanan atas untuk menambahkan.');
+  _FeedbackPageState createState() => _FeedbackPageState();
+}
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Saran & Kesan'),
-            elevation: 0,
-            actions: [
-              // Tombol Edit
-              IconButton(
-                icon: Icon(Icons.edit),
-                tooltip: 'Edit Saran & Kesan',
-                onPressed: () {
-                  // Pindah ke halaman Edit Feedback
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => EditFeedbackPage()),
-                  );
-                },
-              ),
-            ],
-          ),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Header (Ini tetap sama)
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.blue.shade600, Colors.purple.shade600],
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(Icons.feedback, size: 60, color: Colors.white),
-                      SizedBox(height: 12),
-                      Text(
-                        'Saran & Kesan',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Pengalaman dalam mengembangkan aplikasi ini',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.9),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
+class _FeedbackPageState extends State<FeedbackPage> {
+  // Palet Warna
+  final Color primaryColor = Color(0xFF041C4A);
+  final Color secondaryColor = Color(0xFF214894);
+  final Color tertiaryColor = Color(0xFF394461);
+  final Color cardColor = Color(0xFF21252F);
+  final Color textColor = Color(0xFFD9D9D9);
+  final Color hintColor = Color(0xFF898989);
 
-                Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // SARAN (Kita hanya pakai format paragraf)
-                      _buildSectionCard(
-                        icon: Icons.lightbulb,
-                        title: 'Saran',
-                        color: Colors.orange,
-                        content: _buildParagraphContent(saranParagraf),
-                      ),
+  String? _currentUsername;
+  Box? _feedbackBox;
+  bool _isLoading = true;
 
-                      SizedBox(height: 16),
+  @override
+  void initState() {
+    super.initState();
+    _currentUsername = AuthService.getCurrentUsername();
+    _loadFeedbackBox();
+  }
 
-                      // KESAN (Kita hanya pakai format paragraf)
-                      _buildSectionCard(
-                        icon: Icons.emoji_emotions,
-                        title: 'Kesan',
-                        color: Colors.green,
-                        content: _buildParagraphContent(kesanParagraf),
-                      ),
+  // Fungsi yang lebih aman untuk memuat Hive Box
+  Future<void> _loadFeedbackBox() async {
+    // Pastikan box sudah terbuka atau buka jika belum
+    if (!Hive.isBoxOpen('feedback')) {
+      await Hive.openBox('feedback');
+    }
+    _feedbackBox = Hive.box('feedback');
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
-                      SizedBox(height: 24),
-
-                      // Catatan Footer (Ini tetap sama)
-                      Card(
-                        elevation: 1,
-                        color: Colors.blue.shade50,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: Colors.blue.shade700,
-                                size: 20,
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Terima kasih telah menggunakan Country Explorer!',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.blue.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  // Navigasi ke EditFeedbackPage (untuk menambah/mengedit)
+  void _navigateToAddFeedback() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditFeedbackPage(
+          username: _currentUsername!, // Pasti ada karena sudah login
+          feedbackKey: null,
+          initialFeedback: '',
+        ),
+      ),
     );
   }
 
-  // Helper widget (Ini tetap sama)
-  Widget _buildSectionCard({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required Widget content,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                SizedBox(width: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: (color as MaterialColor).shade700,
-                  ),
-                ),
-              ],
-            ),
+  void _navigateToEditFeedback(int key, String currentFeedback) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditFeedbackPage(
+          username: _currentUsername!,
+          feedbackKey: key,
+          initialFeedback: currentFeedback,
+        ),
+      ),
+    );
+  }
+
+  void _deleteFeedback(int key) {
+    _feedbackBox?.delete(key);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Feedback', style: TextStyle(color: textColor)),
+        backgroundColor: primaryColor,
+        iconTheme: IconThemeData(color: textColor),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add_comment, color: textColor),
+            onPressed: _currentUsername != null ? _navigateToAddFeedback : null,
+            tooltip: 'Tambah Feedback',
           ),
-          Padding(padding: EdgeInsets.all(16), child: content),
+        ],
+      ),
+      body: Container(
+        // Background Gradient
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, secondaryColor, tertiaryColor],
+          ),
+        ),
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator(color: secondaryColor))
+            : _currentUsername == null
+                ? Center(
+                    child: Text(
+                      'Silakan login untuk melihat feedback Anda.',
+                      style: TextStyle(color: hintColor),
+                    ),
+                  )
+                : ValueListenableBuilder(
+                    valueListenable: _feedbackBox!.listenable(),
+                    builder: (context, Box box, _) {
+                      // Ambil feedback hanya milik user yang sedang login
+                      List<MapEntry> userFeedback = box.toMap().entries.where((entry) {
+                        return entry.value['username'] == _currentUsername;
+                      }).toList();
+
+                      // Urutkan berdasarkan waktu
+                      userFeedback.sort((a, b) {
+                        // Asumsikan value['timestamp'] adalah DateTime
+                        DateTime timeA = a.value['timestamp'] ?? DateTime(2000);
+                        DateTime timeB = b.value['timestamp'] ?? DateTime(2000);
+                        return timeB.compareTo(timeA); // Terbaru di atas
+                      });
+
+                      if (userFeedback.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      return ListView.builder(
+                        padding: EdgeInsets.all(16),
+                        itemCount: userFeedback.length,
+                        itemBuilder: (context, index) {
+                          final entry = userFeedback[index];
+                          final key = entry.key as int;
+                          final data = entry.value;
+                          final feedbackText = data['feedback'] ?? 'Tidak ada teks';
+                          final timestamp = data['timestamp'] ?? DateTime.now();
+                          
+                          // Styling tiap item feedback
+                          return _buildFeedbackCard(
+                            key, 
+                            feedbackText, 
+                            timestamp
+                          );
+                        },
+                      );
+                    },
+                  ),
+      ),
+    );
+  }
+
+  // --- Widget Pembangun ---
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.feedback_outlined, size: 64, color: hintColor),
+          SizedBox(height: 16),
+          Text(
+            'Belum ada feedback dari Anda',
+            style: TextStyle(fontSize: 18, color: hintColor),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Tekan ikon (+) di atas untuk menambahkan',
+            style: TextStyle(fontSize: 14, color: hintColor.withOpacity(0.7)),
+          ),
         ],
       ),
     );
   }
 
-  // Helper widget (Ini tetap sama)
-  Widget _buildParagraphContent(String text) {
-    return Text(
-      text.trim(),
-      style: TextStyle(fontSize: 15, height: 1.7, color: Colors.grey.shade800),
+  Widget _buildFeedbackCard(int key, String feedbackText, DateTime timestamp) {
+    return Card(
+      color: cardColor,
+      margin: EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: tertiaryColor.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Konten Feedback
+            Text(
+              feedbackText,
+              style: TextStyle(
+                fontSize: 16,
+                color: textColor,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            SizedBox(height: 12),
+            Divider(color: tertiaryColor.withOpacity(0.5), height: 1),
+            SizedBox(height: 12),
+
+            // Footer (Waktu dan Tombol Aksi)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatDate(timestamp),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: hintColor,
+                  ),
+                ),
+                Row(
+                  children: [
+                    // Tombol Edit
+                    GestureDetector(
+                      onTap: () => _navigateToEditFeedback(key, feedbackText),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Icon(Icons.edit, size: 18, color: secondaryColor),
+                      ),
+                    ),
+                    // Tombol Hapus
+                    GestureDetector(
+                      onTap: () async {
+                        bool? confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            backgroundColor: cardColor,
+                            title: Text('Hapus Feedback', style: TextStyle(color: textColor)),
+                            content: Text('Anda yakin ingin menghapus feedback ini?', style: TextStyle(color: hintColor)),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal', style: TextStyle(color: hintColor))),
+                              TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Hapus', style: TextStyle(color: Colors.redAccent))),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          _deleteFeedback(key);
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
+  }
+
+  // Fungsi Helper yang sudah diperbaiki menggunakan DateFormat
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      if (diff.inHours == 0) {
+        return '${diff.inMinutes} menit yang lalu';
+      }
+      return '${diff.inHours} jam yang lalu';
+    } else if (diff.inDays == 1) {
+      return 'Kemarin, ${DateFormat('HH:mm').format(date)}';
+    } else {
+      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+    }
   }
 }

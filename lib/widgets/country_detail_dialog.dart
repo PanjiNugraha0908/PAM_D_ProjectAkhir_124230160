@@ -55,9 +55,11 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     } catch (e) {
       // ignore and fallback
     }
+    // Fallback jika simbol tidak ada di data API
     const fallbacks = {
       'USD': '\$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'IDR': 'Rp',
       'AUD': 'A\$', 'CAD': 'C\$', 'SGD': 'S\$', 'MYR': 'RM', 'THB': '฿',
+      'CNY': '¥', 'KRW': '₩', 'INR': '₹',
     };
     return fallbacks[code] ?? code;
   }
@@ -81,7 +83,8 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   }
 
   void _updateTimes() {
-    if (widget.country.timezones.isEmpty) return;
+    // Guard ini sekarang akan aman karena _parseOffset sudah diperbaiki
+    if (widget.country.timezones.isEmpty) return; 
     setState(() {
       countryTime = TimezoneService.getCurrentTimeForCountry(
         widget.country.timezones[0],
@@ -132,9 +135,15 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
         .join(', ');
   }
 
+  // =================================================================
+  // ===== PERBAIKAN 3: Batasi daftar mata uang =====
+  // =================================================================
   List<String> _getAvailableCurrencies() {
-    return ['IDR', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD', 'MYR', 'THB'];
+    return ['IDR', 'USD', 'EUR'];
   }
+  // =================================================================
+  // ===== AKHIR PERBAIKAN =====
+  // =================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -261,12 +270,17 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
+  // =================================================================
+  // ===== PERBAIKAN 2: Modifikasi _buildCustomTextField =====
+  // =================================================================
   // Helper untuk input field kustom
-  Widget _buildCustomTextField(
-      {TextEditingController? controller,
-      String? label,
-      IconData? icon,
-      bool readOnly = false}) {
+  Widget _buildCustomTextField({
+    TextEditingController? controller,
+    String? label,
+    IconData? icon,
+    String? prefixText, // <-- TAMBAHKAN INI
+    bool readOnly = false
+  }) {
     return TextFormField(
       controller: controller,
       readOnly: readOnly,
@@ -277,6 +291,8 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
         labelText: label,
         labelStyle: TextStyle(color: hintColor),
         prefixIcon: icon != null ? Icon(icon, color: hintColor, size: 20) : null,
+        prefixText: prefixText, // <-- TAMBAHKAN INI
+        prefixStyle: TextStyle(color: textColor, fontSize: 16), // <-- TAMBAHKAN INI
         filled: true,
         fillColor: tertiaryColor.withOpacity(0.3),
         enabledBorder: OutlineInputBorder(
@@ -349,6 +365,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                     );
                   }).toList(),
                   onChanged: (value) {
+                    // Update state agar simbol mata uang di textfield ikut berubah
                     setState(() => selectedFromCurrency = value);
                   },
                 ),
@@ -372,11 +389,17 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
             ],
           ),
           SizedBox(height: 12),
+          // =================================================================
+          // ===== PERBAIKAN 2: Ganti 'icon' menjadi 'prefixText' =====
+          // =================================================================
           _buildCustomTextField(
             controller: _amountController,
             label: 'Jumlah',
-            icon: Icons.attach_money,
+            prefixText: _getCurrencySymbol(selectedFromCurrency) + ' ', // Ganti dari icon
           ),
+          // =================================================================
+          // ===== AKHIR PERBAIKAN =====
+          // =================================================================
           SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -561,6 +584,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                 Text(
                   name,
                   style: TextStyle(fontSize: 12, color: hintColor),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   time,

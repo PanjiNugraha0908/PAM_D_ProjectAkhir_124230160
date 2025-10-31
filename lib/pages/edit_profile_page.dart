@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:image_picker/image_picker.dart'; // Import package
-import 'package:path_provider/path_provider.dart'; // Import package
-import 'package:path/path.dart' as path; // Import package
-import 'dart:io'; // Import untuk File
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'dart:io';
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -22,13 +22,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
 
-  // Controllers untuk setiap field
   late TextEditingController _namaController;
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
   
-  // State untuk menyimpan path gambar yang dipilih
   String? _imagePath;
 
   @override
@@ -36,46 +34,36 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     _profileBox = Hive.box('profile');
     
-    // Isi controller dengan data yang sudah tersimpan di Hive (jika ada)
     _namaController = TextEditingController(text: _profileBox.get('nama', defaultValue: ''));
     _noHpController = TextEditingController(text: _profileBox.get('noHp', defaultValue: ''));
     _prodiController = TextEditingController(text: _profileBox.get('prodi', defaultValue: ''));
     _emailController = TextEditingController(text: _profileBox.get('email', defaultValue: ''));
-    // Ambil path gambar, bukan URL
     _imagePath = _profileBox.get('fotoPath'); 
   }
 
-  // --- Fungsi untuk memilih gambar ---
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
-    // Ambil gambar dari galeri
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      // Dapatkan direktori dokumen aplikasi
       final Directory appDir = await getApplicationDocumentsDirectory();
-      // Buat nama file yang unik (atau gunakan nama aslinya)
       final String fileName = path.basename(pickedFile.path);
       final String newPath = path.join(appDir.path, fileName);
 
-      // Salin file ke direktori aplikasi
       final File newImage = await File(pickedFile.path).copy(newPath);
 
-      // Update state untuk menampilkan gambar baru
       setState(() {
         _imagePath = newImage.path;
       });
     }
   }
 
-  // Fungsi untuk menyimpan data
   void _saveProfile() {
     if (_formKey.currentState!.validate()) {
       _profileBox.put('nama', _namaController.text);
       _profileBox.put('noHp', _noHpController.text);
       _profileBox.put('prodi', _prodiController.text);
       _profileBox.put('email', _emailController.text);
-      // Simpan path gambar ke Hive
       _profileBox.put('fotoPath', _imagePath);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,80 +105,92 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         child: Form(
           key: _formKey,
-          child: ListView(
-            padding: EdgeInsets.all(24.0),
-            children: [
-              // --- Image Picker ---
-              Center(
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 80,
-                        backgroundColor: tertiaryColor,
-                        backgroundImage: (_imagePath != null && _imagePath!.isNotEmpty)
-                            ? FileImage(File(_imagePath!))
-                            : null,
-                        child: (_imagePath == null || _imagePath!.isEmpty)
-                            ? Icon(Icons.person_add_alt_1, size: 80, color: hintColor)
-                            : null,
+          // ===== PERBAIKAN 1: MENGGANTI LISTVIEW MENJADI SINGLECHILDSCROLLVIEW + COLUMN =====
+          // Ini akan menghilangkan peringatan overflow (hitam di bawah)
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  // --- Image Picker ---
+                  Center(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 80,
+                            backgroundColor: tertiaryColor,
+                            backgroundImage: (_imagePath != null && _imagePath!.isNotEmpty)
+                                ? FileImage(File(_imagePath!))
+                                : null,
+                            child: (_imagePath == null || _imagePath!.isEmpty)
+                                ? Icon(
+                                    Icons.person_add_alt_1, 
+                                    size: 80, 
+                                    // ===== PERBAIKAN 2: WARNA IKON AGAR TERLIHAT =====
+                                    color: textColor, // Diubah dari hintColor
+                                  )
+                                : null,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'Ketuk gambar untuk mengubah',
+                            style: TextStyle(color: hintColor),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Ketuk gambar untuk mengubah',
-                        style: TextStyle(color: hintColor),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  SizedBox(height: 32),
+                  
+                  // --- Text Fields ---
+                  _buildTextField(
+                    controller: _namaController,
+                    label: 'Nama Lengkap',
+                    icon: Icons.person,
+                    mustBeFilled: true,
+                  ),
+                  SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _noHpController,
+                    label: 'No. HP',
+                    icon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                    mustBeFilled: true,
+                  ),
+                  SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _prodiController,
+                    label: 'Program Studi',
+                    icon: Icons.school,
+                    mustBeFilled: true,
+                  ),
+                  SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'Email',
+                    icon: Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                    mustBeFilled: true,
+                  ),
+                  
+                  SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: _saveProfile,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: secondaryColor,
+                      minimumSize: Size(double.infinity, 50), // Pastikan tombol lebar
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)
+                      )
+                    ),
+                    child: Text('Simpan Perubahan', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+                  ),
+                ],
               ),
-              SizedBox(height: 32),
-              
-              // --- Text Fields ---
-              _buildTextField(
-                controller: _namaController,
-                label: 'Nama Lengkap',
-                icon: Icons.person,
-                mustBeFilled: true, // Nama wajib diisi
-              ),
-              SizedBox(height: 16),
-              _buildTextField(
-                controller: _noHpController,
-                label: 'No. HP',
-                icon: Icons.phone,
-                keyboardType: TextInputType.phone,
-                mustBeFilled: true, // No. HP wajib diisi
-              ),
-              SizedBox(height: 16),
-              _buildTextField(
-                controller: _prodiController,
-                label: 'Program Studi',
-                icon: Icons.school,
-                mustBeFilled: true, // Prodi wajib diisi
-              ),
-              SizedBox(height: 16),
-              _buildTextField(
-                controller: _emailController,
-                label: 'Email',
-                icon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-                mustBeFilled: true, // Email wajib diisi
-              ),
-              
-              SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: secondaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)
-                  )
-                ),
-                child: Text('Simpan Perubahan', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -204,24 +204,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required IconData icon,
     String? hint,
     TextInputType? keyboardType,
-    bool mustBeFilled = false, // Parameter untuk validasi
+    bool mustBeFilled = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor),
+      style: TextStyle(color: textColor), // Warna teks yang diketik
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor),
+        labelStyle: TextStyle(color: hintColor), // Warna label "Nama Lengkap"
         hintText: hint,
         hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: secondaryColor),
+        
+        // ===== PERBAIKAN 3: WARNA IKON FIELD AGAR TERLIHAT =====
+        prefixIcon: Icon(icon, color: hintColor), // Diubah dari secondaryColor
+        
         filled: true,
-        fillColor: tertiaryColor.withOpacity(0.3),
+        fillColor: tertiaryColor.withOpacity(0.3), // Latar belakang field
+        
+        // ===== PERBAIKAN 4: WARNA GARIS PINGGIR AGAR TERLIHAT =====
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: tertiaryColor),
+          borderSide: BorderSide(color: hintColor), // Diubah dari tertiaryColor
         ),
+        // =======================================================
+
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: secondaryColor, width: 2),

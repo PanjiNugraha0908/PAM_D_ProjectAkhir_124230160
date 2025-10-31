@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'login_page.dart';
+// import 'login_page.dart'; // <--- DIHAPUS
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -13,12 +13,20 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
 
+  // Palet Warna
+  final Color primaryColor = Color(0xFF041C4A);
+  final Color secondaryColor = Color(0xFF214894);
+  final Color tertiaryColor = Color(0xFF394461);
+  final Color cardColor = Color(0xFF21252F);
+  final Color textColor = Color(0xFFD9D9D9);
+  final Color hintColor = Color(0xFF898989);
+
   Future<void> _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Password tidak cocok!'),
-          backgroundColor: Color(0xFF041C4A),
+          content: Text('Password dan Konfirmasi Password tidak cocok'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -34,21 +42,19 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
+      // Tampilkan SnackBar sukses dan kembali ke Login Page
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
-          backgroundColor: Color(0xFF214894),
+          backgroundColor: Colors.green,
         ),
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
+      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
-          backgroundColor: Color(0xFF041C4A),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -63,9 +69,9 @@ class _RegisterPageState extends State<RegisterPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF041C4A), // Warna utama
-              Color(0xFF214894), // Warna sekunder
-              Color(0xFF394461), // Warna tersier
+              primaryColor,
+              secondaryColor,
+              tertiaryColor,
             ],
           ),
         ),
@@ -74,7 +80,7 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: EdgeInsets.all(24.0),
             child: Card(
               elevation: 8,
-              color: Color(0xFF21252F), // Background card
+              color: cardColor, // Warna background card
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -82,141 +88,126 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: EdgeInsets.all(32.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Icon dengan background circle
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF214894).withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.public,
-                        size: 64,
-                        color: Color(0xFFD9D9D9),
-                      ),
+                    // --- Logo dan Judul Aplikasi ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/Logoprojek.png',
+                          height: 40,
+                          width: 40,
+                          color: textColor,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'ExploreUnity',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 24),
+
+                    // Judul Halaman
                     Text(
-                      'Daftar',
+                      'Register',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFD9D9D9),
+                        color: textColor,
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Buat akun baru untuk melanjutkan',
-                      style: TextStyle(color: Color(0xFF898989), fontSize: 14),
                     ),
                     SizedBox(height: 32),
-
-                    // Username Field
-                    TextField(
+                    
+                    // Label Username
+                    Text(
+                      'Masukkan Username',
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    // Field Username
+                    _buildTextField(
                       controller: _usernameController,
-                      style: TextStyle(color: Color(0xFFD9D9D9)),
-                      decoration: InputDecoration(
-                        labelText: 'Masukkan Username',
-                        labelStyle: TextStyle(color: Color(0xFF898989)),
-                        hintText: 'Username',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF898989).withOpacity(0.5),
-                        ),
-                        prefixIcon: Icon(
-                          Icons.person,
-                          color: Color(0xFF214894),
-                        ),
-                        filled: true,
-                        fillColor: Color(0xFF394461).withOpacity(0.3),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF394461)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Color(0xFF214894),
-                            width: 2,
-                          ),
-                        ),
-                      ),
+                      hintText: 'Username',
+                      icon: Icons.person,
                     ),
                     SizedBox(height: 16),
-
-                    // Password Field
-                    TextField(
+                    
+                    // Label Password
+                    Text(
+                      'Masukkan Password',
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    // Field Password
+                    _buildTextField(
                       controller: _passwordController,
-                      obscureText: true,
-                      style: TextStyle(color: Color(0xFFD9D9D9)),
-                      decoration: InputDecoration(
-                        labelText: 'Masukkan Password',
-                        labelStyle: TextStyle(color: Color(0xFF898989)),
-                        hintText: 'Password',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF898989).withOpacity(0.5),
-                        ),
-                        prefixIcon: Icon(Icons.lock, color: Color(0xFF214894)),
-                        filled: true,
-                        fillColor: Color(0xFF394461).withOpacity(0.3),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF394461)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Color(0xFF214894),
-                            width: 2,
-                          ),
-                        ),
-                      ),
+                      hintText: 'Password',
+                      icon: Icons.lock,
+                      isObscure: true,
                     ),
                     SizedBox(height: 16),
 
-                    // Confirm Password Field
-                    TextField(
+                    // Label Konfirmasi Password
+                    Text(
+                      'Konfirmasi Password',
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    // Field Konfirmasi Password
+                    _buildTextField(
                       controller: _confirmPasswordController,
-                      obscureText: true,
-                      style: TextStyle(color: Color(0xFFD9D9D9)),
-                      decoration: InputDecoration(
-                        labelText: 'Masukkan Kembali Password',
-                        labelStyle: TextStyle(color: Color(0xFF898989)),
-                        hintText: 'Konfirmasi Password',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF898989).withOpacity(0.5),
+                      hintText: 'Konfirmasi Password',
+                      icon: Icons.lock_reset,
+                      isObscure: true,
+                      onSubmitted: (_) => _register(),
+                    ),
+                    SizedBox(height: 16),
+
+                    // Link Login
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Sudah punya akun? ',
+                          style: TextStyle(color: hintColor),
                         ),
-                        prefixIcon: Icon(
-                          Icons.lock_outline,
-                          color: Color(0xFF214894),
-                        ),
-                        filled: true,
-                        fillColor: Color(0xFF394461).withOpacity(0.3),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: Color(0xFF394461)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: Color(0xFF214894),
-                            width: 2,
+                        TextButton(
+                          onPressed: () {
+                            // Cukup pop untuk kembali ke halaman Login
+                            Navigator.pop(context); 
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Login di sini!',
+                            style: TextStyle(
+                              color: secondaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                      onSubmitted: (_) => _register(),
+                      ],
                     ),
                     SizedBox(height: 24),
 
-                    // Register Button
+                    // Tombol Register
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: Color(0xFF214894),
-                          disabledBackgroundColor: Color(0xFF394461),
+                          backgroundColor: secondaryColor,
+                          disabledBackgroundColor: tertiaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -226,7 +217,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFFD9D9D9),
+                                  color: textColor,
                                   strokeWidth: 2,
                                 ),
                               )
@@ -234,46 +225,48 @@ class _RegisterPageState extends State<RegisterPage> {
                                 'Daftar',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Color(0xFFD9D9D9),
+                                  color: textColor,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                       ),
-                    ),
-                    SizedBox(height: 16),
-
-                    // Link to Login
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Sudah punya akun? ',
-                          style: TextStyle(color: Color(0xFF898989)),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LoginPage(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            'Login di sini',
-                            style: TextStyle(
-                              color: Color(0xFF214894),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // Helper widget untuk membuat TextField (dengan style gelap)
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isObscure = false,
+    void Function(String)? onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isObscure,
+      style: TextStyle(color: textColor),
+      onSubmitted: onSubmitted,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: secondaryColor),
+        filled: true,
+        fillColor: tertiaryColor.withOpacity(0.3),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: tertiaryColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: secondaryColor, width: 2),
         ),
       ),
     );
