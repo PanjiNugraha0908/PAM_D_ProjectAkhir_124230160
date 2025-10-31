@@ -1,11 +1,11 @@
 import 'package:intl/intl.dart';
 
 class TimezoneService {
-  // Daftar offset jam dari UTC
+  // Daftar offset jam dari UTC (DIBATASI)
+  // Kunci: Singkatan (tetap digunakan internal untuk mapping offset), Nilai: Offset
   static final Map<String, int> _timezoneOffsets = {
     'UTC': 0, 'WIB': 7, 'WITA': 8, 'WIT': 9,
-    // PDT, EDT, JST, KST, AEST, NZST, IST DIBUANG
-    'LONDON': 0, // London Standard Time (GMT/UTC+0)
+    'LONDON': 0, 
   };
 
   // Nama lengkap untuk zona waktu
@@ -14,21 +14,18 @@ class TimezoneService {
     'WITA': 'Waktu Indonesia Tengah',
     'WIT': 'Waktu Indonesia Timur',
     'UTC': 'Universal Terkoordinasi',
-    'LONDON': 'London (GMT)',
+    'LONDON': 'London (GMT)', // Biarkan LONDON (GMT) karena lebih deskriptif
   };
 
   static List<String> getAvailableTimezones() {
-    // Hanya kembalikan daftar yang diminta untuk dropdown
+    // Hanya kembalikan daftar yang diminta
     return ['WIB', 'WITA', 'WIT', 'LONDON'];
   }
 
-  // =================================================================
-  // ===== PERBAIKAN UTAMA: FUNGSI INI KINI DIDEFINISIKAN KEMBALI =====
-  // =================================================================
+  // FUNGSI UTAMA: Mengembalikan hanya nama panjang
   static String getTimezoneName(String timezone) {
     return _timezoneNames[timezone] ?? timezone;
   }
-  // =================================================================
 
   // Helper untuk format HH:mm:ss
   static String _formatTime(DateTime time) {

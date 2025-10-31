@@ -15,9 +15,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late Box _profileBox;
 
   // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E); 
-  final Color secondaryColor = Color(0xFF103070); 
-  final Color tertiaryColor = Color(0xFF2A364B); 
+  final Color primaryColor = Color(0xFF010A1E);
+  final Color secondaryColor = Color(0xFF103070);
+  final Color tertiaryColor = Color(0xFF2A364B);
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -26,24 +26,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  
+
   String? _imagePath;
 
   @override
   void initState() {
     super.initState();
     _profileBox = Hive.box('profile');
-    
-    _namaController = TextEditingController(text: _profileBox.get('nama', defaultValue: ''));
-    _noHpController = TextEditingController(text: _profileBox.get('noHp', defaultValue: ''));
-    _prodiController = TextEditingController(text: _profileBox.get('prodi', defaultValue: ''));
-    _emailController = TextEditingController(text: _profileBox.get('email', defaultValue: ''));
-    _imagePath = _profileBox.get('fotoPath'); 
+
+    _namaController = TextEditingController(
+      text: _profileBox.get('nama', defaultValue: ''),
+    );
+    _noHpController = TextEditingController(
+      text: _profileBox.get('noHp', defaultValue: ''),
+    );
+    _prodiController = TextEditingController(
+      text: _profileBox.get('prodi', defaultValue: ''),
+    );
+    _emailController = TextEditingController(
+      text: _profileBox.get('email', defaultValue: ''),
+    );
+    _imagePath = _profileBox.get('fotoPath');
   }
 
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
 
     if (pickedFile != null) {
       final Directory appDir = await getApplicationDocumentsDirectory();
@@ -72,18 +82,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
           backgroundColor: Colors.green,
         ),
       );
-      
+
       Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ambil tinggi keyboard (0 jika keyboard tidak muncul)
-    final double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      resizeToAvoidBottomInset: true,
+      backgroundColor: primaryColor,
       appBar: AppBar(
         title: Text('Edit Profil', style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
@@ -98,7 +106,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        width: double.infinity,
+        height: double.infinity, // PERBAIKAN: Tambahkan height full
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -108,13 +117,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         child: Form(
           key: _formKey,
-          // Menggunakan SingleChildScrollView untuk mencegah overflow
-          child: SingleChildScrollView( 
-            // Padding bawah dinamis
-            padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + (bottomPadding > 0 ? bottomPadding : 0)),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // --- Image Picker ---
                 Center(
                   child: GestureDetector(
                     onTap: _pickImage,
@@ -123,14 +129,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         CircleAvatar(
                           radius: 80,
                           backgroundColor: tertiaryColor,
-                          backgroundImage: (_imagePath != null && _imagePath!.isNotEmpty)
+                          backgroundImage:
+                              (_imagePath != null && _imagePath!.isNotEmpty)
                               ? FileImage(File(_imagePath!))
                               : null,
                           child: (_imagePath == null || _imagePath!.isEmpty)
                               ? Icon(
-                                  Icons.person_add_alt_1, 
-                                  size: 80, 
-                                  color: textColor, 
+                                  Icons.person_add_alt_1,
+                                  size: 80,
+                                  color: textColor,
                                 )
                               : null,
                         ),
@@ -144,8 +151,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ),
                 SizedBox(height: 32),
-                
-                // --- Text Fields ---
+
                 _buildTextField(
                   controller: _namaController,
                   label: 'Nama Lengkap',
@@ -175,7 +181,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.emailAddress,
                   mustBeFilled: true,
                 ),
-                
+
                 SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _saveProfile,
@@ -184,12 +190,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     backgroundColor: secondaryColor,
                     minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)
-                    )
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: Text('Simpan Perubahan', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'Simpan Perubahan',
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                // Padding di sini dihilangkan/disesuaikan dengan padding di SingleChildScrollView
+                SizedBox(height: 100), // PERBAIKAN: Tambah ruang ekstra
               ],
             ),
           ),
@@ -198,7 +210,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  // Helper widget untuk membuat TextField (dengan style gelap)
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -216,16 +227,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
         labelStyle: TextStyle(color: hintColor),
         hintText: hint,
         hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-        
-        prefixIcon: Icon(icon, color: hintColor), 
-        
+
+        prefixIcon: Icon(icon, color: hintColor),
+
         filled: true,
         fillColor: tertiaryColor.withOpacity(0.3),
-        
-        // Garis pinggir kontras (abu-abu)
+
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor), 
+          borderSide: BorderSide(color: hintColor),
         ),
 
         focusedBorder: OutlineInputBorder(

@@ -15,14 +15,13 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: primaryColor,
       appBar: AppBar(
         title: Text('Profil Pembuat', style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
         actions: [
-          // Tombol Edit
           IconButton(
             icon: Icon(Icons.edit, color: textColor),
             tooltip: 'Edit Profil',
@@ -45,7 +44,6 @@ class ProfilePage extends StatelessWidget {
           String? fotoPath = box.get('fotoPath'); 
 
           return Container(
-            // Background Gradient
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -54,14 +52,12 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             width: double.infinity,
-            // Menggunakan SingleChildScrollView untuk mencegah overflow
-            child: SingleChildScrollView( 
-              // Tambahkan padding vertikal yang lebih banyak
+            height: double.infinity,
+            child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Foto profil
                   CircleAvatar(
                     radius: 80,
                     backgroundColor: tertiaryColor,
@@ -69,13 +65,11 @@ class ProfilePage extends StatelessWidget {
                         ? FileImage(File(fotoPath))
                         : null,
                     child: (fotoPath == null || fotoPath.isEmpty)
-                        // Kontras ikon diperbaiki
                         ? Icon(Icons.person, size: 80, color: textColor.withOpacity(0.8)) 
                         : null,
                   ),
                   SizedBox(height: 24),
                   
-                  // Nama (di-center dan bisa wrap)
                   Text(
                     nama,
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
@@ -83,14 +77,12 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   
-                  // No. HP
                   Text(
                     noHp,
                     style: TextStyle(fontSize: 16, color: hintColor),
                   ),
                   SizedBox(height: 32),
                   
-                  // Card Informasi Detail
                   Card(
                     color: cardColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -115,8 +107,7 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
-                  // Tambahkan ruang di bawah agar pasti bisa di-scroll dan tidak overflow
-                  SizedBox(height: 40), 
+                  SizedBox(height: 50), 
                 ],
               ),
             ),

@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 
 class EditFeedbackPage extends StatefulWidget {
   final String username;
-  final int? feedbackKey; 
+  final int? feedbackKey;
   final String initialFeedback;
 
   EditFeedbackPage({
@@ -22,9 +22,9 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
   late Box _feedbackBox;
 
   // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E); 
-  final Color secondaryColor = Color(0xFF103070); 
-  final Color tertiaryColor = Color(0xFF2A364B); 
+  final Color primaryColor = Color(0xFF010A1E);
+  final Color secondaryColor = Color(0xFF103070);
+  final Color tertiaryColor = Color(0xFF2A364B);
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -43,7 +43,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
       final feedbackData = {
         'username': widget.username,
         'feedback': _feedbackController.text,
-        'timestamp': DateTime.now(), 
+        'timestamp': DateTime.now(),
       };
 
       if (isEditing) {
@@ -54,7 +54,11 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isEditing ? 'Feedback berhasil diubah!' : 'Feedback berhasil dikirim!'),
+          content: Text(
+            isEditing
+                ? 'Feedback berhasil diubah!'
+                : 'Feedback berhasil dikirim!',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -65,10 +69,9 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Ambil tinggi keyboard (0 jika keyboard tidak muncul)
-    final double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
     return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: primaryColor,
       appBar: AppBar(
         title: Text(
           isEditing ? 'Edit Feedback' : 'Kirim Feedback Baru',
@@ -86,7 +89,8 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
         ],
       ),
       body: Container(
-        // Background Gradient
+        width: double.infinity,
+        height: double.infinity, // PERBAIKAN: Tambahkan height full
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -96,10 +100,8 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
         ),
         child: Form(
           key: _formKey,
-          // Menggunakan SingleChildScrollView untuk mencegah overflow
-          child: SingleChildScrollView( 
-            // Padding bawah dinamis
-            padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + (bottomPadding > 0 ? bottomPadding : 0)),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -108,7 +110,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                   style: TextStyle(fontSize: 16, color: hintColor),
                 ),
                 SizedBox(height: 24),
-                
+
                 TextFormField(
                   controller: _feedbackController,
                   maxLines: 10,
@@ -119,13 +121,12 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                     labelStyle: TextStyle(color: hintColor),
                     filled: true,
                     fillColor: tertiaryColor.withOpacity(0.3),
-                    
-                    prefixIcon: Icon(Icons.comment, color: hintColor), 
-                    
-                    // Garis pinggir kontras (abu-abu)
+
+                    prefixIcon: Icon(Icons.comment, color: hintColor),
+
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: hintColor), 
+                      borderSide: BorderSide(color: hintColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -140,7 +141,7 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                   },
                 ),
                 SizedBox(height: 32),
-                
+
                 ElevatedButton(
                   onPressed: _saveFeedback,
                   style: ElevatedButton.styleFrom(
@@ -152,10 +153,13 @@ class _EditFeedbackPageState extends State<EditFeedbackPage> {
                   ),
                   child: Text(
                     isEditing ? 'Simpan Perubahan' : 'Kirim Feedback',
-                    style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                // Padding di sini dihilangkan/disesuaikan dengan padding di SingleChildScrollView
+                SizedBox(height: 200), // PERBAIKAN: Tambah ruang ekstra banyak
               ],
             ),
           ),
