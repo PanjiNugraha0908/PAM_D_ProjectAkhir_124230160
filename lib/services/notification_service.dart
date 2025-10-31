@@ -36,7 +36,9 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin
           >();
       if (platform != null) {
-        final granted = await platform.requestPermission();
+        // --- INI YANG DIUBAH ---
+        final granted = await platform.requestNotificationsPermission();
+        // ---------------------
         return granted ?? true;
       }
     } catch (_) {}
