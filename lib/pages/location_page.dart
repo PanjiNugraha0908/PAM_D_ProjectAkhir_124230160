@@ -45,23 +45,29 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+    if (mounted) {
+      // <-- TAMBAHKAN INI
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
+    }
 
     Map<String, dynamic> result = await LocationService.getCurrentLocation();
 
-    if (result['success']) {
-      setState(() {
-        _locationData = result;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _errorMessage = result['error'];
-        _isLoading = false;
-      });
+    if (mounted) {
+      // <-- TAMBAHKAN INI
+      if (result['success']) {
+        setState(() {
+          _locationData = result;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = result['error'];
+          _isLoading = false;
+        });
+      }
     }
   }
 

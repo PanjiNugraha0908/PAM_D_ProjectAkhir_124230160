@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = false;
   // HAPUS: String _errorMessage = '';
 
-  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
   final Color backgroundColor = Color(
     0xFF1A202C,
   ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
@@ -242,13 +242,12 @@ class _HomePageState extends State<HomePage> {
   void _showCountryDetail(Country country) async {
     String username = widget.username;
 
+    // 1. Dapatkan riwayat SEBELUM penambahan
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
-    bool sudahDilihat = historySebelum.any(
-      (item) => item.countryName == country.name,
-    );
 
+    // 2. Tambahkan riwayat baru
     await DatabaseService.addHistory(
       HistoryItem(
         username: username,
@@ -262,20 +261,23 @@ class _HomePageState extends State<HomePage> {
 
     ActivityTracker.updateLastActive();
 
-    if (!sudahDilihat) {
-      List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
-        username,
-      );
-      var negaraUnik = <String>{};
-      for (var item in historySesudah) {
-        negaraUnik.add(item.countryName);
-      }
+    // 3. Dapatkan riwayat SESUDAH penambahan
+    List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
+      username,
+    );
 
-      if (negaraUnik.length == 3) {
+    // 🟢 LOGIKA NOTIFIKASI BARU (KELIPATAN 3)
+    final int totalViews = historySesudah.length;
+    final int viewsSebelum = historySebelum.length;
+
+    // Cek jika total penambahan item riwayat adalah kelipatan 3
+    if (totalViews > 0 && totalViews % 3 == 0) {
+      // Pastikan total views sebelumnya BUKAN kelipatan 3 (untuk mencegah duplikasi)
+      if (viewsSebelum % 3 != 0) {
         NotificationService.showNotification(
-          id: 3,
-          title: 'Wawasan Bertambah!',
-          body: 'Selamat kamu telah menambah wawasanmu!',
+          id: totalViews, // Gunakan ID unik
+          title: 'Wawasan Bertambah Lagi! 🌍',
+          body: 'Selamat, kamu sudah melihat $totalViews info negara!',
         );
       }
     }
@@ -379,13 +381,14 @@ class _HomePageState extends State<HomePage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: textColor, // Icon warna aksen
+                          color: accentColor, // ICON MENGGUNAKAN ACCENT COLOR
                         ),
                         SizedBox(width: 8),
                         Text(
                           'ExploreUnity',
                           style: TextStyle(
-                            color: textColor,
+                            color:
+                                accentColor, // JUDUL MENGGUNAKAN ACCENT COLOR
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
