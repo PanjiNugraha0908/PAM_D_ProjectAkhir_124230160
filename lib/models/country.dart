@@ -1,17 +1,23 @@
+// lib/models/country.dart
+
 class Country {
   final String name;
-  final String officialName;
+  final String officialName; // <-- DIBUTUHKAN
   final String flagUrl;
   final String capital;
   final String region;
-  final String subregion;
+  final String subregion; // <-- DIBUTUHKAN
   final int population;
-  final double area;
-  final List<String> languages;
-  final Map<String, dynamic> currencies;
+  final double area; // <-- DIBUTUHKAN
+  final List<String> languages; // <-- DIBUTUHKAN
+  final Map<String, dynamic> currencies; // <-- DIBUTUHKAN
   final List<String> timezones;
   final String callingCode;
   final List<String> tld;
+  // ⌄ BARU: Koordinat Negara
+  final double latitude;
+  final double longitude;
+  // ⌃ AKHIR BARU
 
   Country({
     required this.name,
@@ -27,6 +33,10 @@ class Country {
     required this.timezones,
     required this.callingCode,
     required this.tld,
+    // ⌄ BARU
+    required this.latitude,
+    required this.longitude,
+    // ⌃ AKHIR BARU
   });
 
   factory Country.fromJson(Map<String, dynamic> json) {
@@ -42,6 +52,13 @@ class Country {
                         ? json['idd']['suffixes'][0] 
                         : '');
     }
+    
+    // ⌄ BARU: Parsing latlng dari API (asumsi menggunakan restcountries.com/v3.1)
+    final List<dynamic>? latlng = json['latlng'] as List<dynamic>?;
+    // Ambil latitude (indeks 0) dan longitude (indeks 1)
+    final double lat = latlng != null && latlng.length >= 1 ? (json['latlng'][0] as num).toDouble() : 0.0;
+    final double lng = latlng != null && latlng.length >= 2 ? (json['latlng'][1] as num).toDouble() : 0.0;
+    // ⌃ AKHIR BARU
 
     return Country(
       name: json['name']['common'] ?? '',
@@ -59,6 +76,10 @@ class Country {
       timezones: List<String>.from(json['timezones'] ?? []),
       callingCode: callingCode,
       tld: List<String>.from(json['tld'] ?? []),
+      // ⌄ BARU
+      latitude: lat,
+      longitude: lng,
+      // ⌃ AKHIR BARU
     );
   }
 }

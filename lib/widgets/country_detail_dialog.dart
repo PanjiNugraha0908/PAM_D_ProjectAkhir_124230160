@@ -1,8 +1,11 @@
+// lib/widgets/country_detail_dialog.dart
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/country.dart';
 import '../services/currency_service.dart';
 import '../services/timezone_service.dart';
+import '../pages/country_map_page.dart'; // Import untuk Peta
 
 class CountryDetailDialog extends StatefulWidget {
   final Country country;
@@ -31,12 +34,17 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   bool isLoadingConversion = false;
   String conversionError = '';
 
+  // Real-time timezone
+  Timer? _timer; // <-- Dideklarasikan
+  String? selectedTimezone;
+  String countryTime = '';
+  String convertedTime = '';
+
   List<DropdownMenuItem<String>> _buildTimezoneItems() {
     return TimezoneService.getAvailableTimezones().map((timezone) {
       return DropdownMenuItem<String>(
         value: timezone,
         child: Text(
-          // PERBAIKAN: Tampilkan hanya nama panjang di dropdown
           '${TimezoneService.getTimezoneName(timezone)}',
           style: TextStyle(color: textColor),
         ),
@@ -77,11 +85,28 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     return fallbacks[code] ?? code;
   }
 
-  // Real-time timezone
-  Timer? _timer;
-  String? selectedTimezone;
-  String countryTime = '';
-  String convertedTime = '';
+  // Fungsi untuk menavigasi ke halaman peta
+  void _openCountryMap() {
+    // Cek apakah koordinat valid sebelum navigasi
+    if (widget.country.latitude == 0.0 && widget.country.longitude == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Koordinat lokasi untuk ${widget.country.name} tidak tersedia.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CountryMapPage(country: widget.country),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -92,7 +117,10 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     }
     selectedTimezone = 'WIB';
     _updateTimes();
-    _timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTimes());
+    _timer = Timer.periodic(
+      Duration(seconds: 1),
+      (_) => _updateTimes(),
+    ); // <-- Diinisialisasi
   }
 
   void _updateTimes() {
@@ -159,7 +187,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: BoxConstraints(
-          // PERBAIKAN: Meningkatkan maxHeight menjadi 0.95 (95% layar)
           maxHeight: MediaQuery.of(context).size.height * 0.95,
           maxWidth: 600,
         ),
@@ -181,6 +208,13 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                       ),
                     ),
                   ),
+                  // Tombol untuk Buka Peta
+                  IconButton(
+                    icon: Icon(Icons.map, color: secondaryColor, size: 28),
+                    onPressed: _openCountryMap,
+                    tooltip: 'Lihat Negara di Peta',
+                  ),
+                  // Tombol Close
                   IconButton(
                     icon: Icon(Icons.close, color: hintColor),
                     onPressed: () => Navigator.pop(context),
@@ -275,7 +309,8 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
-  // Widget Kustom untuk Baris Info
+  // ... (semua metode helper Anda)
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.0),
@@ -300,7 +335,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
-  // Helper untuk input field kustom
   Widget _buildCustomTextField({
     TextEditingController? controller,
     String? label,
@@ -335,7 +369,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
-  // Helper untuk dropdown kustom
   Widget _buildCustomDropdown({
     String? value,
     String? label,
@@ -365,7 +398,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
-  // Widget untuk Konversi Mata Uang
   Widget _buildCurrencyConverter() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +453,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
           _buildCustomTextField(
             controller: _amountController,
             label: 'Jumlah',
-            prefixText: _getCurrencySymbol(selectedFromCurrency) + ' ',
+            icon: Icons.monetization_on, // Placeholder icon
           ),
 
           SizedBox(height: 12),
@@ -528,7 +560,6 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     );
   }
 
-  // Widget untuk Waktu Real-time
   Widget _buildTimezone() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,7 +654,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer?.cancel(); // **<-- INI ADALAH PERBAIKAN LINT**
     _amountController.dispose();
     super.dispose();
   }

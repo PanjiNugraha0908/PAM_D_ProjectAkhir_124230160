@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
   void _showCountryDetail(Country country) async {
     // 1. Dapatkan username (sudah ada)
     // FIX: widget.username is non-nullable, removed nullable type and '!' usage.
-    String username = widget.username; 
+    String username = widget.username;
 
     // 2. Cek history SEBELUM menambah
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
@@ -134,9 +134,9 @@ class _HomePageState extends State<HomePage> {
 
       // Hitung jumlah negara unik
       var negaraUnik = <String>{};
-      
+
       // ===== PERBAIKAN DI SINI =====
-      for (var item in historySesudah) { 
+      for (var item in historySesudah) {
         negaraUnik.add(item.countryName);
       }
       // =============================
@@ -159,7 +159,9 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       showDialog(
         context: context,
-        barrierColor: Colors.black.withOpacity(0.5), // Latar belakang transparan
+        barrierColor: Colors.black.withOpacity(
+          0.5,
+        ), // Latar belakang transparan
         builder: (context) => CountryDetailDialog(country: country),
       );
     }
@@ -218,30 +220,24 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        
-        // Diubah dari secondaryColor ke hintColor agar tidak ada yang aktif secara default
-        selectedItemColor: hintColor, 
 
-        currentIndex: 0, 
-        
+        // Diubah dari secondaryColor ke hintColor agar tidak ada yang aktif secara default
+        selectedItemColor: hintColor,
+
+        currentIndex: 0,
+
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
           // Item Feedback (Dihapus)
           BottomNavigationBarItem(
             icon: Icon(Icons.my_location),
             label: 'Lokasi',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
       body: Container(
@@ -250,11 +246,7 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              primaryColor,
-              secondaryColor,
-              tertiaryColor,
-            ],
+            colors: [primaryColor, secondaryColor, tertiaryColor],
           ),
         ),
         child: SafeArea(
@@ -333,8 +325,10 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         CircularProgressIndicator(color: textColor),
                         SizedBox(height: 16),
-                        Text('Mencari negara...',
-                            style: TextStyle(color: textColor)),
+                        Text(
+                          'Mencari negara...',
+                          style: TextStyle(color: textColor),
+                        ),
                       ],
                     ),
                   ),
