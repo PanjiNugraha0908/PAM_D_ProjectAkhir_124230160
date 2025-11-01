@@ -26,6 +26,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
+  // 👇 BARU: Controller untuk Saran & Kesan
+  late TextEditingController _saranKesanController;
 
   String? _imagePath;
 
@@ -46,6 +48,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(
       text: _profileBox.get('email', defaultValue: ''),
     );
+    // 👇 BARU: Inisialisasi Saran & Kesan
+    _saranKesanController = TextEditingController(
+      text: _profileBox.get('saranKesan', defaultValue: ''),
+    );
+
     _imagePath = _profileBox.get('fotoPath');
   }
 
@@ -75,6 +82,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _profileBox.put('prodi', _prodiController.text);
       _profileBox.put('email', _emailController.text);
       _profileBox.put('fotoPath', _imagePath);
+      // 👇 BARU: Simpan Saran & Kesan
+      _profileBox.put('saranKesan', _saranKesanController.text);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -151,6 +160,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ),
                 SizedBox(height: 32),
+                
+                // Judul Bagian Profil
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Data Diri',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor),
+                  ),
+                ),
+                Divider(color: tertiaryColor, height: 24),
 
                 _buildTextField(
                   controller: _namaController,
@@ -181,8 +200,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.emailAddress,
                   mustBeFilled: true,
                 ),
+                SizedBox(height: 32),
+                
+                // Judul Bagian Saran & Kesan
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Saran & Kesan',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor),
+                  ),
+                ),
+                Divider(color: tertiaryColor, height: 24),
+
+                // 👇 BARU: Field Saran & Kesan
+                _buildTextField(
+                  controller: _saranKesanController,
+                  label: 'Tulis saran atau kesan Anda...',
+                  icon: Icons.comment,
+                  maxLines: 5,
+                  minLines: 3,
+                  mustBeFilled: false,
+                ),
 
                 SizedBox(height: 32),
+                
                 ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
@@ -216,12 +257,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required IconData icon,
     String? hint,
     TextInputType? keyboardType,
+    int? maxLines = 1,
+    int? minLines = 1,
     bool mustBeFilled = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       style: TextStyle(color: textColor),
+      maxLines: maxLines,
+      minLines: minLines,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: hintColor),
@@ -266,6 +311,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _noHpController.dispose();
     _prodiController.dispose();
     _emailController.dispose();
+    _saranKesanController.dispose(); // 👇 BARU: Dispose
     super.dispose();
   }
 }

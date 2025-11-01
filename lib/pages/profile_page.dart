@@ -42,6 +42,9 @@ class ProfilePage extends StatelessWidget {
           String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
           String email = box.get('email', defaultValue: 'Email Belum Diatur');
           String? fotoPath = box.get('fotoPath'); 
+          // 👇 BARU: Ambil Saran & Kesan
+          String saranKesan = box.get('saranKesan', defaultValue: '');
+
 
           return Container(
             decoration: BoxDecoration(
@@ -107,6 +110,11 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
 
+                  SizedBox(height: 32), // Jarak antara info dan saran/kesan
+
+                  // 👇 BARU: Bagian Saran & Kesan
+                  _buildSaranKesanSection(context, saranKesan),
+
                   SizedBox(height: 50), 
                 ],
               ),
@@ -129,6 +137,56 @@ class ProfilePage extends StatelessWidget {
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor),
       ),
       contentPadding: EdgeInsets.zero,
+    );
+  }
+  
+  // 👇 BARU: Widget untuk menampilkan Saran & Kesan
+  Widget _buildSaranKesanSection(BuildContext context, String saranKesan) {
+    return Card(
+      color: cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Saran & Kesan',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor),
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit, size: 18, color: hintColor),
+                  onPressed: () {
+                    // Navigasi ke EditProfilePage, yang kini juga bisa mengedit saranKesan
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EditProfilePage()),
+                    );
+                  },
+                  constraints: BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Edit Saran & Kesan',
+                ),
+              ],
+            ),
+            Divider(color: tertiaryColor.withOpacity(0.5), height: 16, thickness: 1),
+            Text(
+              saranKesan.isNotEmpty 
+                  ? saranKesan
+                  : 'Belum ada saran atau kesan yang ditambahkan. Ketuk ikon edit di atas untuk menulis.',
+              style: TextStyle(
+                fontSize: 14,
+                color: saranKesan.isNotEmpty ? textColor : hintColor,
+                fontStyle: saranKesan.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

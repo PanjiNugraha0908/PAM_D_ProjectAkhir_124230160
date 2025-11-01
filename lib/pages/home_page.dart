@@ -11,7 +11,6 @@ import 'login_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'profile_page.dart';
-import 'feedback_page.dart';
 import 'settings_page.dart';
 // 燥 IMPORT SERVICE NOTIFIKASI
 import '../services/notification_service.dart';
@@ -88,16 +87,19 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _logout() async {
     await AuthService.logout();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
   }
 
   // 燥 FUNGSI YANG DIPERBAIKI 燥
   void _showCountryDetail(Country country) async {
     // 1. Dapatkan username (sudah ada)
-    String? username = widget.username; // Menggunakan widget.username
+    // FIX: widget.username is non-nullable, removed nullable type and '!' usage.
+    String username = widget.username; 
 
     // 2. Cek history SEBELUM menambah
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
@@ -134,7 +136,7 @@ class _HomePageState extends State<HomePage> {
       var negaraUnik = <String>{};
       
       // ===== PERBAIKAN DI SINI =====
-      for (var item in historySesudah) { // <-- Typo 'historySesah' diperbaiki
+      for (var item in historySesudah) { 
         negaraUnik.add(item.countryName);
       }
       // =============================
@@ -154,11 +156,13 @@ class _HomePageState extends State<HomePage> {
     }
 
     // 6. Tampilkan dialog (sudah ada)
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.5), // Latar belakang transparan
-      builder: (context) => CountryDetailDialog(country: country),
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierColor: Colors.black.withOpacity(0.5), // Latar belakang transparan
+        builder: (context) => CountryDetailDialog(country: country),
+      );
+    }
   }
 
   // --- Fungsi Navigasi ---
@@ -183,13 +187,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _openFeedback() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FeedbackPage()),
-    );
-  }
-
   void _openSettings() {
     Navigator.push(
       context,
@@ -199,21 +196,15 @@ class _HomePageState extends State<HomePage> {
 
   // --- Handler untuk Bottom Nav Bar ---
   void _onItemTapped(int index) {
-    // Navigasi menggunakan Navigator.push,
-    // jadi kita tidak perlu setState untuk _selectedIndex
-    // `HomePage` selalu menjadi 'index 0' secara visual,
-    // dan item lain mendorong halaman baru ke atasnya.
+    // Navigasi disesuaikan: Feedback (Index 1 lama) dihapus
     switch (index) {
       case 0:
         _openProfile();
         break;
-      case 1:
-        _openFeedback();
-        break;
-      case 2:
+      case 1: // Index 1 baru: Lokasi
         _openLocation();
         break;
-      case 3:
+      case 2: // Index 2 baru: History
         _openHistory();
         break;
     }
@@ -222,9 +213,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Hapus AppBar
-      // appBar: ...,
-
       // Tambahkan BottomNavigationBar
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: cardColor,
@@ -245,10 +233,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.person),
             label: 'Profil',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.feedback),
-            label: 'Feedback',
-          ),
+          // Item Feedback (Dihapus)
           BottomNavigationBarItem(
             icon: Icon(Icons.my_location),
             label: 'Lokasi',

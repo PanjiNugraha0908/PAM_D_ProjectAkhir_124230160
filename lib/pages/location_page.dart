@@ -8,9 +8,7 @@ import '../services/auth_service.dart';
 import 'login_page.dart';
 import 'history_page.dart';
 import 'profile_page.dart';
-import 'feedback_page.dart';
 import 'settings_page.dart';
-// import 'package:intl/intl.dart'; <-- Import ini sudah dihapus atau tidak diperlukan
 
 class LocationPage extends StatefulWidget {
   @override
@@ -23,9 +21,9 @@ class _LocationPageState extends State<LocationPage> {
   String _errorMessage = '';
 
   // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E); 
-  final Color secondaryColor = Color(0xFF103070); 
-  final Color tertiaryColor = Color(0xFF2A364B); 
+  final Color primaryColor = Color(0xFF010A1E);
+  final Color secondaryColor = Color(0xFF103070);
+  final Color tertiaryColor = Color(0xFF2A364B);
   final Color cardColor = Color(0xFF21252F);
   final Color textColor = Color(0xFFD9D9D9);
   final Color hintColor = Color(0xFF898989);
@@ -57,7 +55,6 @@ class _LocationPageState extends State<LocationPage> {
     }
   }
 
-
   // --- Fungsi Navigasi ---
   Future<void> _logout() async {
     await AuthService.logout();
@@ -84,13 +81,6 @@ class _LocationPageState extends State<LocationPage> {
     );
   }
 
-  void _openFeedback() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => FeedbackPage()),
-    );
-  }
-
   void _openSettings() {
     Navigator.push(
       context,
@@ -100,22 +90,19 @@ class _LocationPageState extends State<LocationPage> {
 
   // --- Handler untuk Bottom Nav Bar ---
   void _onItemTapped(int index) {
+    // Index disesuaikan: Feedback (Index 1 lama) dihapus
     switch (index) {
       case 0:
         _openProfile();
         break;
-      case 1:
-        _openFeedback();
-        break;
-      case 2:
+      case 1: // Index 1 baru: Lokasi (Stay on page)
         // Sudah di halaman ini
         break;
-      case 3:
+      case 2: // Index 2 baru: History (Index 3 lama)
         _openHistory();
         break;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -125,28 +112,19 @@ class _LocationPageState extends State<LocationPage> {
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
         selectedItemColor: secondaryColor,
-        currentIndex: 2,
+        currentIndex: 1, // Lokasi sekarang di index 1
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.feedback),
-            label: 'Feedback',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          // Item Feedback (Dihapus)
           BottomNavigationBarItem(
             icon: Icon(Icons.my_location),
             label: 'Lokasi',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
       body: Container(
@@ -155,11 +133,7 @@ class _LocationPageState extends State<LocationPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              primaryColor,
-              secondaryColor,
-              tertiaryColor,
-            ],
+            colors: [primaryColor, secondaryColor, tertiaryColor],
           ),
         ),
         child: SafeArea(
@@ -203,7 +177,7 @@ class _LocationPageState extends State<LocationPage> {
                   ],
                 ),
               ),
-              
+
               // --- Title Bar Halaman ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -234,13 +208,16 @@ class _LocationPageState extends State<LocationPage> {
                           children: [
                             CircularProgressIndicator(color: textColor),
                             SizedBox(height: 16),
-                            Text('Mendapatkan lokasi Anda...', style: TextStyle(color: textColor)),
+                            Text(
+                              'Mendapatkan lokasi Anda...',
+                              style: TextStyle(color: textColor),
+                            ),
                           ],
                         ),
                       )
                     : _errorMessage.isNotEmpty
-                        ? _buildErrorWidget()
-                        : _buildLocationContent(),
+                    ? _buildErrorWidget()
+                    : _buildLocationContent(),
               ),
             ],
           ),
@@ -335,15 +312,9 @@ class _LocationPageState extends State<LocationPage> {
                     ),
                   ),
                   Divider(height: 24, color: tertiaryColor),
-                  _buildLocationRow(
-                    'Alamat',
-                    _locationData?['address'] ?? '-',
-                  ),
+                  _buildLocationRow('Alamat', _locationData?['address'] ?? '-'),
                   Divider(height: 16, color: tertiaryColor.withOpacity(0.5)),
-                  _buildLocationRow(
-                    'Negara',
-                    _locationData?['country'] ?? '-',
-                  ),
+                  _buildLocationRow('Negara', _locationData?['country'] ?? '-'),
                   Divider(height: 16, color: tertiaryColor.withOpacity(0.5)),
                   _buildLocationRow(
                     'Kota/Daerah',
@@ -371,11 +342,7 @@ class _LocationPageState extends State<LocationPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_off,
-              size: 64,
-              color: Colors.red.shade300,
-            ),
+            Icon(Icons.location_off, size: 64, color: Colors.red.shade300),
             SizedBox(height: 16),
             Text(
               'Gagal Mendapatkan Lokasi',
@@ -397,9 +364,7 @@ class _LocationPageState extends State<LocationPage> {
               onPressed: _getCurrentLocation,
               icon: Icon(Icons.refresh, color: textColor),
               label: Text('Coba Lagi', style: TextStyle(color: textColor)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: secondaryColor,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: secondaryColor),
             ),
             SizedBox(height: 12),
             OutlinedButton.icon(
@@ -407,7 +372,10 @@ class _LocationPageState extends State<LocationPage> {
                 await LocationService.openLocationSettings();
               },
               icon: Icon(Icons.settings, color: hintColor),
-              label: Text('Buka Pengaturan Lokasi', style: TextStyle(color: hintColor)),
+              label: Text(
+                'Buka Pengaturan Lokasi',
+                style: TextStyle(color: hintColor),
+              ),
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: hintColor),
               ),
@@ -437,10 +405,10 @@ class _LocationPageState extends State<LocationPage> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 16, 
+              fontSize: 16,
               color: textColor,
               // FIX TYPO: w60 -> w600
-              fontWeight: FontWeight.w600, 
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
