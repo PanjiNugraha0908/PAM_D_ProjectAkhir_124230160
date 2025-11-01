@@ -1,3 +1,5 @@
+// panjinugraha0908/mobileteori/mobileteori-7f413ce1fa96f0055ff7cae5adf0a95d644ffbf5/lib/services/database_service.dart
+
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user.dart';
 import '../models/history_item.dart';
@@ -6,8 +8,7 @@ class DatabaseService {
   static const String _userBoxName = 'users';
   static const String _historyBoxName = 'history';
   static const String _currentUserKey = 'current_user';
-  // 👇 1. TAMBAHKAN BARIS INI
-  static const String _profileBoxName = 'profile';
+  static const String _profileBoxName = 'profile'; //
 
   // Initialize Hive
   static Future<void> init() async {
@@ -21,8 +22,7 @@ class DatabaseService {
     await Hive.openBox<User>(_userBoxName);
     await Hive.openBox<HistoryItem>(_historyBoxName);
     await Hive.openBox<String>(_currentUserKey);
-    // 👇 2. TAMBAHKAN BARIS INI
-    await Hive.openBox(_profileBoxName);
+    await Hive.openBox(_profileBoxName); //
   }
 
   // User Box
@@ -35,14 +35,20 @@ class DatabaseService {
   // Current User Box
   static Box<String> get _currentUserBox => Hive.box<String>(_currentUserKey);
 
+  // Profile Box (untuk data yang diakses Profile Page)
+  static Box get _profileBox => Hive.box(_profileBoxName);
+
   // Get user by username
   static User? getUser(String username) {
+    // KODE ASLI ANDA
     return _userBox.values
             .firstWhere(
               (user) => user.username == username,
               orElse: () => User(
                 username: '',
                 passwordHash: '',
+                email: '', // Perlu ditambahkan di model User
+                noHp: '', // Perlu ditambahkan di model User
                 createdAt: DateTime.now(),
                 lastLogin: DateTime.now(),
               ),
@@ -110,5 +116,17 @@ class DatabaseService {
   // Get all users (for debugging)
   static List<User> getAllUsers() {
     return _userBox.values.toList();
+  }
+
+  // 🟢 BARU: Fungsi untuk menyimpan/mengupdate data profil
+  static Future<void> updateProfileData(
+    String username,
+    Map<String, dynamic> data,
+  ) async {
+    // Karena _profileBox digunakan untuk menyimpan data yang dapat diedit,
+    // kita akan menyimpan data ini sebagai pasangan kunci-nilai.
+    // Jika Anda ingin mendukung banyak user, struktur ini harus diubah.
+    // Untuk saat ini, kita ikuti konvensi kode Anda yang hanya menyimpan data profil user yang sedang aktif.
+    await _profileBox.putAll(data);
   }
 }

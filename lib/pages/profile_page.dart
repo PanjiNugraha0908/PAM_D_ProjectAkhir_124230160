@@ -1,3 +1,5 @@
+// lib/pages/profile_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'edit_profile_page.dart';
@@ -10,8 +12,7 @@ import 'home_page.dart';
 import '../services/auth_service.dart';
 
 class ProfilePage extends StatelessWidget {
-  // Palet Warna BARU (Datar dan Kontras)
-  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
   final Color backgroundColor = Color(
     0xFF1A202C,
   ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
@@ -103,7 +104,7 @@ class ProfilePage extends StatelessWidget {
           icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => _openHome(context),
         ),
-        title: Text('Profil Pembuat', style: TextStyle(color: textColor)),
+        title: Text('Profil Pengguna', style: TextStyle(color: textColor)),
         backgroundColor: backgroundColor, // Latar belakang datar
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
@@ -123,12 +124,15 @@ class ProfilePage extends StatelessWidget {
       body: ValueListenableBuilder(
         valueListenable: Hive.box('profile').listenable(),
         builder: (context, Box box, _) {
-          String nama = box.get('nama', defaultValue: 'Nama Belum Diatur');
-          String noHp = box.get('noHp', defaultValue: 'No. HP Belum Diatur');
-          String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
+          String username = AuthService.getCurrentUsername() ?? 'User';
+          // DATA YANG DIAMBIL DARI REGISTRASI DAN BISA DIEDIT DI EDIT PROFILE
           String email = box.get('email', defaultValue: 'Email Belum Diatur');
+          String noHp = box.get('noHp', defaultValue: 'No. HP Belum Diatur');
+
+          // Data tambahan yang mungkin ada
+          String nama = box.get('nama', defaultValue: 'Nama Belum Diatur');
+          String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
           String? fotoPath = box.get('fotoPath');
-          // 👇 BARU: Ambil Saran & Kesan
           String saranKesan = box.get('saranKesan', defaultValue: '');
 
           return Container(
@@ -157,7 +161,7 @@ class ProfilePage extends StatelessWidget {
                   SizedBox(height: 24),
 
                   Text(
-                    nama,
+                    username, // Menampilkan Username Login
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -167,7 +171,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
 
-                  Text(noHp, style: TextStyle(fontSize: 16, color: hintColor)),
+                  Text(nama, style: TextStyle(fontSize: 16, color: hintColor)),
                   SizedBox(height: 32),
 
                   Card(
@@ -183,18 +187,29 @@ class ProfilePage extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _buildInfoTile(
-                            'Program Studi',
-                            prodi.isEmpty ? 'Belum Diatur' : prodi,
-                            Icons.school,
-                          ),
-                          Divider(
-                            color: hintColor.withOpacity(0.5),
-                          ), // Divider warna hint
+                          // Tampilkan EMAIL
                           _buildInfoTile(
                             'Email',
                             email.isEmpty ? 'Belum Diatur' : email,
                             Icons.email,
+                          ),
+                          Divider(
+                            color: hintColor.withOpacity(0.5),
+                          ), // Divider warna hint
+                          // Tampilkan NO HP
+                          _buildInfoTile(
+                            'Nomor HP',
+                            noHp.isEmpty ? 'Belum Diatur' : noHp,
+                            Icons.phone,
+                          ),
+                          Divider(
+                            color: hintColor.withOpacity(0.5),
+                          ), // Divider warna hint
+                          // Tampilkan PROGRAM STUDI (tetap ada)
+                          _buildInfoTile(
+                            'Program Studi',
+                            prodi.isEmpty ? 'Belum Diatur' : prodi,
+                            Icons.school,
                           ),
                         ],
                       ),
@@ -202,7 +217,7 @@ class ProfilePage extends StatelessWidget {
                   ),
 
                   SizedBox(height: 32), // Jarak antara info dan saran/kesan
-                  // 👇 BARU: Bagian Saran & Kesan
+                  // Bagian Saran & Kesan
                   _buildSaranKesanSection(context, saranKesan),
 
                   SizedBox(height: 50),
@@ -235,7 +250,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // 👇 BARU: Widget untuk menampilkan Saran & Kesan
   Widget _buildSaranKesanSection(BuildContext context, String saranKesan) {
     return Card(
       color: surfaceColor, // Warna permukaan

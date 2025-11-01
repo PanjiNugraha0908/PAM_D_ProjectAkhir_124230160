@@ -1,3 +1,5 @@
+// panjinugraha0908/mobileteori/mobileteori-7f413ce1fa96f0055ff7cae5adf0a95d644ffbf5/lib/services/auth_service.dart
+
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import '../models/user.dart';
@@ -14,52 +16,52 @@ class AuthService {
   // Register user baru
   static Future<Map<String, dynamic>> register(
     String username,
-    String password,
-  ) async {
+    String password, {
+    // 🟢 BARU: Tambahkan named parameter email dan noHp
+    required String email,
+    required String noHp,
+  }) async {
     // Validasi
-    if (username.isEmpty || password.isEmpty) {
+    if (username.isEmpty || password.isEmpty || email.isEmpty || noHp.isEmpty) {
       return {
         'success': false,
-        'message': 'Username dan password tidak boleh kosong',
+        'message':
+            'Semua field (Username, Email, No HP, Password) tidak boleh kosong',
       };
     }
 
     if (username.length < 3) {
-      return {
-        'success': false,
-        'message': 'Username minimal 3 karakter',
-      };
+      return {'success': false, 'message': 'Username minimal 3 karakter'};
     }
 
     if (password.length < 6) {
-      return {
-        'success': false,
-        'message': 'Password minimal 6 karakter',
-      };
+      return {'success': false, 'message': 'Password minimal 6 karakter'};
     }
 
     // Check if username exists
     if (DatabaseService.usernameExists(username)) {
-      return {
-        'success': false,
-        'message': 'Username sudah digunakan',
-      };
+      return {'success': false, 'message': 'Username sudah digunakan'};
     }
 
     // Create new user
     User newUser = User(
       username: username,
       passwordHash: hashPassword(password),
+      email: email, // 🟢 BARU: Masukkan Email
+      noHp: noHp, // 🟢 BARU: Masukkan No HP
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
     );
 
     await DatabaseService.addUser(newUser);
 
-    return {
-      'success': true,
-      'message': 'Registrasi berhasil',
-    };
+    // 🟢 BARU: Simpan data yang dapat diedit ke profile box
+    await DatabaseService.updateProfileData(username, {
+      'email': email,
+      'noHp': noHp,
+    });
+
+    return {'success': true, 'message': 'Registrasi berhasil'};
   }
 
   // Login user
@@ -79,19 +81,13 @@ class AuthService {
     User? user = DatabaseService.getUser(username);
 
     if (user == null) {
-      return {
-        'success': false,
-        'message': 'Username tidak ditemukan',
-      };
+      return {'success': false, 'message': 'Username tidak ditemukan'};
     }
 
     // Check password
     String hashedPassword = hashPassword(password);
     if (user.passwordHash != hashedPassword) {
-      return {
-        'success': false,
-        'message': 'Password salah',
-      };
+      return {'success': false, 'message': 'Password salah'};
     }
 
     // Update last login
@@ -101,11 +97,13 @@ class AuthService {
     // Set current user
     await DatabaseService.setCurrentUser(username);
 
-    return {
-      'success': true,
-      'message': 'Login berhasil',
-      'username': username,
-    };
+    // 🟢 BARU: Sinkronkan data profil ke profile box saat login
+    await DatabaseService.updateProfileData(username, {
+      'email': user.email,
+      'noHp': user.noHp,
+    });
+
+    return {'success': true, 'message': 'Login berhasil', 'username': username};
   }
 
   // Logout

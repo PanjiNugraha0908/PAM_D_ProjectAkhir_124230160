@@ -1,3 +1,5 @@
+// lib/pages/register_page.dart
+
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 // import 'login_page.dart'; // DIHAPUS
@@ -9,17 +11,23 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController(); // BARU: Controller Email
+  final _noHpController = TextEditingController(); // BARU: Controller No HP
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
   bool _isLoading = false;
+  // BARU: State untuk mengontrol visibilitas password
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false; 
 
-  // Palet Warna BARU (Corporate Blue Dark Theme)
-  final Color backgroundColor = Color.fromARGB(100, 33, 37, 47);
-  final Color surfaceColor = Color(0xFF21252F);
-  final Color accentColor = Color.fromARGB(255, 38, 88, 188);
-  final Color primaryButtonColor = Color.fromARGB(255, 38, 88, 188);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
+  final Color backgroundColor = Color(0xFF1A202C); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(0xFF2D3748); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(0xFF66B3FF); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(0xFFA0AEC0); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   Future<void> _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -37,6 +45,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final result = await AuthService.register(
       _usernameController.text,
       _passwordController.text,
+      // TAMBAHKAN data yang diperlukan di Auth Service
+      email: _emailController.text, 
+      noHp: _noHpController.text,
     );
 
     setState(() => _isLoading = false);
@@ -60,8 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          backgroundColor, // Menggunakan warna latar belakang datar
+      backgroundColor: backgroundColor, // Menggunakan warna latar belakang datar
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.0),
@@ -85,7 +95,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         'assets/Logoprojek.png',
                         height: 40,
                         width: 40,
-                        color: textColor, // Icon warna aksen
+                        color: accentColor, // Icon warna aksen
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -93,7 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: textColor,
+                          color: accentColor, // Judul warna aksen
                         ),
                       ),
                     ],
@@ -112,47 +122,65 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height: 32),
 
-                  // Label Username
-                  Text(
-                    'Masukkan Username',
-                    style: TextStyle(color: textColor, fontSize: 14),
-                  ),
-                  SizedBox(height: 8),
                   // Field Username
                   _buildTextField(
                     controller: _usernameController,
                     hintText: 'Username',
+                    label: 'Masukkan Username',
                     icon: Icons.person,
                   ),
                   SizedBox(height: 16),
-
-                  // Label Password
-                  Text(
-                    'Masukkan Password',
-                    style: TextStyle(color: textColor, fontSize: 14),
+                  
+                  // BARU: Field Email
+                  _buildTextField(
+                    controller: _emailController,
+                    hintText: 'Email',
+                    label: 'Masukkan Email',
+                    icon: Icons.email,
+                    keyboardType: TextInputType.emailAddress,
                   ),
-                  SizedBox(height: 8),
+                  SizedBox(height: 16),
+
+                  // BARU: Field No HP
+                  _buildTextField(
+                    controller: _noHpController,
+                    hintText: 'Nomor HP',
+                    label: 'Masukkan Nomor HP',
+                    icon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  SizedBox(height: 16),
+
+
                   // Field Password
                   _buildTextField(
                     controller: _passwordController,
                     hintText: 'Password',
+                    label: 'Masukkan Password',
                     icon: Icons.lock,
-                    isObscure: true,
+                    isObscure: !_isPasswordVisible, // Menggunakan state
+                    toggleVisibility: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                    isVisible: _isPasswordVisible,
                   ),
                   SizedBox(height: 16),
 
-                  // Label Konfirmasi Password
-                  Text(
-                    'Konfirmasi Password',
-                    style: TextStyle(color: textColor, fontSize: 14),
-                  ),
-                  SizedBox(height: 8),
                   // Field Konfirmasi Password
                   _buildTextField(
                     controller: _confirmPasswordController,
                     hintText: 'Konfirmasi Password',
+                    label: 'Konfirmasi Password',
                     icon: Icons.lock_reset,
-                    isObscure: true,
+                    isObscure: !_isConfirmPasswordVisible, // Menggunakan state
+                    toggleVisibility: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
+                    isVisible: _isConfirmPasswordVisible,
                     onSubmitted: (_) => _register(),
                   ),
                   SizedBox(height: 16),
@@ -193,11 +221,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor:
-                            primaryButtonColor, // Warna tombol utama
-                        disabledBackgroundColor: surfaceColor.withOpacity(
-                          0.5,
-                        ), // Warna saat dinonaktifkan
+                        backgroundColor: primaryButtonColor, // Warna tombol utama
+                        disabledBackgroundColor: surfaceColor.withOpacity(0.5), // Warna saat dinonaktifkan
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -230,43 +255,66 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Helper widget untuk membuat TextField (dengan style gelap)
+  // Helper widget untuk membuat TextField (diperbarui untuk toggle password)
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
+    required String label,
     required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
     bool isObscure = false,
     void Function(String)? onSubmitted,
+    void Function()? toggleVisibility,
+    bool isVisible = false,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: isObscure,
-      style: TextStyle(color: textColor),
-      onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: accentColor), // Ikon warna aksen
-        filled: true,
-        fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor), // Batas warna hint
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: textColor, fontSize: 14),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: primaryButtonColor,
-            width: 2,
-          ), // Batas fokus warna tombol
+        SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: isObscure,
+          keyboardType: keyboardType,
+          style: TextStyle(color: textColor),
+          onSubmitted: onSubmitted,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
+            prefixIcon: Icon(icon, color: accentColor), // Ikon warna aksen
+            suffixIcon: toggleVisibility != null 
+                ? IconButton(
+                    icon: Icon(
+                      isVisible ? Icons.visibility : Icons.visibility_off,
+                      color: hintColor,
+                    ),
+                    onPressed: toggleVisibility,
+                  )
+                : null,
+            filled: true,
+            fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: hintColor), // Batas warna hint
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: primaryButtonColor, width: 2), // Batas fokus warna tombol
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
   @override
   void dispose() {
     _usernameController.dispose();
+    _emailController.dispose(); // BARU: Dispose Email
+    _noHpController.dispose(); // BARU: Dispose No HP
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();

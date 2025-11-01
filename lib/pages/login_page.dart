@@ -1,3 +1,5 @@
+// lib/pages/login_page.dart
+
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_page.dart';
@@ -12,14 +14,24 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  // BARU: State untuk mengontrol visibilitas password
+  bool _isPasswordVisible = false;
 
-  // Palet Warna BARU (Datar dan Kontras)
-  final Color backgroundColor = Color.fromARGB(100, 33, 37, 47);
-  final Color surfaceColor = Color(0xFF21252F);
-  final Color accentColor = Color.fromARGB(255, 38, 88, 188);
-  final Color primaryButtonColor = Color.fromARGB(255, 38, 88, 188);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
@@ -73,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                         'assets/Logoprojek.png',
                         height: 40,
                         width: 40,
-                        color: textColor, // Icon warna aksen
+                        color: accentColor, // Icon warna aksen
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -81,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: textColor,
+                          color: accentColor, // Judul warna aksen
                         ),
                       ),
                     ],
@@ -140,10 +152,10 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(color: textColor, fontSize: 14),
                   ),
                   SizedBox(height: 8),
-                  // Field Password
+                  // Field Password (dengan toggle)
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: !_isPasswordVisible, // Menggunakan state
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: 'Password',
@@ -152,6 +164,20 @@ class _LoginPageState extends State<LoginPage> {
                         Icons.lock,
                         color: accentColor,
                       ), // Ikon warna aksen
+                      suffixIcon: IconButton(
+                        // Tombol toggle
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: hintColor,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
                       filled: true,
                       fillColor: surfaceColor.withOpacity(0.5),
                       enabledBorder: OutlineInputBorder(
