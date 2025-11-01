@@ -1,3 +1,7 @@
+// File: android/build.gradle.kts
+
+import org.gradle.api.file.Directory
+
 allprojects {
     repositories {
         google()
@@ -5,6 +9,7 @@ allprojects {
     }
 }
 
+// Blok yang mengarahkan build directory
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -15,9 +20,8 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
+
+// BLOK KONFLIK JAVAVERSION DIHAPUS
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)

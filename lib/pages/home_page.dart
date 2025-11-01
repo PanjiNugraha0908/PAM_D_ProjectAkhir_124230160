@@ -345,9 +345,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 👇 PERBAIKAN UTAMA: Cegah Scaffold mengubah ukuran ketika keyboard muncul
+      resizeToAvoidBottomInset: false, 
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
