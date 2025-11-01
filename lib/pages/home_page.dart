@@ -14,7 +14,11 @@ import 'profile_page.dart';
 import 'settings_page.dart';
 import '../services/notification_service.dart';
 
-// Halaman Utama: Menampilkan daftar negara dan menyediakan fitur pencarian
+/// Halaman utama aplikasi.
+///
+/// Menampilkan daftar semua negara yang diambil dari API,
+/// menyediakan fitur pencarian, filter, dan navigasi utama
+/// aplikasi (via BottomNavBar).
 class HomePage extends StatefulWidget {
   final String username;
 
@@ -25,37 +29,47 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // --- State dan Controller ---
   final _searchController = TextEditingController();
-  List<Country> _allCountries = [];
-  List<Country> _filteredCountries = [];
+  List<Country> _allCountries = []; // Daftar master semua negara
+  List<Country> _filteredCountries =
+      []; // Daftar yang ditampilkan (hasil filter)
   bool _isLoading = false;
 
-  // Definisi Palet Warna
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(0xFFA0AEC0); // Warna Teks Petunjuk
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+
+  // --- Lifecycle Methods ---
 
   @override
   void initState() {
     super.initState();
-    // Memperbarui waktu aktif terakhir saat halaman dimuat
+    // 1. Perbarui waktu aktif pengguna
     ActivityTracker.updateLastActive();
-    // Memuat semua data negara dari API
+    // 2. Mulai ambil data semua negara dari API
     _loadAllCountries();
-    // Menambahkan listener untuk memfilter daftar saat teks pencarian berubah
+    // 3. Tambahkan listener ke search bar untuk memfilter secara real-time
     _searchController.addListener(_filterCountries);
   }
 
-  // Fungsi untuk mengambil semua data negara dari API eksternal
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterCountries);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // --- Logika Pengambilan Data (API) ---
+
+  /// Mengambil semua data negara dari API restcountries.com.
+  /// Ini adalah metode pemuatan data utama.
   Future<void> _loadAllCountries() async {
     if (mounted) {
       setState(() {
@@ -64,9 +78,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      print('🌍 Fetching all countries from API...');
-
-      // Memanggil API restcountries.com untuk mendapatkan semua negara
+      print('🌍 Mengambil data semua negara dari API...');
       final response = await http
           .get(
             Uri.parse('https://restcountries.com/v3.1/all'),
@@ -76,9 +88,8 @@ class _HomePageState extends State<HomePage> {
               'Accept-Encoding': 'gzip, deflate, br',
             },
           )
-          // Menetapkan batas waktu untuk request
           .timeout(
-            Duration(seconds: 20),
+            Duration(seconds: 20), // Batas waktu 20 detik
             onTimeout: () {
               throw Exception('Koneksi timeout. Periksa internet Anda.');
             },
@@ -92,24 +103,24 @@ class _HomePageState extends State<HomePage> {
 
         for (var json in data) {
           try {
-            // Memparsing data JSON ke model Country
+            // Parsing setiap item JSON ke model Country
             countries.add(Country.fromJson(json));
           } catch (e) {
             print(
-              '⚠️ Error parsing country: ${json['name']?['common'] ?? 'Unknown'} - $e',
+              '⚠️ Error parsing negara: ${json['name']?['common'] ?? 'Unknown'} - $e',
             );
           }
         }
 
-        // Mengurutkan negara berdasarkan nama secara alfabetis
+        // Urutkan daftar negara berdasarkan abjad
         countries.sort(
           (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
         );
 
         if (mounted) {
           setState(() {
-            _allCountries = countries;
-            _filteredCountries = countries;
+            _allCountries = countries; // Simpan ke daftar master
+            _filteredCountries = countries; // Tampilkan semua di awal
             _isLoading = false;
           });
         }
@@ -122,7 +133,7 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      print('❌ Error loading countries: $e');
+      print('❌ Error memuat negara: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -131,31 +142,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fungsi untuk memfilter daftar negara berdasarkan input pencarian
-  void _filterCountries() {
-    if (mounted) {
-      setState(() {
-        final query = _searchController.text.trim().toLowerCase();
-
-        if (query.isEmpty) {
-          _filteredCountries = _allCountries;
-        } else {
-          // Logika filter: mencari berdasarkan nama, ibu kota, atau region
-          _filteredCountries = _allCountries
-              .where(
-                (country) =>
-                    // Menggunakan startsWith untuk performa lebih baik dan hasil yang relevan
-                    country.name.toLowerCase().startsWith(query) ||
-                    country.capital.toLowerCase().startsWith(query) ||
-                    country.region.toLowerCase().startsWith(query),
-              )
-              .toList();
-        }
-      });
-    }
-  }
-
-  // Fungsi alternatif untuk pencarian langsung ke API jika mode 'load all' gagal
+  /// [Fallback] Pencarian langsung ke API jika data [_allCountries] gagal dimuat.
+  /// Ini dipicu oleh `onSubmitted` di [TextField] jika [_allCountries] kosong.
   Future<void> _searchCountriesByName(String query) async {
     if (query.trim().isEmpty) return;
 
@@ -182,22 +170,21 @@ class _HomePageState extends State<HomePage> {
           final List<Country> countries = data
               .map((json) => Country.fromJson(json))
               .toList();
-
           setState(() {
-            _filteredCountries = countries;
+            _filteredCountries = countries; // Tampilkan hasil pencarian API
             _isLoading = false;
           });
         } else if (response.statusCode == 404) {
           setState(() {
-            _filteredCountries = [];
+            _filteredCountries = []; // Tidak ditemukan
             _isLoading = false;
           });
         } else {
-          throw Exception('Search failed: ${response.statusCode}');
+          throw Exception('Pencarian gagal: ${response.statusCode}');
         }
       }
     } catch (e) {
-      print('❌ Search error: $e');
+      print('❌ Error pencarian: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -206,17 +193,44 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Filter cepat berdasarkan huruf awal
+  // --- Logika Filter dan UI ---
+
+  /// Memfilter daftar [_allCountries] berdasarkan teks di [_searchController].
+  /// Dipanggil oleh listener setiap kali teks berubah.
+  void _filterCountries() {
+    if (mounted) {
+      setState(() {
+        final query = _searchController.text.trim().toLowerCase();
+
+        if (query.isEmpty) {
+          _filteredCountries = _allCountries; // Tampilkan semua jika kosong
+        } else {
+          // Filter berdasarkan nama, ibu kota, atau region
+          _filteredCountries = _allCountries
+              .where(
+                (country) =>
+                    // Menggunakan startsWith untuk hasil yang lebih relevan
+                    country.name.toLowerCase().startsWith(query) ||
+                    country.capital.toLowerCase().startsWith(query) ||
+                    country.region.toLowerCase().startsWith(query),
+              )
+              .toList();
+        }
+      });
+    }
+  }
+
+  /// Memfilter daftar negara berdasarkan huruf awal yang dipilih.
   void _filterByAlphabet(String letter) {
     setState(() {
-      _searchController.clear();
+      _searchController.clear(); // Hapus teks pencarian
       _filteredCountries = _allCountries
           .where((country) => country.name.toUpperCase().startsWith(letter))
           .toList();
     });
   }
 
-  // Mengembalikan filter ke kondisi awal
+  /// Mengembalikan filter ke kondisi awal (menampilkan semua negara).
   void _resetFilter() {
     setState(() {
       _searchController.clear();
@@ -224,23 +238,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Fungsi Logout
-  Future<void> _logout() async {
-    await AuthService.logout();
-    if (mounted) {
-      // Kembali ke halaman Login dan menghapus semua rute sebelumnya
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    }
-  }
-
-  // Menampilkan detail negara dan mencatatnya sebagai history
+  /// Menampilkan dialog detail untuk [Country] yang dipilih.
+  /// Juga mencatat item ini ke [DatabaseService] sebagai riwayat
+  /// dan memicu notifikasi jika mencapai milestone.
   void _showCountryDetail(Country country) async {
     String username = widget.username;
 
-    // 1. Hitung negara unik yang sudah dilihat sebelum penambahan history
+    // 1. Hitung negara unik yang sudah dilihat SEBELUM menambah riwayat
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
@@ -261,10 +265,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    // Memperbarui waktu aktif terakhir pengguna
+    // Perbarui waktu aktif terakhir pengguna
     ActivityTracker.updateLastActive();
 
-    // 3. Hitung negara unik sesudah penambahan
+    // 3. Hitung negara unik SESUDAH menambah riwayat
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
     );
@@ -273,8 +277,10 @@ class _HomePageState extends State<HomePage> {
         .toSet();
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
-    // LOGIKA NOTIFIKASI: Tampilkan notifikasi setiap kelipatan 3 negara unik yang baru dilihat
+    // --- LOGIKA NOTIFIKASI ---
+    // Tampilkan notifikasi setiap kelipatan 3 negara unik *baru* yang dilihat
     if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
+      // Pastikan notifikasi tidak terpicu lagi jika pengguna membuka negara yang sama
       if (totalUnikSebelum % 3 != 0) {
         NotificationService.showNotification(
           id: totalUnikSesudah,
@@ -283,9 +289,10 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+    // --- AKHIR LOGIKA NOTIFIKASI ---
 
     if (mounted) {
-      // Menampilkan dialog detail negara
+      // Tampilkan dialog detail
       showDialog(
         context: context,
         barrierColor: Colors.black.withOpacity(0.5),
@@ -294,7 +301,21 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fungsi Navigasi Tab
+  // --- Navigasi ---
+
+  /// Melakukan proses logout dan mengarahkan pengguna ke [LoginPage].
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (mounted) {
+      // Kembali ke halaman Login dan hapus semua rute sebelumnya
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+  }
+
+  /// Navigasi ke [HistoryPage] (Tab)
   void _openHistory() {
     Navigator.pushReplacement(
       context,
@@ -302,6 +323,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Navigasi ke [LocationPage] (Tab)
   void _openLocation() {
     Navigator.pushReplacement(
       context,
@@ -309,6 +331,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Navigasi ke [ProfilePage] (Tab)
   void _openProfile() {
     Navigator.pushReplacement(
       context,
@@ -316,6 +339,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Navigasi ke [SettingsPage] (Bukan tab, membuka di atas tumpukan)
   void _openSettings() {
     Navigator.push(
       context,
@@ -323,30 +347,34 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  /// Handler untuk [BottomNavigationBar] onTap.
   void _onItemTapped(int index) {
     switch (index) {
-      case 0:
+      case 0: // Profil
         _openProfile();
         break;
-      case 1:
+      case 1: // Lokasi
         _openLocation();
         break;
-      case 2:
+      case 2: // History
         _openHistory();
         break;
     }
   }
 
+  // --- Build Method ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      // Implementasi Bottom Navigation Bar
+      resizeToAvoidBottomInset: false, // Hindari UI terdorong keyboard
+      // --- 1. Bottom Navigation Bar ---
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        // Di halaman Home, semua ikon tidak perlu di-highlight secara visual
+        // Di halaman Home, semua ikon tidak di-highlight
+        // karena Home dianggap sebagai "dasar"
         selectedItemColor: hintColor,
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -361,12 +389,14 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
+
+      // --- 2. Body Utama (SafeArea) ---
       body: Container(
-        color: backgroundColor, // Menggunakan warna latar belakang datar
+        color: backgroundColor,
         child: SafeArea(
           child: Column(
             children: [
-              // Header Aplikasi (Settings, Logo, Logout)
+              // --- 2A. Header Aplikasi (Settings, Logo, Logout) ---
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
@@ -405,7 +435,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // Search Bar
+              // --- 2B. Search Bar ---
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextField(
@@ -414,10 +444,7 @@ class _HomePageState extends State<HomePage> {
                   decoration: InputDecoration(
                     hintText: 'Cari negara...',
                     hintStyle: TextStyle(color: hintColor.withOpacity(0.7)),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: accentColor,
-                    ), // Icon search tetap accent (biru cerah)
+                    prefixIcon: Icon(Icons.search, color: accentColor),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(Icons.clear, color: hintColor),
@@ -425,7 +452,7 @@ class _HomePageState extends State<HomePage> {
                           )
                         : null,
                     filled: true,
-                    fillColor: surfaceColor, // Warna isian field
+                    fillColor: surfaceColor,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.transparent),
@@ -435,10 +462,11 @@ class _HomePageState extends State<HomePage> {
                       borderSide: BorderSide(
                         color: primaryButtonColor,
                         width: 2,
-                      ), // Fokus warna tombol
+                      ),
                     ),
                   ),
-                  // Memungkinkan pencarian langsung jika data negara kosong
+                  // Jika data negara kosong (gagal load),
+                  // gunakan onSubmitted untuk memicu pencarian API langsung
                   onSubmitted:
                       (_allCountries.isEmpty &&
                           _searchController.text.isNotEmpty)
@@ -446,10 +474,10 @@ class _HomePageState extends State<HomePage> {
                       : null,
                 ),
               ),
-
               SizedBox(height: 8),
 
-              // Alphabet Filter (hanya tampil jika data sudah dimuat)
+              // --- 2C. Filter Alfabet ---
+              // Hanya tampilkan jika data sudah dimuat
               if (!_isLoading && _allCountries.isNotEmpty)
                 Container(
                   height: 50,
@@ -459,6 +487,7 @@ class _HomePageState extends State<HomePage> {
                     itemCount: 26,
                     itemBuilder: (context, index) {
                       final letter = String.fromCharCode(65 + index);
+                      // Cek apakah ada negara yang dimulai dengan huruf ini
                       final hasCountries = _allCountries.any(
                         (c) => c.name.toUpperCase().startsWith(letter),
                       );
@@ -479,7 +508,7 @@ class _HomePageState extends State<HomePage> {
                               ? (_) => _filterByAlphabet(letter)
                               : null,
                           backgroundColor: surfaceColor.withOpacity(0.5),
-                          selectedColor: primaryButtonColor, // Warna tombol
+                          selectedColor: primaryButtonColor,
                           disabledColor: surfaceColor.withOpacity(0.1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -489,10 +518,10 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-
               SizedBox(height: 8),
 
-              // Info jumlah negara dan tombol Reset
+              // --- 2D. Info Hasil & Tombol Reset ---
+              // Hanya tampilkan jika tidak loading dan ada hasil
               if (!_isLoading && _filteredCountries.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -505,6 +534,7 @@ class _HomePageState extends State<HomePage> {
                             : '${_filteredCountries.length} hasil',
                         style: TextStyle(color: hintColor, fontSize: 12),
                       ),
+                      // Tampilkan tombol "Reset" jika sedang memfilter
                       if (_filteredCountries.length != _allCountries.length &&
                           _allCountries.isNotEmpty)
                         TextButton(
@@ -515,25 +545,24 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: Text(
                             'Reset',
-                            style: TextStyle(
-                              color: accentColor, // Warna aksen
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: accentColor, fontSize: 12),
                           ),
                         ),
                     ],
                   ),
                 ),
 
-              // Menampilkan Loading, Empty State, atau Daftar Negara
+              // --- 2E. Konten Utama (List, Loading, atau Empty) ---
+              // Menggunakan Expanded agar mengisi sisa ruang
               if (_isLoading)
+                // --- Kondisi: Loading ---
                 Expanded(
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(
-                          color: primaryButtonColor, // Warna tombol
+                          color: primaryButtonColor,
                           strokeWidth: 3,
                         ),
                         SizedBox(height: 24),
@@ -553,6 +582,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )
               else if (_filteredCountries.isEmpty)
+                // --- Kondisi: Kosong (Tidak ada hasil / Awal) ---
                 Expanded(
                   child: Center(
                     child: Padding(
@@ -570,16 +600,14 @@ class _HomePageState extends State<HomePage> {
                               'assets/Logoprojek.png',
                               height: 80,
                               width: 80,
-                              color: accentColor.withOpacity(
-                                0.8,
-                              ), // Ikon warna aksen
+                              color: accentColor.withOpacity(0.8),
                             ),
                           ),
                           SizedBox(height: 32),
                           Text(
                             _allCountries.isEmpty
-                                ? 'Jelajahi Dunia'
-                                : 'Tidak Ada Hasil',
+                                ? 'Jelajahi Dunia' // Tampilan awal
+                                : 'Tidak Ada Hasil', // Hasil filter 0
                             style: TextStyle(
                               color: textColor,
                               fontSize: 24,
@@ -594,6 +622,7 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(color: hintColor, fontSize: 14),
                             textAlign: TextAlign.center,
                           ),
+                          // Petunjuk tambahan jika data negara gagal dimuat
                           if (_allCountries.isEmpty) ...[
                             SizedBox(height: 32),
                             Container(
@@ -634,7 +663,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )
               else
-                // Daftar Negara (ListView.builder)
+                // --- Kondisi: Menampilkan Daftar Negara ---
                 Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -645,8 +674,10 @@ class _HomePageState extends State<HomePage> {
                       // Logika untuk menampilkan header abjad (A, B, C, dst)
                       bool showHeader = false;
                       if (_allCountries.isNotEmpty && index == 0) {
-                        showHeader = true;
+                        showHeader =
+                            true; // Selalu tampilkan header di item pertama
                       } else if (_allCountries.isNotEmpty && index > 0) {
+                        // Tampilkan header jika huruf pertama berbeda dari item sebelumnya
                         final currentLetter = country.name[0].toUpperCase();
                         final prevLetter = _filteredCountries[index - 1].name[0]
                             .toUpperCase();
@@ -656,6 +687,7 @@ class _HomePageState extends State<HomePage> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Tampilkan Header Abjad jika perlu
                           if (showHeader)
                             Padding(
                               padding: EdgeInsets.only(
@@ -663,24 +695,23 @@ class _HomePageState extends State<HomePage> {
                                 bottom: 8,
                                 left: 4,
                               ),
-                              // Menampilkan huruf awal sebagai header
                               child: Text(
                                 country.name[0].toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: accentColor, // Warna aksen
+                                  color: accentColor,
                                 ),
                               ),
                             ),
 
+                          // Card untuk setiap negara
                           Card(
-                            color: surfaceColor, // Warna permukaan
+                            color: surfaceColor,
                             margin: EdgeInsets.only(bottom: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            // InkWell untuk efek visual saat diklik
                             child: InkWell(
                               onTap: () => _showCountryDetail(country),
                               borderRadius: BorderRadius.circular(12),
@@ -696,7 +727,7 @@ class _HomePageState extends State<HomePage> {
                                         width: 60,
                                         height: 40,
                                         fit: BoxFit.cover,
-                                        // Error Builder: menampilkan ikon jika gambar gagal dimuat
+                                        // Error Builder: Tampil jika gambar gagal dimuat
                                         errorBuilder:
                                             (context, error, stackTrace) {
                                               return Container(
@@ -712,7 +743,7 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                               );
                                             },
-                                        // Loading Builder: menampilkan progress saat gambar dimuat
+                                        // Loading Builder: Tampil saat gambar sedang dimuat
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
                                               if (loadingProgress == null)
@@ -739,7 +770,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     SizedBox(width: 12),
-                                    // Info Nama, Ibu Kota, dan Region
+                                    // Info Teks (Nama, Ibu Kota, Region)
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -775,7 +806,7 @@ class _HomePageState extends State<HomePage> {
                                         ],
                                       ),
                                     ),
-                                    // Ikon Navigasi
+                                    // Ikon Navigasi (>)
                                     Icon(
                                       Icons.arrow_forward_ios,
                                       color: hintColor,
@@ -796,12 +827,5 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_filterCountries);
-    _searchController.dispose();
-    super.dispose();
   }
 }

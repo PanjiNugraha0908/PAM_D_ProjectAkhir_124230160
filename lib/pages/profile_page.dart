@@ -1,34 +1,34 @@
-// lib/pages/profile_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'edit_profile_page.dart';
 import 'dart:io';
-// Tambahkan import untuk navigasi BottomNavBar dan kembali ke Home
+// Import untuk navigasi
 import 'location_page.dart';
 import 'history_page.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 import '../services/auth_service.dart';
 
+/// Halaman (Page) StatelessWidget untuk menampilkan data profil pengguna.
+///
+/// Halaman ini menggunakan [ValueListenableBuilder] untuk mendengarkan
+/// perubahan data profil dari [Hive] secara real-time berdasarkan
+/// username yang sedang login (didapat dari [AuthService]).
 class ProfilePage extends StatelessWidget {
-  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
 
-  // Tambahkan navigasi helper untuk kembali ke Home
+  // --- Fungsi Navigasi ---
+
+  /// Navigasi kembali ke [HomePage].
+  /// Ini digunakan oleh tombol 'back' kustom di AppBar.
   void _openHome(BuildContext context) {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -37,6 +37,7 @@ class ProfilePage extends StatelessWidget {
         MaterialPageRoute(builder: (context) => HomePage(username: username)),
       );
     } else {
+      // Fallback ke Login Page jika sesi hilang
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
@@ -45,6 +46,7 @@ class ProfilePage extends StatelessWidget {
     }
   }
 
+  /// Navigasi ke [HistoryPage] (Tab).
   void _openHistory(BuildContext context) {
     Navigator.pushReplacement(
       context,
@@ -52,6 +54,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  /// Navigasi ke [LocationPage] (Tab).
   void _openLocation(BuildContext context) {
     Navigator.pushReplacement(
       context,
@@ -59,9 +62,11 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  /// Handler untuk [BottomNavigationBar] onTap.
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
-      case 0: // Profil (Stay on page)
+      case 0: // Profil (Halaman ini)
+        // Tidak melakukan apa-apa
         break;
       case 1: // Lokasi
         _openLocation(context);
@@ -74,18 +79,44 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🟢 PERBAIKAN DATA: Dapatkan username saat ini
+    // Dapatkan username yang sedang login
     final String? username = AuthService.getCurrentUsername();
 
     return Scaffold(
-      // === BottomNavigationBar ===
+      backgroundColor: backgroundColor,
+      // --- 1. AppBar ---
+      appBar: AppBar(
+        // Tombol 'back' kustom untuk kembali ke Home
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textColor),
+          onPressed: () => _openHome(context),
+        ),
+        title: Text('Profil Pengguna', style: TextStyle(color: textColor)),
+        backgroundColor: backgroundColor,
+        iconTheme: IconThemeData(color: textColor),
+        elevation: 0,
+        actions: [
+          // Tombol Edit
+          IconButton(
+            icon: Icon(Icons.edit, color: accentColor),
+            tooltip: 'Edit Profil',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditProfilePage()),
+              );
+            },
+          ),
+        ],
+      ),
+
+      // --- 2. Bottom Navigation Bar ---
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: surfaceColor, // Warna permukaan
+        backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: accentColor, // Warna aksen
-        currentIndex:
-            0, // Index untuk 'Profil' (karena ini adalah Profile Page)
+        selectedItemColor: accentColor,
+        currentIndex: 0, // Menandai 'Profil' sebagai tab aktif
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -100,49 +131,25 @@ class ProfilePage extends StatelessWidget {
         ],
       ),
 
-      // === Akhir BottomNavigationBar ===
-      backgroundColor: backgroundColor, // Latar belakang datar
-      appBar: AppBar(
-        // Tambahkan tombol kembali dan fungsi _openHome
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: textColor),
-          onPressed: () => _openHome(context),
-        ),
-        title: Text('Profil Pengguna', style: TextStyle(color: textColor)),
-        backgroundColor: backgroundColor, // Latar belakang datar
-        iconTheme: IconThemeData(color: textColor),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit, color: accentColor), // Ikon warna aksen
-            tooltip: 'Edit Profil',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => EditProfilePage()),
-              );
-            },
-          ),
-        ],
-      ),
-      // 🟢 PERBAIKAN DATA: Gunakan ValueListenableBuilder yang mendengarkan KEY SPESIFIK
+      // --- 3. Body (Menggunakan ValueListenableBuilder) ---
+      // Builder ini akan otomatis update UI ketika data di Hive
+      // untuk 'key' username ini berubah (misalnya setelah diedit).
       body: ValueListenableBuilder(
         valueListenable: Hive.box('profile').listenable(keys: [username ?? '']),
         builder: (context, Box box, _) {
-          // 🟢 PERBAIKAN DATA: Ambil data dari map spesifik user
+          // Ambil data profil spesifik milik user dari Hive
           final userProfileData = box.get(username) ?? <String, dynamic>{};
 
-          // Data yang diambil dari registrasi dan bisa diedit
+          // Ekstrak data untuk ditampilkan
           String email = userProfileData['email'] ?? 'Email Belum Diatur';
           String noHp = userProfileData['noHp'] ?? 'No. HP Belum Diatur';
-          // Data tambahan yang mungkin ada
           String nama = userProfileData['nama'] ?? 'Nama Belum Diatur';
           String prodi = userProfileData['prodi'] ?? 'Prodi Belum Diatur';
           String? fotoPath = userProfileData['fotoPath'];
           String saranKesan = userProfileData['saranKesan'] ?? '';
 
           return Container(
-            color: backgroundColor, // Latar belakang datar
+            color: backgroundColor,
             width: double.infinity,
             height: double.infinity,
             child: SingleChildScrollView(
@@ -150,9 +157,10 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // --- 3A. Foto Profil (Avatar) ---
                   CircleAvatar(
                     radius: 80,
-                    backgroundColor: surfaceColor, // Warna permukaan
+                    backgroundColor: surfaceColor,
                     backgroundImage: (fotoPath != null && fotoPath.isNotEmpty)
                         ? FileImage(File(fotoPath))
                         : null,
@@ -166,7 +174,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 24),
 
-                  // 👇 PERBAIKAN UI: NAMA sebagai Judul Utama
+                  // --- 3B. Nama dan Username ---
                   Text(
                     nama,
                     style: TextStyle(
@@ -177,16 +185,15 @@ class ProfilePage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 8),
-
-                  // 👇 PERBAIKAN UI: USERNAME sebagai Subtitle
                   Text(
                     '@${username ?? 'User'}',
                     style: TextStyle(fontSize: 16, color: hintColor),
                   ),
                   SizedBox(height: 32),
 
+                  // --- 3C. Kartu Informasi Data Diri ---
                   Card(
-                    color: surfaceColor, // Warna permukaan
+                    color: surfaceColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -198,25 +205,18 @@ class ProfilePage extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // Tampilkan EMAIL
                           _buildInfoTile(
                             'Email',
                             email.isEmpty ? 'Belum Diatur' : email,
                             Icons.email,
                           ),
-                          Divider(
-                            color: hintColor.withOpacity(0.5),
-                          ), // Divider warna hint
-                          // Tampilkan NO HP
+                          Divider(color: hintColor.withOpacity(0.5)),
                           _buildInfoTile(
                             'Nomor HP',
                             noHp.isEmpty ? 'Belum Diatur' : noHp,
                             Icons.phone,
                           ),
-                          Divider(
-                            color: hintColor.withOpacity(0.5),
-                          ), // Divider warna hint
-                          // Tampilkan PROGRAM STUDI (tetap ada)
+                          Divider(color: hintColor.withOpacity(0.5)),
                           _buildInfoTile(
                             'Program Studi',
                             prodi.isEmpty ? 'Belum Diatur' : prodi,
@@ -226,9 +226,9 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  SizedBox(height: 32),
 
-                  SizedBox(height: 32), // Jarak antara info dan saran/kesan
-                  // Bagian Saran & Kesan
+                  // --- 3D. Kartu Saran & Kesan ---
                   _buildSaranKesanSection(context, saranKesan),
 
                   SizedBox(height: 50),
@@ -241,13 +241,11 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  /// [Helper Widget] Membangun satu baris info (Ikon, Label, Value)
+  /// di dalam kartu data diri.
   Widget _buildInfoTile(String label, String value, IconData icon) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: primaryButtonColor,
-        size: 28,
-      ), // Ikon warna tombol
+      leading: Icon(icon, color: primaryButtonColor, size: 28),
       title: Text(label, style: TextStyle(fontSize: 14, color: hintColor)),
       subtitle: Text(
         value,
@@ -261,9 +259,10 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  /// [Helper Widget] Membangun bagian kartu 'Saran & Kesan'.
   Widget _buildSaranKesanSection(BuildContext context, String saranKesan) {
     return Card(
-      color: surfaceColor, // Warna permukaan
+      color: surfaceColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -279,13 +278,13 @@ class ProfilePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: primaryButtonColor, // Warna tombol
+                    color: primaryButtonColor,
                   ),
                 ),
                 IconButton(
                   icon: Icon(Icons.edit, size: 18, color: hintColor),
                   onPressed: () {
-                    // Navigasi ke EditProfilePage, yang kini juga bisa mengedit saranKesan
+                    // Navigasi ke EditProfilePage
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -300,7 +299,7 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
             Divider(
-              color: hintColor.withOpacity(0.5), // Divider warna hint
+              color: hintColor.withOpacity(0.5),
               height: 16,
               thickness: 1,
             ),

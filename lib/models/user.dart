@@ -2,14 +2,18 @@ import 'package:hive/hive.dart';
 
 part 'user.g.dart';
 
-// Model data untuk User, terhubung dengan Hive (Database Lokal)
+/// Model data untuk Pengguna (User), diadaptasi untuk [Hive].
+///
+/// Kelas ini merepresentasikan data otentikasi dan profil dasar
+/// seorang pengguna. [typeId: 0] digunakan oleh Hive untuk
+/// mengidentifikasi model ini.
 @HiveType(typeId: 0)
 class User extends HiveObject {
   @HiveField(0)
   String username;
 
   @HiveField(1)
-  String passwordHash;
+  String passwordHash; // Password yang sudah di-hash (misal: SHA-256)
 
   @HiveField(2)
   DateTime createdAt;
@@ -17,7 +21,7 @@ class User extends HiveObject {
   @HiveField(3)
   DateTime lastLogin;
 
-  // Field untuk data profil dasar
+  // Field untuk data profil dasar yang diambil saat registrasi
   @HiveField(4)
   String email;
 

@@ -2,42 +2,45 @@ import 'package:flutter/material.dart';
 import '../models/history_item.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
-// Tambahkan import halaman lain untuk navigasi BottomNavBar dan kembali ke Home
+// Impor untuk navigasi BottomNavBar
 import 'profile_page.dart';
 import 'location_page.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 
+/// Halaman (Page) Stateful untuk menampilkan riwayat pencarian negara
+/// yang telah dilihat oleh pengguna yang sedang login.
 class HistoryPage extends StatefulWidget {
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  // --- State ---
   List<HistoryItem> _history = [];
 
-  // Palet Warna BARU (Datar dan Kontras)
-  // Palet Warna BARU (Datar dan Kontras)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+
+  // --- Lifecycle Methods ---
+
   @override
   void initState() {
     super.initState();
     _loadHistory();
   }
 
+  // --- Logika Halaman (Page Logic) ---
+
+  /// Mengambil data history dari [DatabaseService] untuk pengguna
+  /// yang sedang login (dari [AuthService]) dan memperbarui state [_history].
   void _loadHistory() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -47,6 +50,8 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  /// Menampilkan dialog konfirmasi dan menghapus semua history
+  /// jika pengguna setuju.
   Future<void> _clearHistory() async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -60,36 +65,40 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, false), // Batal
             child: Text('Batal', style: TextStyle(color: hintColor)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, true), // Konfirmasi
             child: Text(
               'Hapus',
               style: TextStyle(color: accentColor),
-            ), // Warna aksen
+            ),
           ),
         ],
       ),
     );
 
+    // Jika pengguna menekan "Hapus"
     if (confirm == true) {
       String? username = AuthService.getCurrentUsername();
       if (username != null) {
         await DatabaseService.clearHistoryForUser(username);
-        _loadHistory();
+        _loadHistory(); // Muat ulang list (yang sekarang kosong)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('History berhasil dihapus'),
-            backgroundColor: primaryButtonColor, // Warna tombol
+            backgroundColor: primaryButtonColor,
           ),
         );
       }
     }
   }
 
-  // Tambahkan navigasi helper untuk BottomNavBar dan kembali ke Home
+  // --- Navigasi ---
+
+  /// Navigasi kembali ke [HomePage].
+  /// Ini digunakan oleh tombol 'back' kustom di AppBar.
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -98,6 +107,7 @@ class _HistoryPageState extends State<HistoryPage> {
         MaterialPageRoute(builder: (context) => HomePage(username: username)),
       );
     } else {
+      // Fallback jika session hilang, kembali ke Login
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
@@ -106,22 +116,25 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  /// Navigasi ke [ProfilePage] menggunakan [pushReplacement]
+  /// untuk pengalaman seperti 'tab'.
   void _openProfile() {
-    // Menggunakan pushReplacement untuk navigasi antar tab utama agar stack tetap bersih
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
     );
   }
 
+  /// Navigasi ke [LocationPage] menggunakan [pushReplacement]
+  /// untuk pengalaman seperti 'tab'.
   void _openLocation() {
-    // Menggunakan pushReplacement untuk navigasi antar tab utama agar stack tetap bersih
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LocationPage()),
     );
   }
 
+  /// Handler untuk [BottomNavigationBar] onTap.
   void _onItemTapped(int index) {
     switch (index) {
       case 0: // Profil
@@ -130,60 +143,49 @@ class _HistoryPageState extends State<HistoryPage> {
       case 1: // Lokasi
         _openLocation();
         break;
-      case 2: // History (Tetap di halaman ini)
+      case 2: // History (Halaman ini)
+        // Tidak melakukan apa-apa karena sudah di halaman ini
         break;
     }
   }
 
+  // --- Build Method ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // === Tambahkan BottomNavigationBar di sini ===
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: surfaceColor, // Warna permukaan
-        type: BottomNavigationBarType.fixed,
-        unselectedItemColor: hintColor,
-        selectedItemColor: accentColor, // Warna aksen
-        currentIndex: 2, // Index untuk 'History'
-        showUnselectedLabels: true,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.my_location),
-            label: 'Lokasi',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-        ],
-      ),
-      backgroundColor: backgroundColor, // Untuk latar belakang datar
+      backgroundColor: backgroundColor,
+      // --- 1. AppBar ---
       appBar: AppBar(
-        // Tambahkan tombol kembali dan fungsi _openHome
+        // Tombol 'leading' ini dikustomisasi untuk kembali ke Home,
+        // bukan 'pop' stack seperti bawaan.
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: _openHome,
         ),
         title: Text('History Pencarian', style: TextStyle(color: textColor)),
-        backgroundColor: backgroundColor, // Warna latar belakang datar
+        backgroundColor: backgroundColor,
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
         actions: [
+          // Hanya tampilkan tombol hapus jika ada history
           if (_history.isNotEmpty)
             IconButton(
               icon: Icon(
                 Icons.delete_sweep,
                 color: accentColor,
-              ), // Ikon warna aksen
+              ),
               onPressed: _clearHistory,
               tooltip: 'Hapus Semua History',
             ),
         ],
       ),
+
+      // --- 2. Body ---
       body: Container(
-        color: backgroundColor, // Latar belakang datar
+        color: backgroundColor,
         child: _history.isEmpty
+            // --- 2A. Tampilan Kosong (Empty State) ---
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -205,6 +207,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   ],
                 ),
               )
+            // --- 2B. Tampilan Daftar History ---
             : ListView.builder(
                 padding: EdgeInsets.all(16),
                 itemCount: _history.length,
@@ -243,7 +246,7 @@ class _HistoryPageState extends State<HistoryPage> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              _formatDate(item.viewedAt),
+                              _formatDate(item.viewedAt), // Format waktu
                               style: TextStyle(
                                 fontSize: 12,
                                 color: hintColor.withOpacity(0.7),
@@ -255,7 +258,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         isThreeLine: true,
                       ),
                       Divider(
-                        color: surfaceColor, // Warna permukaan
+                        color: surfaceColor,
                         height: 16,
                         indent: 16,
                         endIndent: 16,
@@ -265,9 +268,34 @@ class _HistoryPageState extends State<HistoryPage> {
                 },
               ),
       ),
+
+      // --- 3. Bottom Navigation Bar ---
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: surfaceColor,
+        type: BottomNavigationBarType.fixed,
+        unselectedItemColor: hintColor,
+        selectedItemColor: accentColor,
+        currentIndex: 2, // Menandai 'History' sebagai tab aktif
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.my_location),
+            label: 'Lokasi',
+          ),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.history), label: 'History'),
+        ],
+      ),
     );
   }
 
+  // --- Helper ---
+
+  /// Mengubah [DateTime] menjadi format waktu relatif (misal: "5 menit yang lalu").
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
@@ -285,6 +313,7 @@ class _HistoryPageState extends State<HistoryPage> {
     } else if (diff.inDays < 7) {
       return '${diff.inDays} hari yang lalu';
     } else {
+      // Format tanggal standar jika sudah lebih dari seminggu
       return '${date.day}/${date.month}/${date.year}';
     }
   }

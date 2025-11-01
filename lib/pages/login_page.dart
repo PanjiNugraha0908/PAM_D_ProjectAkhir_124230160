@@ -3,50 +3,59 @@ import '../services/auth_service.dart';
 import 'home_page.dart';
 import 'register_page.dart';
 
-// Halaman untuk Login Pengguna
+/// Halaman (Page) Stateful untuk otentikasi pengguna (Login).
+///
+/// Halaman ini menyediakan field untuk username dan password,
+/// memvalidasinya melalui [AuthService], dan mengarahkan
+/// pengguna ke [HomePage] jika berhasil.
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // --- Controller dan State ---
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  // State untuk mengontrol visibilitas password
-  bool _isPasswordVisible = false;
+  bool _isPasswordVisible = false; // State untuk toggle visibilitas password
 
-  // Definisi Palet Warna (Sophisticated Dark Blue - Kontras Optimal)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
 
-  // Fungsi asinkron untuk proses login
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  /// Menangani proses login.
+  ///
+  /// Mengambil teks dari controller, memanggil [AuthService.login],
+  /// dan menavigasi ke [HomePage] atau menampilkan [SnackBar] error.
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
-    // Memanggil AuthService untuk memproses otentikasi
     final result = await AuthService.login(
       _usernameController.text,
       _passwordController.text,
     );
 
+    // Pastikan widget masih mounted sebelum setState pasca-await
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
 
-    // Menangani hasil login
     if (result['success']) {
-      // Navigasi ke halaman utama (HomePage) setelah login berhasil
+      // Navigasi ke HomePage dan hapus stack sebelumnya
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -54,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      // Menampilkan pesan error jika login gagal
+      // Tampilkan SnackBar error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
@@ -64,11 +73,11 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Menggunakan warna latar belakang datar
-      backgroundColor: backgroundColor, 
+      backgroundColor: backgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.0),
+          // Menggunakan Card untuk Tampilan Form yang terangkat
           child: Card(
             elevation: 8,
             color: surfaceColor,
@@ -81,16 +90,15 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo dan Judul Aplikasi
+                  // --- 1. Logo dan Judul Aplikasi ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Memuat aset logo dari folder assets
                       Image.asset(
                         'assets/Logoprojek.png',
                         height: 40,
                         width: 40,
-                        color: accentColor, // Icon warna aksen
+                        color: accentColor,
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -98,14 +106,12 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: accentColor, // Judul warna aksen
+                          color: accentColor,
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: 24),
-
-                  // Judul Halaman
                   Text(
                     'Login',
                     textAlign: TextAlign.center,
@@ -117,23 +123,19 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 32),
 
-                  // Label Username
+                  // --- 2. Form Field: Username ---
                   Text(
                     'Masukkan Username',
                     style: TextStyle(color: textColor, fontSize: 14),
                   ),
                   SizedBox(height: 8),
-                  // Field Username
                   TextField(
                     controller: _usernameController,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: 'Username',
                       hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-                      prefixIcon: Icon(
-                        Icons.person,
-                        color: accentColor,
-                      ), // Ikon warna aksen
+                      prefixIcon: Icon(Icons.person, color: accentColor),
                       filled: true,
                       fillColor: surfaceColor.withOpacity(0.5),
                       enabledBorder: OutlineInputBorder(
@@ -145,32 +147,28 @@ class _LoginPageState extends State<LoginPage> {
                         borderSide: BorderSide(
                           color: primaryButtonColor,
                           width: 2,
-                        ), // Batas fokus warna tombol
+                        ),
                       ),
                     ),
                   ),
                   SizedBox(height: 16),
 
-                  // Label Password
+                  // --- 3. Form Field: Password ---
                   Text(
                     'Masukkan Password',
                     style: TextStyle(color: textColor, fontSize: 14),
                   ),
                   SizedBox(height: 8),
-                  // Field Password (dengan toggle visibilitas)
                   TextField(
                     controller: _passwordController,
-                    obscureText: !_isPasswordVisible, // Menggunakan state untuk hide/show
+                    obscureText: !_isPasswordVisible,
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: 'Password',
                       hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-                      prefixIcon: Icon(
-                        Icons.lock,
-                        color: accentColor,
-                      ), // Ikon warna aksen
+                      prefixIcon: Icon(Icons.lock, color: accentColor),
                       suffixIcon: IconButton(
-                        // Tombol toggle visibilitas
+                        // Toggle visibilitas password
                         icon: Icon(
                           _isPasswordVisible
                               ? Icons.visibility
@@ -194,14 +192,14 @@ class _LoginPageState extends State<LoginPage> {
                         borderSide: BorderSide(
                           color: primaryButtonColor,
                           width: 2,
-                        ), // Batas fokus warna tombol
+                        ),
                       ),
                     ),
                     onSubmitted: (_) => _login(),
                   ),
                   SizedBox(height: 16),
 
-                  // Link ke halaman Daftar (Register)
+                  // --- 4. Link ke Halaman Register ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -225,7 +223,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Text(
                           'Daftar di sini!',
                           style: TextStyle(
-                            color: accentColor, // Warna teks aksen
+                            color: accentColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -234,15 +232,14 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 24),
 
-                  // Tombol Login
+                  // --- 5. Tombol Login ---
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor:
-                            primaryButtonColor, // Warna tombol utama
+                        backgroundColor: primaryButtonColor,
                         disabledBackgroundColor: surfaceColor.withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -252,7 +249,7 @@ class _LoginPageState extends State<LoginPage> {
                           ? SizedBox(
                               height: 20,
                               width: 20,
-                              // Indikator loading saat proses login
+                              // Indikator loading
                               child: CircularProgressIndicator(
                                 color: textColor,
                                 strokeWidth: 2,
@@ -275,12 +272,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }

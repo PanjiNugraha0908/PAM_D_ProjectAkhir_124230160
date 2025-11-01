@@ -2,14 +2,22 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user.dart';
 import '../models/history_item.dart';
 
-// Layanan yang membungkus operasi Hive Database
+/// Kelas helper statis yang membungkus semua operasi database [Hive].
+///
+/// Kelas ini mengelola semua Box Hive dan menyediakan method
+/// untuk operasi CRUD (Create, Read, Update, Delete) pada data
+/// [User], [HistoryItem], dan data profil.
 class DatabaseService {
+  // --- Nama-nama Box Hive ---
   static const String _userBoxName = 'users';
   static const String _historyBoxName = 'history';
   static const String _currentUserKey = 'current_user';
   static const String _profileBoxName = 'profile';
 
-  // Inisialisasi Hive dan mendaftarkan TypeAdapter
+  /// Menginisialisasi Hive dan mendaftarkan semua [TypeAdapter].
+  ///
+  /// Fungsi ini harus dipanggil di `main.dart` sebelum aplikasi dijalankan
+  /// untuk memastikan semua Box terbuka dan siap digunakan.
   static Future<void> init() async {
     await Hive.initFlutter();
 
@@ -17,104 +25,105 @@ class DatabaseService {
     Hive.registerAdapter(UserAdapter());
     Hive.registerAdapter(HistoryItemAdapter());
 
-    // Membuka box yang diperlukan
+    // Membuka semua box yang diperlukan
     await Hive.openBox<User>(_userBoxName);
     await Hive.openBox<HistoryItem>(_historyBoxName);
     await Hive.openBox<String>(_currentUserKey);
-    await Hive.openBox(
-      _profileBoxName,
-    ); // Box untuk data profil yang dapat diedit
+    await Hive.openBox(_profileBoxName); // Box generik untuk data profil Map
   }
 
-  // Getter untuk Box User
+  // --- Getter Privat untuk Box ---
   static Box<User> get _userBox => Hive.box<User>(_userBoxName);
-
-  // Getter untuk Box History
   static Box<HistoryItem> get _historyBox =>
       Hive.box<HistoryItem>(_historyBoxName);
-
-  // Getter untuk Box Current User
   static Box<String> get _currentUserBox => Hive.box<String>(_currentUserKey);
 
-  // Mendapatkan objek User berdasarkan username
+  // --- Operasi User ---
+
+  /// Mendapatkan objek [User] berdasarkan [username].
+  ///
+  /// Mengembalikan [User] jika ditemukan, atau `null` jika tidak.
   static User? getUser(String username) {
-    // Mencari user berdasarkan username
-    return _userBox.values
-            .firstWhere(
-              (user) => user.username == username,
-              // Menggunakan orElse untuk mencegah error jika user tidak ditemukan
-              orElse: () => User(
-                username: '',
-                passwordHash: '',
-                email: '',
-                noHp: '',
-                createdAt: DateTime.now(),
-                lastLogin: DateTime.now(),
-              ),
-            )
-            .username
-            .isNotEmpty
-        ? _userBox.values.firstWhere((user) => user.username == username)
-        : null;
+    // Menggunakan try-catch dengan firstWhere lebih aman dan bersih
+    // daripada pola orElse yang kompleks.
+    try {
+      return _userBox.values.firstWhere((user) => user.username == username);
+    } catch (e) {
+      // firstWhere melempar error jika tidak ada elemen yang cocok
+      return null;
+    }
   }
 
-  // Menambahkan user baru
+  /// Menambahkan [User] baru ke database.
   static Future<void> addUser(User user) async {
     await _userBox.add(user);
   }
 
-  // Memperbarui data user
+  /// Memperbarui data [User] yang ada di database.
+  ///
+  /// Perubahan harus dilakukan pada objek [User] sebelum memanggil ini.
   static Future<void> updateUser(User user) async {
     await user.save();
   }
 
-  // Memeriksa apakah username sudah ada
+  /// Memeriksa apakah [username] sudah terdaftar di database.
   static bool usernameExists(String username) {
     return _userBox.values.any((user) => user.username == username);
   }
 
-  // Mendapatkan username dari user yang sedang login
+  // --- Operasi Sesi (Current User) ---
+
+  /// Mendapatkan [String] username dari pengguna yang sedang login.
+  ///
+  /// Mengembalikan `null` jika tidak ada pengguna yang login.
   static String? getCurrentUsername() {
     return _currentUserBox.get('username');
   }
 
-  // Menyimpan status user yang sedang login
+  /// Menyimpan [username] sebagai pengguna yang sedang login.
   static Future<void> setCurrentUser(String username) async {
     await _currentUserBox.put('username', username);
   }
 
-  // Menghapus status user yang sedang login (Logout)
+  /// Menghapus status pengguna yang sedang login (untuk Logout).
   static Future<void> clearCurrentUser() async {
     await _currentUserBox.delete('username');
   }
 
-  // Menambahkan item ke riwayat pencarian
+  // --- Operasi History ---
+
+  /// Menambahkan satu [HistoryItem] ke database.
   static Future<void> addHistory(HistoryItem item) async {
     await _historyBox.add(item);
   }
 
-  // Mendapatkan riwayat pencarian untuk user tertentu, diurutkan berdasarkan waktu
+  /// Mendapatkan [List<HistoryItem>] untuk [username] tertentu.
+  ///
+  /// Daftar yang dikembalikan diurutkan dari yang terbaru ke terlama.
   static List<HistoryItem> getHistoryForUser(String username) {
     return _historyBox.values
         .where((item) => item.username == username)
         .toList()
-      ..sort(
-        (a, b) => b.viewedAt.compareTo(a.viewedAt),
-      ); // Urutan Terbaru ke Terlama
+      // Mengurutkan dengan b (baru) dibanding a (lama)
+      ..sort((a, b) => b.viewedAt.compareTo(a.viewedAt));
   }
 
-  // Menghapus semua riwayat untuk user tertentu
+  /// Menghapus semua [HistoryItem] yang terkait dengan [username].
   static Future<void> clearHistoryForUser(String username) async {
     final itemsToDelete = _historyBox.values
         .where((item) => item.username == username)
         .toList();
 
+    // Menghapus satu per satu
     for (var item in itemsToDelete) {
       await item.delete();
     }
   }
 
-  // Mendapatkan semua user (untuk debugging)
+  // --- Utilitas (Debugging) ---
+
+  /// Mendapatkan [List<User>] dari semua pengguna yang terdaftar.
+  /// (Hanya untuk keperluan debugging).
   static List<User> getAllUsers() {
     return _userBox.values.toList();
   }

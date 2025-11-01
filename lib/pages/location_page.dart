@@ -9,34 +9,32 @@ import 'login_page.dart';
 import 'history_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
-import 'home_page.dart'; // <-- Pastikan ini ada
+import 'home_page.dart';
 
+/// Halaman (Page) Stateful untuk menampilkan lokasi pengguna saat ini
+/// menggunakan [LocationService] dan menampilkannya di [FlutterMap].
 class LocationPage extends StatefulWidget {
   @override
   _LocationPageState createState() => _LocationPageState();
 }
 
 class _LocationPageState extends State<LocationPage> {
+  // --- State ---
   bool _isLoading = false;
   Map<String, dynamic>? _locationData;
   String _errorMessage = '';
 
-  // Palet Warna BARU (Datar dan Kontras)
-  // Palet Warna BARU (Datar dan Kontras)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+
+  // --- Lifecycle Methods ---
 
   @override
   void initState() {
@@ -44,9 +42,15 @@ class _LocationPageState extends State<LocationPage> {
     _getCurrentLocation();
   }
 
+  // --- Logika Halaman (Page Logic) ---
+
+  /// Mengambil data lokasi (koordinat dan alamat) dari [LocationService].
+  ///
+  /// Memperbarui state [_isLoading] selama proses, dan mengisi
+  /// [_locationData] atau [_errorMessage] berdasarkan hasil.
   Future<void> _getCurrentLocation() async {
+    // Pastikan widget masih ada di tree sebelum setState
     if (mounted) {
-      // <-- TAMBAHKAN INI
       setState(() {
         _isLoading = true;
         _errorMessage = '';
@@ -55,8 +59,8 @@ class _LocationPageState extends State<LocationPage> {
 
     Map<String, dynamic> result = await LocationService.getCurrentLocation();
 
+    // Pastikan widget masih ada di tree sebelum setState
     if (mounted) {
-      // <-- TAMBAHKAN INI
       if (result['success']) {
         setState(() {
           _locationData = result;
@@ -72,6 +76,8 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   // --- Fungsi Navigasi ---
+
+  /// Melakukan proses logout dan mengarahkan pengguna ke [LoginPage].
   Future<void> _logout() async {
     await AuthService.logout();
     if (mounted) {
@@ -83,11 +89,11 @@ class _LocationPageState extends State<LocationPage> {
     }
   }
 
-  // PERBAIKAN: Fungsi untuk kembali ke HomePage
+  /// Navigasi kembali ke [HomePage].
+  /// Menggunakan [pushReplacement] untuk menukar halaman ini dengan [HomePage].
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
-      // Menggunakan pushReplacement agar kembali ke HomePage dan mengganti LocationPage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePage(username: username)),
@@ -102,22 +108,23 @@ class _LocationPageState extends State<LocationPage> {
     }
   }
 
+  /// Navigasi ke [HistoryPage] (Tab).
   void _openHistory() {
-    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HistoryPage()),
     );
   }
 
+  /// Navigasi ke [ProfilePage] (Tab).
   void _openProfile() {
-    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
     );
   }
 
+  /// Navigasi ke [SettingsPage] (Membuka halaman baru di atas).
   void _openSettings() {
     Navigator.push(
       context,
@@ -125,31 +132,33 @@ class _LocationPageState extends State<LocationPage> {
     );
   }
 
-  // --- Handler untuk Bottom Nav Bar ---
+  /// Handler untuk [BottomNavigationBar] onTap.
   void _onItemTapped(int index) {
-    // Index disesuaikan: Feedback (Index 1 lama) dihapus
     switch (index) {
-      case 0:
+      case 0: // Profil
         _openProfile();
         break;
-      case 1: // Index 1 baru: Lokasi (Stay on page)
-        // Sudah di halaman ini
+      case 1: // Lokasi (Halaman ini)
+        // Tidak melakukan apa-apa
         break;
-      case 2: // Index 2 baru: History (Index 3 lama)
+      case 2: // History
         _openHistory();
         break;
     }
   }
 
+  // --- Build Method ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // --- 1. Bottom Navigation Bar ---
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: surfaceColor, // Warna permukaan
+        backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: accentColor, // Warna aksen
-        currentIndex: 1, // Lokasi sekarang di index 1
+        selectedItemColor: accentColor,
+        currentIndex: 1, // Menandai 'Lokasi' sebagai tab aktif
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -163,12 +172,14 @@ class _LocationPageState extends State<LocationPage> {
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
+
+      // --- 2. Body ---
       body: Container(
-        color: backgroundColor, // Latar belakang datar
+        color: backgroundColor,
         child: SafeArea(
           child: Column(
             children: [
-              // --- Header Kustom (dari Home) ---
+              // --- 2A. Header Aplikasi (Settings, Logo, Logout) ---
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
@@ -185,7 +196,7 @@ class _LocationPageState extends State<LocationPage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: textColor, // Icon warna aksen
+                          color: textColor,
                         ),
                         SizedBox(width: 8),
                         Text(
@@ -207,15 +218,14 @@ class _LocationPageState extends State<LocationPage> {
                 ),
               ),
 
-              // --- Title Bar Halaman ---
+              // --- 2B. Title Bar Halaman ---
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
                     IconButton(
                       icon: Icon(Icons.arrow_back, color: textColor),
-                      // PERBAIKAN: Ganti Navigator.pop dengan _openHome
-                      onPressed: _openHome,
+                      onPressed: _openHome, // Kembali ke Home
                     ),
                     Text(
                       'Lokasi Saya',
@@ -229,16 +239,17 @@ class _LocationPageState extends State<LocationPage> {
                 ),
               ),
 
-              // --- Konten (Loading, Error, Map) ---
+              // --- 2C. Konten Utama (Loading, Error, atau Map) ---
               Expanded(
                 child: _isLoading
                     ? Center(
+                        // --- Tampilan Loading ---
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             CircularProgressIndicator(
                               color: primaryButtonColor,
-                            ), // Warna tombol
+                            ),
                             SizedBox(height: 16),
                             Text(
                               'Mendapatkan lokasi Anda...',
@@ -248,8 +259,8 @@ class _LocationPageState extends State<LocationPage> {
                         ),
                       )
                     : _errorMessage.isNotEmpty
-                    ? _buildErrorWidget()
-                    : _buildLocationContent(),
+                    ? _buildErrorWidget() // --- Tampilan Error ---
+                    : _buildLocationContent(), // --- Tampilan Sukses (Map & Data) ---
               ),
             ],
           ),
@@ -258,17 +269,20 @@ class _LocationPageState extends State<LocationPage> {
     );
   }
 
-  // Widget untuk menampilkan Peta dan Detail Lokasi
+  // --- Helper Widgets ---
+
+  /// [Helper Widget] Membangun tampilan utama saat data lokasi berhasil didapat.
+  /// Terdiri dari Peta [FlutterMap] dan Kartu Detail Lokasi.
   Widget _buildLocationContent() {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Peta
+          // --- Peta ---
           Card(
             elevation: 4,
-            color: surfaceColor, // Warna permukaan
+            color: surfaceColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -303,7 +317,7 @@ class _LocationPageState extends State<LocationPage> {
                                 ),
                                 child: Icon(
                                   Icons.location_pin,
-                                  color: accentColor, // Warna aksen
+                                  color: accentColor,
                                   size: 40,
                                 ),
                               ),
@@ -323,10 +337,10 @@ class _LocationPageState extends State<LocationPage> {
 
           SizedBox(height: 16),
 
-          // Kartu Lokasi
+          // --- Kartu Detail Lokasi ---
           Card(
             elevation: 4,
-            color: surfaceColor, // Warna permukaan
+            color: surfaceColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -340,13 +354,10 @@ class _LocationPageState extends State<LocationPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: accentColor, // Warna aksen
+                      color: accentColor,
                     ),
                   ),
-                  Divider(
-                    height: 24,
-                    color: hintColor.withOpacity(0.5),
-                  ), // Divider warna hint
+                  Divider(height: 24, color: hintColor.withOpacity(0.5)),
                   _buildLocationRow('Alamat', _locationData?['address'] ?? '-'),
                   Divider(height: 16, color: hintColor.withOpacity(0.5)),
                   _buildLocationRow('Negara', _locationData?['country'] ?? '-'),
@@ -369,7 +380,8 @@ class _LocationPageState extends State<LocationPage> {
     );
   }
 
-  // Widget untuk menampilkan pesan error
+  /// [Helper Widget] Membangun tampilan 'Error' saat gagal mendapat lokasi.
+  /// Menampilkan pesan error dan tombol 'Coba Lagi' & 'Buka Pengaturan'.
   Widget _buildErrorWidget() {
     return Center(
       child: Padding(
@@ -377,11 +389,7 @@ class _LocationPageState extends State<LocationPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_off,
-              size: 64,
-              color: accentColor,
-            ), // Ikon warna aksen
+            Icon(Icons.location_off, size: 64, color: accentColor),
             SizedBox(height: 16),
             Text(
               'Gagal Mendapatkan Lokasi',
@@ -405,7 +413,7 @@ class _LocationPageState extends State<LocationPage> {
               label: Text('Coba Lagi', style: TextStyle(color: textColor)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryButtonColor,
-              ), // Warna tombol
+              ),
             ),
             SizedBox(height: 12),
             OutlinedButton.icon(
@@ -427,7 +435,8 @@ class _LocationPageState extends State<LocationPage> {
     );
   }
 
-  // Helper untuk baris info lokasi (sesuai screenshot)
+  /// [Helper Widget] Membangun baris info (Label dan Value)
+  /// untuk kartu detail lokasi.
   Widget _buildLocationRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -448,7 +457,6 @@ class _LocationPageState extends State<LocationPage> {
             style: TextStyle(
               fontSize: 16,
               color: textColor,
-              // FIX TYPO: w60 -> w600
               fontWeight: FontWeight.w600,
             ),
           ),

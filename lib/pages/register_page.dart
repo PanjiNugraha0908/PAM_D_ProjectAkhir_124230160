@@ -1,43 +1,54 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
-// Halaman untuk Pendaftaran Pengguna Baru
+/// Halaman (Page) Stateful untuk pendaftaran pengguna baru.
+///
+/// Menyediakan form untuk username, email, no. hp, dan password.
+/// Data ini kemudian dikirim ke [AuthService] untuk diproses.
 class RegisterPage extends StatefulWidget {
   @override
   _RegisterPageState createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // --- Controller dan State ---
   final _usernameController = TextEditingController();
-  final _emailController =
-      TextEditingController(); // Controller untuk input Email
-  final _noHpController =
-      TextEditingController(); // Controller untuk input No HP
+  final _emailController = TextEditingController();
+  final _noHpController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
-  // State untuk mengontrol visibilitas password
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Definisi Palet Warna
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(0xFFA0AEC0); // Warna Teks Petunjuk
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
 
-  // Fungsi asinkron untuk proses pendaftaran
+  @override
+  void dispose() {
+    // Selalu dispose controller untuk mencegah kebocoran memori
+    _usernameController.dispose();
+    _emailController.dispose();
+    _noHpController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  /// Menangani proses pendaftaran.
+  ///
+  /// Memvalidasi kesamaan password, memanggil [AuthService.register],
+  /// dan kembali ke [LoginPage] jika berhasil atau menampilkan [SnackBar] error.
   Future<void> _register() async {
-    // Validasi kesamaan password
+    // 1. Validasi kesamaan password
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -50,7 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
 
-    // Memanggil AuthService.register dengan data lengkap (termasuk email & noHp)
+    // 2. Panggil AuthService dengan data lengkap
     final result = await AuthService.register(
       _usernameController.text,
       _passwordController.text,
@@ -58,21 +69,23 @@ class _RegisterPageState extends State<RegisterPage> {
       noHp: _noHpController.text,
     );
 
+    // Pastikan widget masih mounted sebelum setState pasca-await
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
 
-    // Menangani hasil pendaftaran
+    // 3. Tangani hasil pendaftaran
     if (result['success']) {
-      // Menampilkan SnackBar sukses dan kembali ke Login Page
+      // Sukses: Tampilkan notifikasi dan kembali ke halaman Login
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result['message']),
           backgroundColor: Colors.green,
         ),
       );
-      // Kembali ke halaman Login
       Navigator.pop(context);
     } else {
-      // Menampilkan pesan error jika pendaftaran gagal
+      // Gagal: Tampilkan notifikasi error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
@@ -82,14 +95,13 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          backgroundColor, // Menggunakan warna latar belakang datar
+      backgroundColor: backgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.0),
           child: Card(
             elevation: 8,
-            color: surfaceColor, // Warna background card
+            color: surfaceColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -99,7 +111,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- Logo dan Judul Aplikasi ---
+                  // --- 1. Logo dan Judul Aplikasi ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -107,7 +119,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         'assets/Logoprojek.png',
                         height: 40,
                         width: 40,
-                        color: accentColor, // Icon warna aksen
+                        color: accentColor,
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -115,14 +127,14 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: accentColor, // Judul warna aksen
+                          color: accentColor,
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: 24),
 
-                  // Judul Halaman
+                  // --- 2. Judul Halaman ---
                   Text(
                     'Register',
                     textAlign: TextAlign.center,
@@ -134,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height: 32),
 
-                  // Field Username
+                  // --- 3. Form Pendaftaran ---
                   _buildTextField(
                     controller: _usernameController,
                     hintText: 'Username',
@@ -142,8 +154,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     icon: Icons.person,
                   ),
                   SizedBox(height: 16),
-
-                  // Field Email
                   _buildTextField(
                     controller: _emailController,
                     hintText: 'Email',
@@ -152,8 +162,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     keyboardType: TextInputType.emailAddress,
                   ),
                   SizedBox(height: 16),
-
-                  // Field No HP
                   _buildTextField(
                     controller: _noHpController,
                     hintText: 'Nomor HP',
@@ -162,14 +170,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     keyboardType: TextInputType.phone,
                   ),
                   SizedBox(height: 16),
-
-                  // Field Password
                   _buildTextField(
                     controller: _passwordController,
                     hintText: 'Password',
                     label: 'Masukkan Password',
                     icon: Icons.lock,
-                    isObscure: !_isPasswordVisible, // Menggunakan state
+                    isObscure: !_isPasswordVisible,
                     toggleVisibility: () {
                       setState(() {
                         _isPasswordVisible = !_isPasswordVisible;
@@ -178,14 +184,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     isVisible: _isPasswordVisible,
                   ),
                   SizedBox(height: 16),
-
-                  // Field Konfirmasi Password
                   _buildTextField(
                     controller: _confirmPasswordController,
                     hintText: 'Konfirmasi Password',
                     label: 'Konfirmasi Password',
                     icon: Icons.lock_reset,
-                    isObscure: !_isConfirmPasswordVisible, // Menggunakan state
+                    isObscure: !_isConfirmPasswordVisible,
                     toggleVisibility: () {
                       setState(() {
                         _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
@@ -196,7 +200,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height: 16),
 
-                  // Link Login
+                  // --- 4. Link ke Halaman Login ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -206,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       TextButton(
                         onPressed: () {
-                          // Cukup pop untuk kembali ke halaman Login
+                          // Kembali ke halaman Login
                           Navigator.pop(context);
                         },
                         style: TextButton.styleFrom(
@@ -216,7 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Text(
                           'Login di sini!',
                           style: TextStyle(
-                            color: accentColor, // Warna teks aksen
+                            color: accentColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -225,18 +229,15 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   SizedBox(height: 24),
 
-                  // Tombol Register
+                  // --- 5. Tombol Register ---
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor:
-                            primaryButtonColor, // Warna tombol utama
-                        disabledBackgroundColor: surfaceColor.withOpacity(
-                          0.5,
-                        ), // Warna saat dinonaktifkan
+                        backgroundColor: primaryButtonColor,
+                        disabledBackgroundColor: surfaceColor.withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -245,6 +246,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ? SizedBox(
                               height: 20,
                               width: 20,
+                              // Indikator loading
                               child: CircularProgressIndicator(
                                 color: textColor,
                                 strokeWidth: 2,
@@ -269,7 +271,10 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // Helper widget untuk membuat TextField (dengan fitur toggle password)
+  /// [Helper Widget] Membangun [TextField] yang seragam untuk form.
+  ///
+  /// Termasuk label, ikon, tipe keyboard, dan logika
+  /// untuk toggle visibilitas password.
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
@@ -278,8 +283,8 @@ class _RegisterPageState extends State<RegisterPage> {
     TextInputType keyboardType = TextInputType.text,
     bool isObscure = false,
     void Function(String)? onSubmitted,
-    void Function()? toggleVisibility,
-    bool isVisible = false,
+    void Function()? toggleVisibility, // Fungsi untuk toggle
+    bool isVisible = false, // Status visibilitas saat ini
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +300,8 @@ class _RegisterPageState extends State<RegisterPage> {
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-            prefixIcon: Icon(icon, color: accentColor), // Ikon warna aksen
+            prefixIcon: Icon(icon, color: accentColor),
+            // Tampilkan ikon mata hanya jika 'toggleVisibility' disediakan
             suffixIcon: toggleVisibility != null
                 ? IconButton(
                     icon: Icon(
@@ -306,29 +312,18 @@ class _RegisterPageState extends State<RegisterPage> {
                   )
                 : null,
             filled: true,
-            fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
+            fillColor: surfaceColor.withOpacity(0.5),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: hintColor), // Batas warna hint
+              borderSide: BorderSide(color: hintColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              // Batas fokus warna tombol
               borderSide: BorderSide(color: primaryButtonColor, width: 2),
             ),
           ),
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose(); // Dispose Controller Email
-    _noHpController.dispose(); // Dispose Controller No HP
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
   }
 }

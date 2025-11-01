@@ -2,30 +2,32 @@ import 'package:flutter/material.dart';
 import '../services/activity_tracker.dart';
 import '../services/notification_service.dart';
 
+/// Halaman (Page) Stateful untuk mengelola pengaturan aplikasi.
+///
+/// Saat ini digunakan untuk:
+/// 1. Mengaktifkan/menonaktifkan notifikasi pengingat inaktivitas.
+/// 2. Menguji pengiriman notifikasi.
+/// 3. Menampilkan informasi aktivitas terakhir pengguna.
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  // --- State ---
   bool _notificationEnabled = true;
 
-  // Palet Warna BARU (Datar dan Kontras)
-  // Palet Warna BARU (Datar dan Kontras)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+
+  // --- Lifecycle Methods ---
 
   @override
   void initState() {
@@ -33,31 +35,43 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadSettings();
   }
 
+  // --- Logika Halaman (Page Logic) ---
+
+  /// Memuat status pengaturan notifikasi dari [ActivityTracker] (SharedPreferences)
+  /// dan memperbarui state [_notificationEnabled].
   Future<void> _loadSettings() async {
     bool enabled = await ActivityTracker.isNotificationEnabled();
-    setState(() {
-      _notificationEnabled = enabled;
-    });
+    if (mounted) {
+      setState(() {
+        _notificationEnabled = enabled;
+      });
+    }
   }
 
+  /// Mengubah status notifikasi pengingat.
+  ///
+  /// Menyimpan pengaturan baru ke [ActivityTracker] dan memperbarui state.
   Future<void> _toggleNotification(bool value) async {
     await ActivityTracker.setNotificationEnabled(value);
-    setState(() {
-      _notificationEnabled = value;
-    });
+    if (mounted) {
+      setState(() {
+        _notificationEnabled = value;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          value
-              ? 'Notifikasi pengingat diaktifkan'
-              : 'Notifikasi pengingat dinonaktifkan',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Notifikasi pengingat diaktifkan'
+                : 'Notifikasi pengingat dinonaktifkan',
+          ),
+          backgroundColor: primaryButtonColor,
         ),
-        backgroundColor: primaryButtonColor, // Warna tombol
-      ),
-    );
+      );
+    }
   }
 
+  /// Memicu notifikasi tes secara manual menggunakan [NotificationService].
   Future<void> _testNotification() async {
     await NotificationService.showNotification(
       id: 999,
@@ -65,34 +79,61 @@ class _SettingsPageState extends State<SettingsPage> {
       body: 'Notifikasi berhasil! Sistem notifikasi berfungsi dengan baik.',
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Notifikasi test dikirim!'),
-        backgroundColor: primaryButtonColor, // Warna tombol
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Notifikasi test dikirim!'),
+          backgroundColor: primaryButtonColor,
+        ),
+      );
+    }
   }
+
+  /// Memformat [DateTime] menjadi string waktu relatif (misal: "5 menit lalu").
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+
+    if (diff.inSeconds < 60) {
+      return 'Baru saja';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} menit yang lalu';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours} jam yang lalu';
+    } else if (diff.inDays == 1) {
+      return 'Kemarin';
+    } else {
+      // Format tanggal standar jika sudah lama
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
+  // --- Build Method ---
 
   @override
   Widget build(BuildContext context) {
+    // Ambil data aktivitas terakhir untuk ditampilkan
     DateTime? lastActive = ActivityTracker.getLastActive();
     int daysSinceActive = ActivityTracker.getDaysSinceLastActive();
 
     return Scaffold(
-      backgroundColor: backgroundColor, // Untuk latar belakang datar
+      backgroundColor: backgroundColor,
+      // --- 1. AppBar ---
       appBar: AppBar(
         title: Text('Pengaturan', style: TextStyle(color: textColor)),
-        backgroundColor: backgroundColor, // Latar belakang datar
+        backgroundColor: backgroundColor,
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
       ),
+
+      // --- 2. Body ---
       body: Container(
-        color: backgroundColor, // Latar belakang datar
+        color: backgroundColor,
         child: ListView(
           children: [
-            // Notification Settings
+            // --- 2A. Kartu Pengaturan Notifikasi ---
             Card(
-              color: surfaceColor, // Warna permukaan
+              color: surfaceColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -100,10 +141,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(
-                      Icons.notifications,
-                      color: accentColor,
-                    ), // Ikon warna aksen
+                    leading: Icon(Icons.notifications, color: accentColor),
                     title: Text(
                       'Notifikasi',
                       style: TextStyle(
@@ -112,10 +150,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
-                  Divider(
-                    height: 1,
-                    color: hintColor.withOpacity(0.5),
-                  ), // Divider warna hint
+                  Divider(height: 1, color: hintColor.withOpacity(0.5)),
+                  // Toggle Pengingat Aktivitas
                   SwitchListTile(
                     secondary: Icon(Icons.alarm, color: hintColor),
                     title: Text(
@@ -128,9 +164,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     value: _notificationEnabled,
                     onChanged: _toggleNotification,
-                    activeColor: primaryButtonColor, // Warna tombol
+                    activeColor: primaryButtonColor,
                     inactiveThumbColor: hintColor,
                   ),
+                  // Tombol Test Notifikasi
                   ListTile(
                     leading: Icon(Icons.send, color: hintColor),
                     title: Text(
@@ -152,9 +189,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
 
-            // Activity Info
+            // --- 2B. Kartu Informasi Aktivitas ---
             Card(
-              color: surfaceColor, // Warna permukaan
+              color: surfaceColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -162,10 +199,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(
-                      Icons.info,
-                      color: accentColor,
-                    ), // Ikon warna aksen
+                    leading: Icon(Icons.info, color: accentColor),
                     title: Text(
                       'Informasi Aktivitas',
                       style: TextStyle(
@@ -174,10 +208,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
-                  Divider(
-                    height: 1,
-                    color: hintColor.withOpacity(0.5),
-                  ), // Divider warna hint
+                  Divider(height: 1, color: hintColor.withOpacity(0.5)),
                   ListTile(
                     title: Text(
                       'Terakhir Aktif',
@@ -206,12 +237,10 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
 
-            // Info Card
+            // --- 2C. Kartu Info Penjelasan Notifikasi ---
             Card(
               margin: EdgeInsets.all(16),
-              color: surfaceColor.withOpacity(
-                0.8,
-              ), // Warna permukaan yang diredupkan
+              color: surfaceColor.withOpacity(0.8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -222,10 +251,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: primaryButtonColor,
-                        ), // Ikon warna tombol
+                        Icon(Icons.info_outline, color: primaryButtonColor),
                         SizedBox(width: 8),
                         Text(
                           'Tentang Notifikasi',
@@ -249,22 +275,5 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-
-    if (diff.inSeconds < 60) {
-      return 'Baru saja';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} menit yang lalu';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours} jam yang lalu';
-    } else if (diff.inDays == 1) {
-      return 'Kemarin';
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
-    }
   }
 }

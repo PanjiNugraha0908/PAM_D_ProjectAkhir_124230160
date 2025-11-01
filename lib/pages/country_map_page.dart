@@ -1,64 +1,67 @@
-// lib/pages/country_map_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/country.dart';
 
+/// Halaman (Page) untuk menampilkan lokasi geografis suatu negara pada peta.
+///
+/// Halaman ini menerima data [Country] melalui constructor untuk
+/// menentukan titik tengah peta dan lokasi marker.
 class CountryMapPage extends StatelessWidget {
   final Country country;
 
   CountryMapPage({required this.country});
 
-  // Palet Warna BARU (Datar dan Kontras)
-  final Color backgroundColor = Color(
-    0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
-  final Color surfaceColor = Color(
-    0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
-  final Color accentColor = Color(
-    0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
-  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
-  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  // --- Palet Warna Halaman ---
+  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
+  // agar konsisten dan mudah dikelola di seluruh aplikasi.
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
 
   @override
   Widget build(BuildContext context) {
-    // Gunakan koordinat dari model negara
+    // Ambil koordinat dari objek negara yang diterima
     final LatLng countryLocation = LatLng(country.latitude, country.longitude);
 
     return Scaffold(
+      // --- 1. AppBar ---
       appBar: AppBar(
         title: Text(
           'Peta: ${country.name}',
           style: TextStyle(color: textColor),
         ),
-        backgroundColor: backgroundColor, // Latar belakang datar
+        backgroundColor: backgroundColor,
         iconTheme: IconThemeData(color: textColor),
       ),
+      // --- 2. Body ---
       body: Container(
-        color: backgroundColor, // Latar belakang datar
+        color: backgroundColor,
         child: FlutterMap(
+          // --- 2A. Opsi Peta ---
           options: MapOptions(
-            initialCenter: countryLocation,
+            initialCenter: countryLocation, // Pusatkan peta ke lokasi negara
             initialZoom: 4.0,
-            minZoom: 1.0, // <--- PERUBAHAN DI SINI (dari 2.0 menjadi 1.0)
+            minZoom: 1.0,
             interactionOptions: const InteractionOptions(
               flags: InteractiveFlag.all,
             ),
           ),
+
+          // --- 2B. Layer-layer Peta ---
+          // Ditampilkan dari bawah ke atas (index 0 adalah yang paling bawah)
           children: [
-            // Layer Peta OpenStreetMap
+            // [Layer 1] Layer Tile (Dasar Peta)
             TileLayer(
               urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
               subdomains: const ['a', 'b', 'c'],
               userAgentPackageName: 'com.example.mobileprojek',
             ),
-            // Marker Lokasi Negara
+
+            // [Layer 2] Layer Marker (Penanda Lokasi)
             MarkerLayer(
               markers: [
                 Marker(
@@ -67,11 +70,9 @@ class CountryMapPage extends StatelessWidget {
                   point: countryLocation,
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.location_pin,
-                        color: accentColor,
-                        size: 40,
-                      ), // Warna aksen
+                      // Ikon Pin
+                      Icon(Icons.location_pin, color: accentColor, size: 40),
+                      // Label Nama Negara
                       Flexible(
                         child: Container(
                           padding: EdgeInsets.symmetric(
@@ -79,7 +80,7 @@ class CountryMapPage extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white70,
+                            color: Colors.white70, // Semi-transparan
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -90,6 +91,8 @@ class CountryMapPage extends StatelessWidget {
                               fontSize: 10,
                             ),
                             textAlign: TextAlign.center,
+                            overflow: TextOverflow
+                                .ellipsis, // Cegah teks terlalu panjang
                           ),
                         ),
                       ),
@@ -98,7 +101,8 @@ class CountryMapPage extends StatelessWidget {
                 ),
               ],
             ),
-            // Informasi Copyright
+
+            // [Layer 3] Layer Atribusi/Copyright
             Align(
               alignment: Alignment.bottomLeft,
               child: Padding(
@@ -108,7 +112,7 @@ class CountryMapPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.black54,
-                    backgroundColor: Colors.white70,
+                    backgroundColor: Colors.white70, // Semi-transparan
                   ),
                 ),
               ),

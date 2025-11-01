@@ -1,4 +1,7 @@
-// Model Data untuk merepresentasikan informasi detail Negara
+/// Model data yang merepresentasikan satu negara.
+///
+/// Model ini berisi semua informasi detail yang relevan
+/// yang didapat dari API restcountries.com.
 class Country {
   final String name;
   final String officialName;
@@ -13,7 +16,6 @@ class Country {
   final List<String> timezones;
   final String callingCode;
   final List<String> tld;
-  // Koordinat Negara (untuk peta)
   final double latitude;
   final double longitude;
 
@@ -35,42 +37,47 @@ class Country {
     required this.longitude,
   });
 
-  // Factory constructor untuk membuat objek Country dari data JSON (API Response)
+  /// Factory constructor untuk membuat instance [Country] dari data JSON (Map).
+  ///
+  /// Ini menangani parsing data yang kompleks dan bersarang dari
+  /// respons API restcountries.com, termasuk data opsional dan
+  /// struktur data yang tidak konsisten.
   factory Country.fromJson(Map<String, dynamic> json) {
+    // Parsing 'languages': API mengembalikan Map ({"fra": "French"}),
+    // kita hanya ambil 'values' (["French"]).
     List<String> languageList = [];
     if (json['languages'] != null) {
-      // Mengambil nilai (nama bahasa) dari map languages
       languageList = (json['languages'] as Map).values.toList().cast<String>();
     }
 
+    // Parsing 'callingCode': API mengembalikan Map ('idd')
+    // yang berisi 'root' dan 'suffixes'.
     String callingCode = '';
     if (json['idd'] != null) {
-      // Menggabungkan root dan suffix untuk kode panggilan penuh
       callingCode =
           (json['idd']['root'] ?? '') +
           (json['idd']['suffixes'] != null && json['idd']['suffixes'].isNotEmpty
-              ? json['idd']['suffixes'][0]
+              ? json['idd']['suffixes'][0] // Ambil suffix pertama
               : '');
     }
 
-    // Parsing latlng (koordinat) dari API
+    // Parsing 'latlng': API mengembalikan List [latitude, longitude].
     final List<dynamic>? latlng = json['latlng'] as List<dynamic>?;
-    // Mengambil latitude (indeks 0) dan longitude (indeks 1), default 0.0 jika tidak ada
     final double lat = latlng != null && latlng.length >= 1
         ? (json['latlng'][0] as num).toDouble()
-        : 0.0;
+        : 0.0; // Default jika data tidak ada
     final double lng = latlng != null && latlng.length >= 2
         ? (json['latlng'][1] as num).toDouble()
-        : 0.0;
+        : 0.0; // Default jika data tidak ada
 
     return Country(
       name: json['name']['common'] ?? '',
       officialName: json['name']['official'] ?? '',
       flagUrl: json['flags']['png'] ?? '',
-      // Mengambil ibu kota pertama, default 'N/A'
+      // Parsing 'capital': API mengembalikan List, kita ambil yg pertama.
       capital: json['capital'] != null && json['capital'].isNotEmpty
           ? json['capital'][0]
-          : 'N/A',
+          : 'N/A', // Default jika tidak ada ibu kota
       region: json['region'] ?? '',
       subregion: json['subregion'] ?? 'N/A',
       population: json['population'] ?? 0,

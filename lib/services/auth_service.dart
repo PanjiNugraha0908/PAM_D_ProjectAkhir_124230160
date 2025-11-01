@@ -1,19 +1,35 @@
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
-import 'package:hive_flutter/hive_flutter.dart'; // Import untuk Hive
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user.dart';
 import 'database_service.dart';
 
-// Layanan untuk menangani semua logika Autentikasi (Register, Login, Hashing)
+/// Kelas helper statis untuk menangani semua logika otentikasi.
+///
+/// Tanggung jawab kelas ini meliputi:
+/// - Mendaftarkan pengguna baru.
+/// - Memvalidasi login pengguna.
+/// - Mengelola sesi pengguna (login/logout).
+/// - Menyediakan utilitas hashing password.
 class AuthService {
-  // Hash password menggunakan algoritma SHA256
+  /// Melakukan hash pada string [password] menggunakan algoritma SHA-256.
+  ///
+  /// Mengembalikan [String] representasi heksadesimal dari hash.
   static String hashPassword(String password) {
-    var bytes = utf8.encode(password);
-    var digest = sha256.convert(bytes);
+    var bytes = utf8.encode(password); // Ubah string ke bytes (UTF-8)
+    var digest = sha256.convert(bytes); // Lakukan hash
     return digest.toString();
   }
 
-  // Mendaftarkan user baru ke database lokal (Hive)
+  /// Mendaftarkan pengguna baru ke database lokal (Hive).
+  ///
+  /// Selain membuat entri [User] untuk otentikasi, fungsi ini juga
+  /// membuat entri profil kosong yang terpisah di box 'profile'
+  /// yang di-key berdasarkan [username].
+  ///
+  /// Mengembalikan [Map<String, dynamic>] yang berisi:
+  /// - `success` (bool): Status registrasi.
+  /// - `message` (String): Pesan hasil (sukses atau error).
   static Future<Map<String, dynamic>> register(
     String username,
     String password, {
@@ -21,7 +37,7 @@ class AuthService {
     required String email,
     required String noHp,
   }) async {
-    // Validasi input dasar
+    // --- 1. Validasi Input ---
     if (username.isEmpty || password.isEmpty || email.isEmpty || noHp.isEmpty) {
       return {
         'success': false,
@@ -29,21 +45,17 @@ class AuthService {
             'Semua field (Username, Email, No HP, Password) tidak boleh kosong',
       };
     }
-
     if (username.length < 3) {
       return {'success': false, 'message': 'Username minimal 3 karakter'};
     }
-
     if (password.length < 6) {
       return {'success': false, 'message': 'Password minimal 6 karakter'};
     }
-
-    // Cek apakah username sudah terdaftar
     if (DatabaseService.usernameExists(username)) {
       return {'success': false, 'message': 'Username sudah digunakan'};
     }
 
-    // Membuat objek User baru
+    // --- 2. Buat Objek User Baru (untuk Otentikasi) ---
     User newUser = User(
       username: username,
       passwordHash: hashPassword(password),
@@ -52,18 +64,17 @@ class AuthService {
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
     );
-
     await DatabaseService.addUser(newUser);
 
-    // Membuat entri data profil awal (dipisahkan dari User Model untuk data yang dapat diedit)
+    // --- 3. Buat Entri Profil Terpisah (untuk Data yang Dapat Diedit) ---
     final profileBox = Hive.box('profile');
     var newUserProfile = {
       'email': email,
       'noHp': noHp,
-      'nama': '', // Nama lengkap dikosongkan (diisi di Edit Profile)
-      'prodi': '', // Prodi dikosongkan
-      'saranKesan': '', // Saran Kesan dikosongkan
-      'fotoPath': null, // Foto profil dikosongkan
+      'nama': '', // Dikosongkan, diisi nanti via Edit Profile
+      'prodi': '', // Dikosongkan
+      'saranKesan': '', // Dikosongkan
+      'fotoPath': null, // Dikosongkan
     };
     // Menyimpan data profil di bawah key username
     await profileBox.put(username, newUserProfile);
@@ -71,12 +82,22 @@ class AuthService {
     return {'success': true, 'message': 'Registrasi berhasil'};
   }
 
-  // Login user
+  /// Memvalidasi kredensial pengguna dan melakukan login.
+  ///
+  /// Jika berhasil:
+  /// 1. Memperbarui [lastLogin] pengguna.
+  /// 2. Menetapkan pengguna sebagai 'current user' di [DatabaseService].
+  /// 3. Memastikan entri profil untuk pengguna ini ada (untuk migrasi data lama).
+  ///
+  /// Mengembalikan [Map<String, dynamic>] yang berisi:
+  /// - `success` (bool): Status login.
+  /// - `message` (String): Pesan hasil (sukses atau error).
+  /// - `username` (String, opsional): Username jika login berhasil.
   static Future<Map<String, dynamic>> login(
     String username,
     String password,
   ) async {
-    // Validasi input
+    // --- 1. Validasi Input ---
     if (username.isEmpty || password.isEmpty) {
       return {
         'success': false,
@@ -84,19 +105,19 @@ class AuthService {
       };
     }
 
-    // Mengambil data user dari database
+    // --- 2. Ambil dan Validasi User ---
     User? user = DatabaseService.getUser(username);
-
     if (user == null) {
       return {'success': false, 'message': 'Username tidak ditemukan'};
     }
 
-    // Membandingkan hash password
+    // --- 3. Validasi Password ---
     String hashedPassword = hashPassword(password);
     if (user.passwordHash != hashedPassword) {
       return {'success': false, 'message': 'Password salah'};
     }
 
+    // --- 4. Proses Pasca-Login ---
     // Memperbarui waktu login terakhir
     user.lastLogin = DateTime.now();
     await DatabaseService.updateUser(user);
@@ -104,7 +125,9 @@ class AuthService {
     // Menetapkan user sebagai user yang sedang login
     await DatabaseService.setCurrentUser(username);
 
-    // Memastikan entri data profil ada (untuk user lama yang baru di-migrate)
+    // [Fallback/Migrasi] Memastikan entri data profil ada.
+    // Ini untuk menangani pengguna lama yang mungkin dibuat sebelum
+    // sistem 'profileBox' terpisah diimplementasikan.
     final profileBox = Hive.box('profile');
     if (profileBox.get(username) == null) {
       var userProfileData = {
@@ -121,17 +144,23 @@ class AuthService {
     return {'success': true, 'message': 'Login berhasil', 'username': username};
   }
 
-  // Logout: Menghapus status user yang sedang login
+  /// Melakukan logout pada pengguna yang sedang aktif.
+  ///
+  /// Ini menghapus status 'current user' dari [DatabaseService].
   static Future<void> logout() async {
     await DatabaseService.clearCurrentUser();
   }
 
-  // Memeriksa status login
+  /// Memeriksa apakah ada pengguna yang sedang login.
+  ///
+  /// Mengembalikan `true` jika ada 'current user', `false` jika tidak.
   static bool isLoggedIn() {
     return DatabaseService.getCurrentUsername() != null;
   }
 
-  // Mendapatkan username dari user yang sedang login
+  /// Mendapatkan [String] username dari pengguna yang sedang login.
+  ///
+  /// Mengembalikan `null` jika tidak ada pengguna yang login.
   static String? getCurrentUsername() {
     return DatabaseService.getCurrentUsername();
   }

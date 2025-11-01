@@ -2,7 +2,11 @@ import 'package:hive/hive.dart';
 
 part 'history_item.g.dart';
 
-// Model data untuk History, terhubung dengan Hive (Database Lokal)
+/// Model data untuk item riwayat (History), diadaptasi untuk [Hive].
+///
+/// Kelas ini merepresentasikan satu entri riwayat pencarian negara
+/// oleh seorang pengguna. [typeId: 1] digunakan oleh Hive untuk
+/// mengidentifikasi model ini.
 @HiveType(typeId: 1)
 class HistoryItem extends HiveObject {
   @HiveField(0)
