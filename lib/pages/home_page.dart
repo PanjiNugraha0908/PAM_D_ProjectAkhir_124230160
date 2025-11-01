@@ -242,10 +242,14 @@ class _HomePageState extends State<HomePage> {
   void _showCountryDetail(Country country) async {
     String username = widget.username;
 
-    // 1. Dapatkan riwayat SEBELUM penambahan
+    // 1. Dapatkan daftar negara unik yang sudah dilihat SEBELUM penambahan
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
+    var negaraUnikSebelum = historySebelum
+        .map((item) => item.countryName)
+        .toSet();
+    final int totalUnikSebelum = negaraUnikSebelum.length;
 
     // 2. Tambahkan riwayat baru
     await DatabaseService.addHistory(
@@ -261,23 +265,26 @@ class _HomePageState extends State<HomePage> {
 
     ActivityTracker.updateLastActive();
 
-    // 3. Dapatkan riwayat SESUDAH penambahan
+    // 3. Dapatkan daftar negara unik SESUDAH penambahan
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
     );
+    var negaraUnikSesudah = historySesudah
+        .map((item) => item.countryName)
+        .toSet();
+    final int totalUnikSesudah = negaraUnikSesudah.length;
 
-    // 🟢 LOGIKA NOTIFIKASI BARU (KELIPATAN 3)
-    final int totalViews = historySesudah.length;
-    final int viewsSebelum = historySebelum.length;
+    // 🟢 LOGIKA NOTIFIKASI BARU (KELIPATAN 3 NEGARA UNIK)
 
-    // Cek jika total penambahan item riwayat adalah kelipatan 3
-    if (totalViews > 0 && totalViews % 3 == 0) {
-      // Pastikan total views sebelumnya BUKAN kelipatan 3 (untuk mencegah duplikasi)
-      if (viewsSebelum % 3 != 0) {
+    // Cek jika jumlah negara unik mencapai kelipatan 3 (3, 6, 9, dst.)
+    if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
+      // Pastikan negara unik yang dilihat sebelumnya BUKAN kelipatan 3
+      // Notifikasi hanya dikirim saat AMBANG BATAS kelipatan 3 tercapai (mis. dari 2 ke 3, atau dari 5 ke 6).
+      if (totalUnikSebelum % 3 != 0) {
         NotificationService.showNotification(
-          id: totalViews, // Gunakan ID unik
-          title: 'Wawasan Bertambah Lagi! 🌍',
-          body: 'Selamat, kamu sudah melihat $totalViews info negara!',
+          id: totalUnikSesudah, // ID unik berdasarkan jumlah negara unik
+          title: 'Wawasan Bertambah! 🌍',
+          body: 'Selamat, kamu sudah melihat $totalUnikSesudah negara baru!',
         );
       }
     }
@@ -381,14 +388,13 @@ class _HomePageState extends State<HomePage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: accentColor, // ICON MENGGUNAKAN ACCENT COLOR
+                          color: textColor, // ICON MENGGUNAKAN ACCENT COLOR
                         ),
                         SizedBox(width: 8),
                         Text(
                           'ExploreUnity',
                           style: TextStyle(
-                            color:
-                                accentColor, // JUDUL MENGGUNAKAN ACCENT COLOR
+                            color: textColor, // JUDUL MENGGUNAKAN ACCENT COLOR
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
