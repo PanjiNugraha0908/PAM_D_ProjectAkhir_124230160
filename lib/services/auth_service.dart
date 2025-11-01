@@ -1,28 +1,27 @@
-// lib/services/auth_service.dart
-
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
-import 'package:hive_flutter/hive_flutter.dart'; // 🟢 BARU: Import Hive
+import 'package:hive_flutter/hive_flutter.dart'; // Import untuk Hive
 import '../models/user.dart';
 import 'database_service.dart';
 
+// Layanan untuk menangani semua logika Autentikasi (Register, Login, Hashing)
 class AuthService {
-  // Hash password menggunakan SHA256
+  // Hash password menggunakan algoritma SHA256
   static String hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // Register user baru
+  // Mendaftarkan user baru ke database lokal (Hive)
   static Future<Map<String, dynamic>> register(
     String username,
     String password, {
-    // 泙 BARU: Tambahkan named parameter email dan noHp
+    // Parameter wajib untuk data profil awal
     required String email,
     required String noHp,
   }) async {
-    // Validasi
+    // Validasi input dasar
     if (username.isEmpty || password.isEmpty || email.isEmpty || noHp.isEmpty) {
       return {
         'success': false,
@@ -39,40 +38,35 @@ class AuthService {
       return {'success': false, 'message': 'Password minimal 6 karakter'};
     }
 
-    // Check if username exists
+    // Cek apakah username sudah terdaftar
     if (DatabaseService.usernameExists(username)) {
       return {'success': false, 'message': 'Username sudah digunakan'};
     }
 
-    // Create new user
+    // Membuat objek User baru
     User newUser = User(
       username: username,
       passwordHash: hashPassword(password),
-      email: email, // 泙 BARU: Masukkan Email
-      noHp: noHp, // 泙 BARU: Masukkan No HP
+      email: email, // Menyimpan Email dari registrasi
+      noHp: noHp, // Menyimpan No HP dari registrasi
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
-      // 🟢 CATATAN: Pastikan model User Anda (user.dart) memiliki field email dan noHp
-      // Dan jalankan build_runner
     );
 
     await DatabaseService.addUser(newUser);
 
-    // 🟢 PERBAIKAN DATA: Buat data profil KOSONG untuk user baru
-    // Data ini akan diisi di EditProfilePage
+    // Membuat entri data profil awal (dipisahkan dari User Model untuk data yang dapat diedit)
     final profileBox = Hive.box('profile');
     var newUserProfile = {
-      'email': email, // Ambil dari registrasi
-      'noHp': noHp, // Ambil dari registrasi
-      'nama': '', // Kosongkan
-      'prodi': '', // Kosongkan
-      'saranKesan': '', // Kosongkan
-      'fotoPath': null, // Kosongkan
+      'email': email,
+      'noHp': noHp,
+      'nama': '', // Nama lengkap dikosongkan (diisi di Edit Profile)
+      'prodi': '', // Prodi dikosongkan
+      'saranKesan': '', // Saran Kesan dikosongkan
+      'fotoPath': null, // Foto profil dikosongkan
     };
-    await profileBox.put(
-      username,
-      newUserProfile,
-    ); // Simpan data di bawah key username
+    // Menyimpan data profil di bawah key username
+    await profileBox.put(username, newUserProfile);
 
     return {'success': true, 'message': 'Registrasi berhasil'};
   }
@@ -82,7 +76,7 @@ class AuthService {
     String username,
     String password,
   ) async {
-    // Validasi
+    // Validasi input
     if (username.isEmpty || password.isEmpty) {
       return {
         'success': false,
@@ -90,28 +84,27 @@ class AuthService {
       };
     }
 
-    // Get user
+    // Mengambil data user dari database
     User? user = DatabaseService.getUser(username);
 
     if (user == null) {
       return {'success': false, 'message': 'Username tidak ditemukan'};
     }
 
-    // Check password
+    // Membandingkan hash password
     String hashedPassword = hashPassword(password);
     if (user.passwordHash != hashedPassword) {
       return {'success': false, 'message': 'Password salah'};
     }
 
-    // Update last login
+    // Memperbarui waktu login terakhir
     user.lastLogin = DateTime.now();
     await DatabaseService.updateUser(user);
 
-    // Set current user
+    // Menetapkan user sebagai user yang sedang login
     await DatabaseService.setCurrentUser(username);
 
-    // 🟢 PERBAIKAN DATA: Saat login, cek apakah data profil sudah ada
-    // Jika user lama (dibuat sebelum perbaikan ini), buatkan data profil baru
+    // Memastikan entri data profil ada (untuk user lama yang baru di-migrate)
     final profileBox = Hive.box('profile');
     if (profileBox.get(username) == null) {
       var userProfileData = {
@@ -128,18 +121,17 @@ class AuthService {
     return {'success': true, 'message': 'Login berhasil', 'username': username};
   }
 
-  // Logout
+  // Logout: Menghapus status user yang sedang login
   static Future<void> logout() async {
     await DatabaseService.clearCurrentUser();
-    // Tidak perlu clear profile box, karena data disimpan per user
   }
 
-  // Check if user is logged in
+  // Memeriksa status login
   static bool isLoggedIn() {
     return DatabaseService.getCurrentUsername() != null;
   }
 
-  // Get current username
+  // Mendapatkan username dari user yang sedang login
   static String? getCurrentUsername() {
     return DatabaseService.getCurrentUsername();
   }

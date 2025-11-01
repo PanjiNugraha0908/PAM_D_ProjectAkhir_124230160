@@ -1,10 +1,9 @@
-// lib/pages/login_page.dart
-
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'home_page.dart';
 import 'register_page.dart';
 
+// Halaman untuk Login Pengguna
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -14,10 +13,10 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  // BARU: State untuk mengontrol visibilitas password
+  // State untuk mengontrol visibilitas password
   bool _isPasswordVisible = false;
 
-  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
+  // Definisi Palet Warna (Sophisticated Dark Blue - Kontras Optimal)
   final Color backgroundColor = Color(
     0xFF1A202C,
   ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
@@ -33,9 +32,11 @@ class _LoginPageState extends State<LoginPage> {
     0xFFA0AEC0,
   ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
+  // Fungsi asinkron untuk proses login
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
+    // Memanggil AuthService untuk memproses otentikasi
     final result = await AuthService.login(
       _usernameController.text,
       _passwordController.text,
@@ -43,7 +44,9 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = false);
 
+    // Menangani hasil login
     if (result['success']) {
+      // Navigasi ke halaman utama (HomePage) setelah login berhasil
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -51,6 +54,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
+      // Menampilkan pesan error jika login gagal
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
@@ -60,8 +64,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          backgroundColor, // Menggunakan warna latar belakang datar
+      // Menggunakan warna latar belakang datar
+      backgroundColor: backgroundColor, 
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(24.0),
@@ -81,6 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Memuat aset logo dari folder assets
                       Image.asset(
                         'assets/Logoprojek.png',
                         height: 40,
@@ -152,10 +157,10 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(color: textColor, fontSize: 14),
                   ),
                   SizedBox(height: 8),
-                  // Field Password (dengan toggle)
+                  // Field Password (dengan toggle visibilitas)
                   TextField(
                     controller: _passwordController,
-                    obscureText: !_isPasswordVisible, // Menggunakan state
+                    obscureText: !_isPasswordVisible, // Menggunakan state untuk hide/show
                     style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: 'Password',
@@ -165,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: accentColor,
                       ), // Ikon warna aksen
                       suffixIcon: IconButton(
-                        // Tombol toggle
+                        // Tombol toggle visibilitas
                         icon: Icon(
                           _isPasswordVisible
                               ? Icons.visibility
@@ -196,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 16),
 
-                  // Link Daftar
+                  // Link ke halaman Daftar (Register)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -247,6 +252,7 @@ class _LoginPageState extends State<LoginPage> {
                           ? SizedBox(
                               height: 20,
                               width: 20,
+                              // Indikator loading saat proses login
                               child: CircularProgressIndicator(
                                 color: textColor,
                                 strokeWidth: 2,

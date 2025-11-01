@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'history_item.g.dart';
 
+// Model data untuk History, terhubung dengan Hive (Database Lokal)
 @HiveType(typeId: 1)
 class HistoryItem extends HiveObject {
   @HiveField(0)

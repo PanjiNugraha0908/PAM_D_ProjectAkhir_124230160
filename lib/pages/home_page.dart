@@ -1,4 +1,3 @@
-// lib/pages/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,6 +14,7 @@ import 'profile_page.dart';
 import 'settings_page.dart';
 import '../services/notification_service.dart';
 
+// Halaman Utama: Menampilkan daftar negara dan menyediakan fitur pencarian
 class HomePage extends StatefulWidget {
   final String username;
 
@@ -29,44 +29,44 @@ class _HomePageState extends State<HomePage> {
   List<Country> _allCountries = [];
   List<Country> _filteredCountries = [];
   bool _isLoading = false;
-  // HAPUS: String _errorMessage = '';
 
-  // Palet Warna BARU (Sophisticated Dark Blue - Kontras Optimal)
+  // Definisi Palet Warna
   final Color backgroundColor = Color(
     0xFF1A202C,
-  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  ); // Latar Belakang Utama Aplikasi
   final Color surfaceColor = Color(
     0xFF2D3748,
-  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  ); // Warna Permukaan (Card, Input Field)
   final Color accentColor = Color(
     0xFF66B3FF,
-  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  ); // Aksen Utama (Logo, Judul, Ikon Penting)
   final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
   final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
-  final Color hintColor = Color(
-    0xFFA0AEC0,
-  ); // Warna Teks Petunjuk (Hint text, ikon minor)
+  final Color hintColor = Color(0xFFA0AEC0); // Warna Teks Petunjuk
 
   @override
   void initState() {
     super.initState();
+    // Memperbarui waktu aktif terakhir saat halaman dimuat
     ActivityTracker.updateLastActive();
+    // Memuat semua data negara dari API
     _loadAllCountries();
+    // Menambahkan listener untuk memfilter daftar saat teks pencarian berubah
     _searchController.addListener(_filterCountries);
   }
 
+  // Fungsi untuk mengambil semua data negara dari API eksternal
   Future<void> _loadAllCountries() async {
-    // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
     if (mounted) {
       setState(() {
         _isLoading = true;
-        // HAPUS: _errorMessage = '';
       });
     }
 
     try {
       print('🌍 Fetching all countries from API...');
 
+      // Memanggil API restcountries.com untuk mendapatkan semua negara
       final response = await http
           .get(
             Uri.parse('https://restcountries.com/v3.1/all'),
@@ -76,6 +76,7 @@ class _HomePageState extends State<HomePage> {
               'Accept-Encoding': 'gzip, deflate, br',
             },
           )
+          // Menetapkan batas waktu untuk request
           .timeout(
             Duration(seconds: 20),
             onTimeout: () {
@@ -84,39 +85,27 @@ class _HomePageState extends State<HomePage> {
           );
 
       print('📡 Response status: ${response.statusCode}');
-      print('📦 Response length: ${response.body.length} bytes');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('✅ Berhasil decode ${data.length} negara');
-
         final List<Country> countries = [];
-
-        int successCount = 0;
-        int errorCount = 0;
 
         for (var json in data) {
           try {
+            // Memparsing data JSON ke model Country
             countries.add(Country.fromJson(json));
-            successCount++;
           } catch (e) {
-            errorCount++;
             print(
-              '⚠️ Error parsing country #$errorCount: ${json['name']?['common'] ?? 'Unknown'} - $e',
+              '⚠️ Error parsing country: ${json['name']?['common'] ?? 'Unknown'} - $e',
             );
           }
         }
 
-        print('✅ Successfully parsed: $successCount countries');
-        if (errorCount > 0) {
-          print('⚠️ Failed to parse: $errorCount countries');
-        }
-
+        // Mengurutkan negara berdasarkan nama secara alfabetis
         countries.sort(
           (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
         );
 
-        // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
         if (mounted) {
           setState(() {
             _allCountries = countries;
@@ -124,12 +113,8 @@ class _HomePageState extends State<HomePage> {
             _isLoading = false;
           });
         }
-
-        print('🎉 UI updated with ${countries.length} countries');
       } else {
-        // JIKA GAGAL: Tidak perlu set error message, cukup pastikan _allCountries tetap kosong.
         print('❌ Server error: ${response.statusCode}');
-        // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -137,21 +122,17 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (e) {
-      // JIKA EXCEPTION (Network error dll.): Cukup log error dan nonaktifkan loading.
       print('❌ Error loading countries: $e');
-      // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
     }
-    // Tidak ada return value, _allCountries akan kosong jika gagal.
   }
 
+  // Fungsi untuk memfilter daftar negara berdasarkan input pencarian
   void _filterCountries() {
-    // Pengecekan mounted tidak wajib di sini karena dipanggil oleh listener,
-    // yang seharusnya aman. Namun, jika ragu, tambahkan if (mounted)
     if (mounted) {
       setState(() {
         final query = _searchController.text.trim().toLowerCase();
@@ -159,10 +140,11 @@ class _HomePageState extends State<HomePage> {
         if (query.isEmpty) {
           _filteredCountries = _allCountries;
         } else {
+          // Logika filter: mencari berdasarkan nama, ibu kota, atau region
           _filteredCountries = _allCountries
               .where(
                 (country) =>
-                    // PERBAIKAN: Mengganti .contains() dengan .startsWith() untuk filtering yang benar.
+                    // Menggunakan startsWith untuk performa lebih baik dan hasil yang relevan
                     country.name.toLowerCase().startsWith(query) ||
                     country.capital.toLowerCase().startsWith(query) ||
                     country.region.toLowerCase().startsWith(query),
@@ -173,21 +155,17 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // FUNGSI BARU: Search by name (alternatif jika load all gagal)
+  // Fungsi alternatif untuk pencarian langsung ke API jika mode 'load all' gagal
   Future<void> _searchCountriesByName(String query) async {
     if (query.trim().isEmpty) return;
 
-    // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
     if (mounted) {
       setState(() {
         _isLoading = true;
-        // HAPUS: _errorMessage = '';
       });
     }
 
     try {
-      print('🔍 Searching for: $query');
-
       final response = await http
           .get(
             Uri.parse('https://restcountries.com/v3.1/name/$query'),
@@ -198,10 +176,7 @@ class _HomePageState extends State<HomePage> {
           )
           .timeout(Duration(seconds: 10));
 
-      print('📡 Search response: ${response.statusCode}');
-
       if (mounted) {
-        // 🟢 PERBAIKAN FREEZE: Cek mounted setelah await
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
           final List<Country> countries = data
@@ -212,8 +187,6 @@ class _HomePageState extends State<HomePage> {
             _filteredCountries = countries;
             _isLoading = false;
           });
-
-          print('✅ Found ${countries.length} countries');
         } else if (response.statusCode == 404) {
           setState(() {
             _filteredCountries = [];
@@ -225,16 +198,15 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('❌ Search error: $e');
-      // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
       if (mounted) {
         setState(() {
-          // HAPUS: _errorMessage = 'Pencarian gagal. Coba kata kunci lain.';
           _isLoading = false;
         });
       }
     }
   }
 
+  // Filter cepat berdasarkan huruf awal
   void _filterByAlphabet(String letter) {
     setState(() {
       _searchController.clear();
@@ -244,17 +216,19 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Mengembalikan filter ke kondisi awal
   void _resetFilter() {
     setState(() {
       _searchController.clear();
       _filteredCountries = _allCountries;
-      // HAPUS: _errorMessage = '';
     });
   }
 
+  // Fungsi Logout
   Future<void> _logout() async {
     await AuthService.logout();
     if (mounted) {
+      // Kembali ke halaman Login dan menghapus semua rute sebelumnya
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
@@ -262,10 +236,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Menampilkan detail negara dan mencatatnya sebagai history
   void _showCountryDetail(Country country) async {
     String username = widget.username;
 
-    // 1. Dapatkan daftar negara unik yang sudah dilihat SEBELUM penambahan
+    // 1. Hitung negara unik yang sudah dilihat sebelum penambahan history
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
@@ -274,7 +249,7 @@ class _HomePageState extends State<HomePage> {
         .toSet();
     final int totalUnikSebelum = negaraUnikSebelum.length;
 
-    // 2. Tambahkan riwayat baru
+    // 2. Tambahkan entri riwayat baru
     await DatabaseService.addHistory(
       HistoryItem(
         username: username,
@@ -286,9 +261,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
+    // Memperbarui waktu aktif terakhir pengguna
     ActivityTracker.updateLastActive();
 
-    // 3. Dapatkan daftar negara unik SESUDAH penambahan
+    // 3. Hitung negara unik sesudah penambahan
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
     );
@@ -297,7 +273,7 @@ class _HomePageState extends State<HomePage> {
         .toSet();
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
-    // 🟢 LOGIKA NOTIFIKASI (KELIPATAN 3 NEGARA UNIK)
+    // LOGIKA NOTIFIKASI: Tampilkan notifikasi setiap kelipatan 3 negara unik yang baru dilihat
     if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
       if (totalUnikSebelum % 3 != 0) {
         NotificationService.showNotification(
@@ -309,6 +285,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (mounted) {
+      // Menampilkan dialog detail negara
       showDialog(
         context: context,
         barrierColor: Colors.black.withOpacity(0.5),
@@ -317,6 +294,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Fungsi Navigasi Tab
   void _openHistory() {
     Navigator.pushReplacement(
       context,
@@ -363,12 +341,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      // Implementasi Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        // 🟢 PERBAIKAN HIGHLIGHT: Set selected color ke HINT color (abu-abu)
-        // Ini memastikan tidak ada ikon yang ter-highlight di Home Page
+        // Di halaman Home, semua ikon tidak perlu di-highlight secara visual
         selectedItemColor: hintColor,
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -388,7 +366,7 @@ class _HomePageState extends State<HomePage> {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // Header Aplikasi (Settings, Logo, Logout)
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
@@ -405,14 +383,12 @@ class _HomePageState extends State<HomePage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          // 🟢 PERBAIKAN WARNA HEADER: Kembali ke textColor
                           color: textColor,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'ExploreUnity',
                           style: TextStyle(
-                            // 🟢 PERBAIKAN WARNA HEADER: Kembali ke textColor
                             color: textColor,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -462,6 +438,7 @@ class _HomePageState extends State<HomePage> {
                       ), // Fokus warna tombol
                     ),
                   ),
+                  // Memungkinkan pencarian langsung jika data negara kosong
                   onSubmitted:
                       (_allCountries.isEmpty &&
                           _searchController.text.isNotEmpty)
@@ -472,7 +449,7 @@ class _HomePageState extends State<HomePage> {
 
               SizedBox(height: 8),
 
-              // Alphabet Filter (hanya jika data sudah loaded)
+              // Alphabet Filter (hanya tampil jika data sudah dimuat)
               if (!_isLoading && _allCountries.isNotEmpty)
                 Container(
                   height: 50,
@@ -515,7 +492,7 @@ class _HomePageState extends State<HomePage> {
 
               SizedBox(height: 8),
 
-              // Info jumlah negara
+              // Info jumlah negara dan tombol Reset
               if (!_isLoading && _filteredCountries.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
@@ -548,7 +525,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
-              // Content
+              // Menampilkan Loading, Empty State, atau Daftar Negara
               if (_isLoading)
                 Expanded(
                   child: Center(
@@ -657,6 +634,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )
               else
+                // Daftar Negara (ListView.builder)
                 Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -664,6 +642,7 @@ class _HomePageState extends State<HomePage> {
                     itemBuilder: (context, index) {
                       final country = _filteredCountries[index];
 
+                      // Logika untuk menampilkan header abjad (A, B, C, dst)
                       bool showHeader = false;
                       if (_allCountries.isNotEmpty && index == 0) {
                         showHeader = true;
@@ -684,6 +663,7 @@ class _HomePageState extends State<HomePage> {
                                 bottom: 8,
                                 left: 4,
                               ),
+                              // Menampilkan huruf awal sebagai header
                               child: Text(
                                 country.name[0].toUpperCase(),
                                 style: TextStyle(
@@ -700,6 +680,7 @@ class _HomePageState extends State<HomePage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            // InkWell untuk efek visual saat diklik
                             child: InkWell(
                               onTap: () => _showCountryDetail(country),
                               borderRadius: BorderRadius.circular(12),
@@ -707,6 +688,7 @@ class _HomePageState extends State<HomePage> {
                                 padding: EdgeInsets.all(12),
                                 child: Row(
                                   children: [
+                                    // Bendera Negara
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
@@ -714,6 +696,7 @@ class _HomePageState extends State<HomePage> {
                                         width: 60,
                                         height: 40,
                                         fit: BoxFit.cover,
+                                        // Error Builder: menampilkan ikon jika gambar gagal dimuat
                                         errorBuilder:
                                             (context, error, stackTrace) {
                                               return Container(
@@ -729,6 +712,7 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                               );
                                             },
+                                        // Loading Builder: menampilkan progress saat gambar dimuat
                                         loadingBuilder:
                                             (context, child, loadingProgress) {
                                               if (loadingProgress == null)
@@ -755,6 +739,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     SizedBox(width: 12),
+                                    // Info Nama, Ibu Kota, dan Region
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -790,6 +775,7 @@ class _HomePageState extends State<HomePage> {
                                         ],
                                       ),
                                     ),
+                                    // Ikon Navigasi
                                     Icon(
                                       Icons.arrow_forward_ios,
                                       color: hintColor,
