@@ -74,6 +74,9 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🟢 PERBAIKAN DATA: Dapatkan username saat ini
+    final String? username = AuthService.getCurrentUsername();
+
     return Scaffold(
       // === BottomNavigationBar ===
       bottomNavigationBar: BottomNavigationBar(
@@ -122,18 +125,21 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
+      // 🟢 PERBAIKAN DATA: Gunakan ValueListenableBuilder yang mendengarkan KEY SPESIFIK
       body: ValueListenableBuilder(
-        valueListenable: Hive.box('profile').listenable(),
+        valueListenable: Hive.box('profile').listenable(keys: [username ?? '']),
         builder: (context, Box box, _) {
-          String username = AuthService.getCurrentUsername() ?? 'User';
+          // 🟢 PERBAIKAN DATA: Ambil data dari map spesifik user
+          final userProfileData = box.get(username) ?? <String, dynamic>{};
+
           // Data yang diambil dari registrasi dan bisa diedit
-          String email = box.get('email', defaultValue: 'Email Belum Diatur');
-          String noHp = box.get('noHp', defaultValue: 'No. HP Belum Diatur');
+          String email = userProfileData['email'] ?? 'Email Belum Diatur';
+          String noHp = userProfileData['noHp'] ?? 'No. HP Belum Diatur';
           // Data tambahan yang mungkin ada
-          String nama = box.get('nama', defaultValue: 'Nama Belum Diatur');
-          String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
-          String? fotoPath = box.get('fotoPath');
-          String saranKesan = box.get('saranKesan', defaultValue: '');
+          String nama = userProfileData['nama'] ?? 'Nama Belum Diatur';
+          String prodi = userProfileData['prodi'] ?? 'Prodi Belum Diatur';
+          String? fotoPath = userProfileData['fotoPath'];
+          String saranKesan = userProfileData['saranKesan'] ?? '';
 
           return Container(
             color: backgroundColor, // Latar belakang datar
@@ -160,7 +166,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 24),
 
-                  // 👇 PERBAIKAN: NAMA sebagai Judul Utama
+                  // 👇 PERBAIKAN UI: NAMA sebagai Judul Utama
                   Text(
                     nama,
                     style: TextStyle(
@@ -172,9 +178,9 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
 
-                  // 👇 PERBAIKAN: USERNAME sebagai Subtitle
+                  // 👇 PERBAIKAN UI: USERNAME sebagai Subtitle
                   Text(
-                    '@$username',
+                    '@${username ?? 'User'}',
                     style: TextStyle(fontSize: 16, color: hintColor),
                   ),
                   SizedBox(height: 32),

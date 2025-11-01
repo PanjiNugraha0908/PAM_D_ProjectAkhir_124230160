@@ -1,9 +1,12 @@
+// lib/pages/edit_profile_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'dart:io';
+import '../services/auth_service.dart'; // 🟢 BARU: Import AuthService
 
 class EditProfilePage extends StatefulWidget {
   @override
@@ -13,6 +16,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late Box _profileBox;
+  String? _username; // 🟢 BARU: Untuk menyimpan username
 
   // Palet Warna BARU (Datar dan Kontras)
   final Color backgroundColor = Color(
@@ -34,7 +38,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  // 燥 BARU: Controller untuk Saran & Kesan
   late TextEditingController _saranKesanController;
 
   String? _imagePath;
@@ -44,24 +47,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     _profileBox = Hive.box('profile');
 
+    // 🟢 PERBAIKAN DATA: Baca data dari key username
+    _username = AuthService.getCurrentUsername();
+    var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
+
     _namaController = TextEditingController(
-      text: _profileBox.get('nama', defaultValue: ''),
+      text: userProfileData['nama'] ?? '',
     );
     _noHpController = TextEditingController(
-      text: _profileBox.get('noHp', defaultValue: ''),
+      text: userProfileData['noHp'] ?? '',
     );
     _prodiController = TextEditingController(
-      text: _profileBox.get('prodi', defaultValue: ''),
+      text: userProfileData['prodi'] ?? '',
     );
     _emailController = TextEditingController(
-      text: _profileBox.get('email', defaultValue: ''),
+      text: userProfileData['email'] ?? '',
     );
-    // 燥 BARU: Inisialisasi Saran & Kesan
     _saranKesanController = TextEditingController(
-      text: _profileBox.get('saranKesan', defaultValue: ''),
+      text: userProfileData['saranKesan'] ?? '',
     );
 
-    _imagePath = _profileBox.get('fotoPath');
+    _imagePath = userProfileData['fotoPath'];
   }
 
   Future<void> _pickImage() async {
@@ -84,19 +90,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _saveProfile() {
-    if (_formKey.currentState!.validate()) {
-      _profileBox.put('nama', _namaController.text);
-      _profileBox.put('noHp', _noHpController.text);
-      _profileBox.put('prodi', _prodiController.text);
-      _profileBox.put('email', _emailController.text);
-      _profileBox.put('fotoPath', _imagePath);
-      // 燥 BARU: Simpan Saran & Kesan
-      _profileBox.put('saranKesan', _saranKesanController.text);
+    if (_formKey.currentState!.validate() && _username != null) {
+      // 🟢 PERBAIKAN DATA: Simpan data sebagai Map di bawah key username
+      var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
+
+      userProfileData['nama'] = _namaController.text;
+      userProfileData['noHp'] = _noHpController.text;
+      userProfileData['prodi'] = _prodiController.text;
+      userProfileData['email'] = _emailController.text;
+      userProfileData['fotoPath'] = _imagePath;
+      userProfileData['saranKesan'] = _saranKesanController.text;
+
+      _profileBox.put(_username, userProfileData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Profil berhasil disimpan!'),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors
+              .green, // Anda bisa ganti ini ke primaryButtonColor jika mau
         ),
       );
 

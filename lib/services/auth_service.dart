@@ -2,6 +2,7 @@
 
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:hive_flutter/hive_flutter.dart'; // 🟢 BARU: Import Hive
 import '../models/user.dart';
 import 'database_service.dart';
 
@@ -17,7 +18,7 @@ class AuthService {
   static Future<Map<String, dynamic>> register(
     String username,
     String password, {
-    // 🟢 BARU: Tambahkan named parameter email dan noHp
+    // 泙 BARU: Tambahkan named parameter email dan noHp
     required String email,
     required String noHp,
   }) async {
@@ -47,19 +48,31 @@ class AuthService {
     User newUser = User(
       username: username,
       passwordHash: hashPassword(password),
-      email: email, // 🟢 BARU: Masukkan Email
-      noHp: noHp, // 🟢 BARU: Masukkan No HP
+      email: email, // 泙 BARU: Masukkan Email
+      noHp: noHp, // 泙 BARU: Masukkan No HP
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
+      // 🟢 CATATAN: Pastikan model User Anda (user.dart) memiliki field email dan noHp
+      // Dan jalankan build_runner
     );
 
     await DatabaseService.addUser(newUser);
 
-    // 🟢 BARU: Simpan data yang dapat diedit ke profile box
-    await DatabaseService.updateProfileData(username, {
-      'email': email,
-      'noHp': noHp,
-    });
+    // 🟢 PERBAIKAN DATA: Buat data profil KOSONG untuk user baru
+    // Data ini akan diisi di EditProfilePage
+    final profileBox = Hive.box('profile');
+    var newUserProfile = {
+      'email': email, // Ambil dari registrasi
+      'noHp': noHp, // Ambil dari registrasi
+      'nama': '', // Kosongkan
+      'prodi': '', // Kosongkan
+      'saranKesan': '', // Kosongkan
+      'fotoPath': null, // Kosongkan
+    };
+    await profileBox.put(
+      username,
+      newUserProfile,
+    ); // Simpan data di bawah key username
 
     return {'success': true, 'message': 'Registrasi berhasil'};
   }
@@ -97,12 +110,20 @@ class AuthService {
     // Set current user
     await DatabaseService.setCurrentUser(username);
 
-    // 🟢 BARU: Sinkronkan data profil ke profile box saat login
-    // Asumsi properti email dan noHp sudah ada di User model
-    await DatabaseService.updateProfileData(username, {
-      'email': user.email,
-      'noHp': user.noHp,
-    });
+    // 🟢 PERBAIKAN DATA: Saat login, cek apakah data profil sudah ada
+    // Jika user lama (dibuat sebelum perbaikan ini), buatkan data profil baru
+    final profileBox = Hive.box('profile');
+    if (profileBox.get(username) == null) {
+      var userProfileData = {
+        'email': user.email,
+        'noHp': user.noHp,
+        'nama': '',
+        'prodi': '',
+        'saranKesan': '',
+        'fotoPath': null,
+      };
+      await profileBox.put(username, userProfileData);
+    }
 
     return {'success': true, 'message': 'Login berhasil', 'username': username};
   }
@@ -110,6 +131,7 @@ class AuthService {
   // Logout
   static Future<void> logout() async {
     await DatabaseService.clearCurrentUser();
+    // Tidak perlu clear profile box, karena data disimpan per user
   }
 
   // Check if user is logged in
