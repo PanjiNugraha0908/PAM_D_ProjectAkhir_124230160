@@ -16,14 +16,22 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   List<HistoryItem> _history = [];
 
-  // Palet Warna (DIPERBARUI)
-  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
-  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
-  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
-
+  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
   @override
   void initState() {
     super.initState();
@@ -43,7 +51,7 @@ class _HistoryPageState extends State<HistoryPage> {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: cardColor,
+        backgroundColor: surfaceColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text('Hapus History', style: TextStyle(color: textColor)),
         content: Text(
@@ -57,7 +65,10 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Hapus', style: TextStyle(color: Colors.redAccent)),
+            child: Text(
+              'Hapus',
+              style: TextStyle(color: accentColor),
+            ), // Warna aksen
           ),
         ],
       ),
@@ -71,7 +82,7 @@ class _HistoryPageState extends State<HistoryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('History berhasil dihapus'),
-            backgroundColor: secondaryColor,
+            backgroundColor: primaryButtonColor, // Warna tombol
           ),
         );
       }
@@ -129,10 +140,10 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       // === Tambahkan BottomNavigationBar di sini ===
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: cardColor,
+        backgroundColor: surfaceColor, // Warna permukaan
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: hintColor, // Agar semua icon seragam/tidak berwarna
+        selectedItemColor: accentColor, // Warna aksen
         currentIndex: 2, // Index untuk 'History'
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -147,7 +158,7 @@ class _HistoryPageState extends State<HistoryPage> {
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
-      backgroundColor: Colors.transparent, // Untuk gradient
+      backgroundColor: backgroundColor, // Untuk latar belakang datar
       appBar: AppBar(
         // Tambahkan tombol kembali dan fungsi _openHome
         leading: IconButton(
@@ -155,27 +166,23 @@ class _HistoryPageState extends State<HistoryPage> {
           onPressed: _openHome,
         ),
         title: Text('History Pencarian', style: TextStyle(color: textColor)),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // Warna latar belakang datar
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
         actions: [
           if (_history.isNotEmpty)
             IconButton(
-              icon: Icon(Icons.delete_sweep, color: hintColor),
+              icon: Icon(
+                Icons.delete_sweep,
+                color: accentColor,
+              ), // Ikon warna aksen
               onPressed: _clearHistory,
               tooltip: 'Hapus Semua History',
             ),
         ],
       ),
       body: Container(
-        // Background Gradient (DIPERBARUI)
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
-          ),
-        ),
+        color: backgroundColor, // Latar belakang datar
         child: _history.isEmpty
             ? Center(
                 child: Column(
@@ -248,7 +255,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         isThreeLine: true,
                       ),
                       Divider(
-                        color: tertiaryColor.withOpacity(0.5),
+                        color: surfaceColor, // Warna permukaan
                         height: 16,
                         indent: 16,
                         endIndent: 16,

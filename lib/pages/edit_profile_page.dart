@@ -14,19 +14,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late Box _profileBox;
 
-  // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   late TextEditingController _namaController;
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  // 👇 BARU: Controller untuk Saran & Kesan
+  // 燥 BARU: Controller untuk Saran & Kesan
   late TextEditingController _saranKesanController;
 
   String? _imagePath;
@@ -48,7 +56,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(
       text: _profileBox.get('email', defaultValue: ''),
     );
-    // 👇 BARU: Inisialisasi Saran & Kesan
+    // 燥 BARU: Inisialisasi Saran & Kesan
     _saranKesanController = TextEditingController(
       text: _profileBox.get('saranKesan', defaultValue: ''),
     );
@@ -82,7 +90,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _profileBox.put('prodi', _prodiController.text);
       _profileBox.put('email', _emailController.text);
       _profileBox.put('fotoPath', _imagePath);
-      // 👇 BARU: Simpan Saran & Kesan
+      // 燥 BARU: Simpan Saran & Kesan
       _profileBox.put('saranKesan', _saranKesanController.text);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,15 +108,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: primaryColor,
+      backgroundColor: backgroundColor, // Latar belakang datar
       appBar: AppBar(
         title: Text('Edit Profil', style: TextStyle(color: textColor)),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // Latar belakang datar
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: textColor),
+            icon: Icon(Icons.save, color: accentColor), // Ikon warna aksen
             onPressed: _saveProfile,
             tooltip: 'Simpan',
           ),
@@ -117,13 +125,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       body: Container(
         width: double.infinity,
         height: double.infinity, // PERBAIKAN: Tambahkan height full
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
-          ),
-        ),
+        color: backgroundColor, // Latar belakang datar
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -137,7 +139,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       children: [
                         CircleAvatar(
                           radius: 80,
-                          backgroundColor: tertiaryColor,
+                          backgroundColor: surfaceColor, // Warna permukaan
                           backgroundImage:
                               (_imagePath != null && _imagePath!.isNotEmpty)
                               ? FileImage(File(_imagePath!))
@@ -160,16 +162,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ),
                 SizedBox(height: 32),
-                
+
                 // Judul Bagian Profil
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Data Diri',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryButtonColor,
+                    ), // Warna tombol
                   ),
                 ),
-                Divider(color: tertiaryColor, height: 24),
+                Divider(
+                  color: hintColor.withOpacity(0.5),
+                  height: 24,
+                ), // Divider warna hint
 
                 _buildTextField(
                   controller: _namaController,
@@ -201,18 +210,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   mustBeFilled: true,
                 ),
                 SizedBox(height: 32),
-                
+
                 // Judul Bagian Saran & Kesan
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Saran & Kesan',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryButtonColor,
+                    ), // Warna tombol
                   ),
                 ),
-                Divider(color: tertiaryColor, height: 24),
-
-                // 👇 BARU: Field Saran & Kesan
+                Divider(
+                  color: hintColor.withOpacity(0.5),
+                  height: 24,
+                ), // Divider warna hint
+                // 燥 BARU: Field Saran & Kesan
                 _buildTextField(
                   controller: _saranKesanController,
                   label: 'Tulis saran atau kesan Anda...',
@@ -223,12 +238,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
 
                 SizedBox(height: 32),
-                
+
                 ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: secondaryColor,
+                    backgroundColor: primaryButtonColor, // Warna tombol
                     minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -273,10 +288,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         hintText: hint,
         hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
 
-        prefixIcon: Icon(icon, color: hintColor),
+        prefixIcon: Icon(icon, color: accentColor), // Ikon warna aksen
 
         filled: true,
-        fillColor: tertiaryColor.withOpacity(0.3),
+        fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -285,7 +300,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: secondaryColor, width: 2),
+          borderSide: BorderSide(
+            color: primaryButtonColor,
+            width: 2,
+          ), // Fokus warna tombol
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -311,7 +329,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _noHpController.dispose();
     _prodiController.dispose();
     _emailController.dispose();
-    _saranKesanController.dispose(); // 👇 BARU: Dispose
+    _saranKesanController.dispose(); // 燥 BARU: Dispose
     super.dispose();
   }
 }

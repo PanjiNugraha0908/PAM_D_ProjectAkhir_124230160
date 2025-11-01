@@ -10,13 +10,22 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationEnabled = true;
 
-  // Palet Warna (DIPERBARUI)
-  final Color primaryColor = Color(0xFF010A1E); // LEBIH GELAP
-  final Color secondaryColor = Color(0xFF103070); // LEBIH GELAP
-  final Color tertiaryColor = Color(0xFF2A364B); // LEBIH GELAP
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   @override
   void initState() {
@@ -44,7 +53,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ? 'Notifikasi pengingat diaktifkan'
               : 'Notifikasi pengingat dinonaktifkan',
         ),
-        backgroundColor: secondaryColor,
+        backgroundColor: primaryButtonColor, // Warna tombol
       ),
     );
   }
@@ -59,7 +68,7 @@ class _SettingsPageState extends State<SettingsPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Notifikasi test dikirim!'),
-        backgroundColor: secondaryColor,
+        backgroundColor: primaryButtonColor, // Warna tombol
       ),
     );
   }
@@ -70,60 +79,73 @@ class _SettingsPageState extends State<SettingsPage> {
     int daysSinceActive = ActivityTracker.getDaysSinceLastActive();
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Untuk gradient
+      backgroundColor: backgroundColor, // Untuk latar belakang datar
       appBar: AppBar(
         title: Text('Pengaturan', style: TextStyle(color: textColor)),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // Latar belakang datar
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
       ),
       body: Container(
-        // Background Gradient (DIPERBARUI)
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              primaryColor,
-              secondaryColor,
-              tertiaryColor,
-            ],
-          ),
-        ),
+        color: backgroundColor, // Latar belakang datar
         child: ListView(
           children: [
             // Notification Settings
             Card(
-              color: cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: surfaceColor, // Warna permukaan
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               margin: EdgeInsets.all(16),
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.notifications, color: secondaryColor),
+                    leading: Icon(
+                      Icons.notifications,
+                      color: accentColor,
+                    ), // Ikon warna aksen
                     title: Text(
                       'Notifikasi',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
                     ),
                   ),
-                  Divider(height: 1, color: tertiaryColor),
+                  Divider(
+                    height: 1,
+                    color: hintColor.withOpacity(0.5),
+                  ), // Divider warna hint
                   SwitchListTile(
                     secondary: Icon(Icons.alarm, color: hintColor),
-                    title: Text('Pengingat Aktivitas', style: TextStyle(color: textColor)),
+                    title: Text(
+                      'Pengingat Aktivitas',
+                      style: TextStyle(color: textColor),
+                    ),
                     subtitle: Text(
                       'Kirim notifikasi jika tidak aktif selama 1 hari',
                       style: TextStyle(color: hintColor),
                     ),
                     value: _notificationEnabled,
                     onChanged: _toggleNotification,
-                    activeColor: secondaryColor,
-                    inactiveThumbColor: tertiaryColor,
+                    activeColor: primaryButtonColor, // Warna tombol
+                    inactiveThumbColor: hintColor,
                   ),
                   ListTile(
                     leading: Icon(Icons.send, color: hintColor),
-                    title: Text('Test Notifikasi', style: TextStyle(color: textColor)),
-                    subtitle: Text('Kirim notifikasi test', style: TextStyle(color: hintColor)),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16, color: hintColor),
+                    title: Text(
+                      'Test Notifikasi',
+                      style: TextStyle(color: textColor),
+                    ),
+                    subtitle: Text(
+                      'Kirim notifikasi test',
+                      style: TextStyle(color: hintColor),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: hintColor,
+                    ),
                     onTap: _testNotification,
                   ),
                 ],
@@ -132,21 +154,35 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Activity Info
             Card(
-              color: cardColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: surfaceColor, // Warna permukaan
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               margin: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.info, color: secondaryColor),
+                    leading: Icon(
+                      Icons.info,
+                      color: accentColor,
+                    ), // Ikon warna aksen
                     title: Text(
                       'Informasi Aktivitas',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
                     ),
                   ),
-                  Divider(height: 1, color: tertiaryColor),
+                  Divider(
+                    height: 1,
+                    color: hintColor.withOpacity(0.5),
+                  ), // Divider warna hint
                   ListTile(
-                    title: Text('Terakhir Aktif', style: TextStyle(color: textColor)),
+                    title: Text(
+                      'Terakhir Aktif',
+                      style: TextStyle(color: textColor),
+                    ),
                     subtitle: Text(
                       lastActive != null
                           ? _formatDateTime(lastActive)
@@ -156,8 +192,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     trailing: Icon(Icons.access_time, color: hintColor),
                   ),
                   ListTile(
-                    title: Text('Hari Sejak Terakhir Aktif', style: TextStyle(color: textColor)),
-                    subtitle: Text('$daysSinceActive hari', style: TextStyle(color: hintColor)),
+                    title: Text(
+                      'Hari Sejak Terakhir Aktif',
+                      style: TextStyle(color: textColor),
+                    ),
+                    subtitle: Text(
+                      '$daysSinceActive hari',
+                      style: TextStyle(color: hintColor),
+                    ),
                     trailing: Icon(Icons.calendar_today, color: hintColor),
                   ),
                 ],
@@ -167,8 +209,12 @@ class _SettingsPageState extends State<SettingsPage> {
             // Info Card
             Card(
               margin: EdgeInsets.all(16),
-              color: tertiaryColor.withOpacity(0.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: surfaceColor.withOpacity(
+                0.8,
+              ), // Warna permukaan yang diredupkan
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: Column(
@@ -176,7 +222,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info_outline, color: secondaryColor),
+                        Icon(
+                          Icons.info_outline,
+                          color: primaryButtonColor,
+                        ), // Ikon warna tombol
                         SizedBox(width: 8),
                         Text(
                           'Tentang Notifikasi',

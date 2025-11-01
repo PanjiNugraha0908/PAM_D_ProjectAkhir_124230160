@@ -10,13 +10,22 @@ import 'home_page.dart';
 import '../services/auth_service.dart';
 
 class ProfilePage extends StatelessWidget {
-  // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   // Tambahkan navigasi helper untuk kembali ke Home
   void _openHome(BuildContext context) {
@@ -67,10 +76,10 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       // === BottomNavigationBar ===
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: cardColor,
+        backgroundColor: surfaceColor, // Warna permukaan
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: hintColor, // Agar semua icon seragam/tidak berwarna
+        selectedItemColor: accentColor, // Warna aksen
         currentIndex: 0, // Index untuk 'Profil'
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -87,7 +96,7 @@ class ProfilePage extends StatelessWidget {
       ),
 
       // === Akhir BottomNavigationBar ===
-      backgroundColor: primaryColor,
+      backgroundColor: backgroundColor, // Latar belakang datar
       appBar: AppBar(
         // Tambahkan tombol kembali dan fungsi _openHome
         leading: IconButton(
@@ -95,12 +104,12 @@ class ProfilePage extends StatelessWidget {
           onPressed: () => _openHome(context),
         ),
         title: Text('Profil Pembuat', style: TextStyle(color: textColor)),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // Latar belakang datar
         iconTheme: IconThemeData(color: textColor),
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.edit, color: textColor),
+            icon: Icon(Icons.edit, color: accentColor), // Ikon warna aksen
             tooltip: 'Edit Profil',
             onPressed: () {
               Navigator.push(
@@ -123,13 +132,7 @@ class ProfilePage extends StatelessWidget {
           String saranKesan = box.get('saranKesan', defaultValue: '');
 
           return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [primaryColor, secondaryColor, tertiaryColor],
-              ),
-            ),
+            color: backgroundColor, // Latar belakang datar
             width: double.infinity,
             height: double.infinity,
             child: SingleChildScrollView(
@@ -139,7 +142,7 @@ class ProfilePage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 80,
-                    backgroundColor: tertiaryColor,
+                    backgroundColor: surfaceColor, // Warna permukaan
                     backgroundImage: (fotoPath != null && fotoPath.isNotEmpty)
                         ? FileImage(File(fotoPath))
                         : null,
@@ -168,7 +171,7 @@ class ProfilePage extends StatelessWidget {
                   SizedBox(height: 32),
 
                   Card(
-                    color: cardColor,
+                    color: surfaceColor, // Warna permukaan
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -185,7 +188,9 @@ class ProfilePage extends StatelessWidget {
                             prodi.isEmpty ? 'Belum Diatur' : prodi,
                             Icons.school,
                           ),
-                          Divider(color: tertiaryColor.withOpacity(0.5)),
+                          Divider(
+                            color: hintColor.withOpacity(0.5),
+                          ), // Divider warna hint
                           _buildInfoTile(
                             'Email',
                             email.isEmpty ? 'Belum Diatur' : email,
@@ -212,7 +217,11 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildInfoTile(String label, String value, IconData icon) {
     return ListTile(
-      leading: Icon(icon, color: secondaryColor, size: 28),
+      leading: Icon(
+        icon,
+        color: primaryButtonColor,
+        size: 28,
+      ), // Ikon warna tombol
       title: Text(label, style: TextStyle(fontSize: 14, color: hintColor)),
       subtitle: Text(
         value,
@@ -229,7 +238,7 @@ class ProfilePage extends StatelessWidget {
   // 👇 BARU: Widget untuk menampilkan Saran & Kesan
   Widget _buildSaranKesanSection(BuildContext context, String saranKesan) {
     return Card(
-      color: cardColor,
+      color: surfaceColor, // Warna permukaan
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -245,7 +254,7 @@ class ProfilePage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: secondaryColor,
+                    color: primaryButtonColor, // Warna tombol
                   ),
                 ),
                 IconButton(
@@ -266,7 +275,7 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
             Divider(
-              color: tertiaryColor.withOpacity(0.5),
+              color: hintColor.withOpacity(0.5), // Divider warna hint
               height: 16,
               thickness: 1,
             ),

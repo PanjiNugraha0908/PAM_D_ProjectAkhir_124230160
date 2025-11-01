@@ -21,13 +21,22 @@ class _LocationPageState extends State<LocationPage> {
   Map<String, dynamic>? _locationData;
   String _errorMessage = '';
 
-  // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Datar dan Kontras)
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   @override
   void initState() {
@@ -130,10 +139,10 @@ class _LocationPageState extends State<LocationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: cardColor,
+        backgroundColor: surfaceColor, // Warna permukaan
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: hintColor, // Menyamakan warna
+        selectedItemColor: accentColor, // Warna aksen
         currentIndex: 1, // Lokasi sekarang di index 1
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -149,14 +158,7 @@ class _LocationPageState extends State<LocationPage> {
         ],
       ),
       body: Container(
-        // Background Gradient
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
-          ),
-        ),
+        color: backgroundColor, // Latar belakang datar
         child: SafeArea(
           child: Column(
             children: [
@@ -177,7 +179,7 @@ class _LocationPageState extends State<LocationPage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: textColor,
+                          color: textColor, // Icon warna aksen
                         ),
                         SizedBox(width: 8),
                         Text(
@@ -228,7 +230,9 @@ class _LocationPageState extends State<LocationPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(color: textColor),
+                            CircularProgressIndicator(
+                              color: primaryButtonColor,
+                            ), // Warna tombol
                             SizedBox(height: 16),
                             Text(
                               'Mendapatkan lokasi Anda...',
@@ -258,7 +262,7 @@ class _LocationPageState extends State<LocationPage> {
           // Peta
           Card(
             elevation: 4,
-            color: tertiaryColor,
+            color: surfaceColor, // Warna permukaan
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -293,7 +297,7 @@ class _LocationPageState extends State<LocationPage> {
                                 ),
                                 child: Icon(
                                   Icons.location_pin,
-                                  color: Colors.red,
+                                  color: accentColor, // Warna aksen
                                   size: 40,
                                 ),
                               ),
@@ -316,7 +320,7 @@ class _LocationPageState extends State<LocationPage> {
           // Kartu Lokasi
           Card(
             elevation: 4,
-            color: cardColor, // Warna card gelap
+            color: surfaceColor, // Warna permukaan
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -330,19 +334,22 @@ class _LocationPageState extends State<LocationPage> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: textColor,
+                      color: accentColor, // Warna aksen
                     ),
                   ),
-                  Divider(height: 24, color: tertiaryColor),
+                  Divider(
+                    height: 24,
+                    color: hintColor.withOpacity(0.5),
+                  ), // Divider warna hint
                   _buildLocationRow('Alamat', _locationData?['address'] ?? '-'),
-                  Divider(height: 16, color: tertiaryColor.withOpacity(0.5)),
+                  Divider(height: 16, color: hintColor.withOpacity(0.5)),
                   _buildLocationRow('Negara', _locationData?['country'] ?? '-'),
-                  Divider(height: 16, color: tertiaryColor.withOpacity(0.5)),
+                  Divider(height: 16, color: hintColor.withOpacity(0.5)),
                   _buildLocationRow(
                     'Kota/Daerah',
                     _locationData?['locality'] ?? '-',
                   ),
-                  Divider(height: 16, color: tertiaryColor.withOpacity(0.5)),
+                  Divider(height: 16, color: hintColor.withOpacity(0.5)),
                   _buildLocationRow(
                     'Koordinat',
                     '${_locationData?['latitude']?.toStringAsFixed(6) ?? '-'}, ${_locationData?['longitude']?.toStringAsFixed(6) ?? '-'}',
@@ -364,7 +371,11 @@ class _LocationPageState extends State<LocationPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.location_off, size: 64, color: Colors.red.shade300),
+            Icon(
+              Icons.location_off,
+              size: 64,
+              color: accentColor,
+            ), // Ikon warna aksen
             SizedBox(height: 16),
             Text(
               'Gagal Mendapatkan Lokasi',
@@ -386,7 +397,9 @@ class _LocationPageState extends State<LocationPage> {
               onPressed: _getCurrentLocation,
               icon: Icon(Icons.refresh, color: textColor),
               label: Text('Coba Lagi', style: TextStyle(color: textColor)),
-              style: ElevatedButton.styleFrom(backgroundColor: secondaryColor),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryButtonColor,
+              ), // Warna tombol
             ),
             SizedBox(height: 12),
             OutlinedButton.icon(

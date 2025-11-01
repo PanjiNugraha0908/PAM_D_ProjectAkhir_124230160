@@ -17,13 +17,20 @@ class CountryDetailDialog extends StatefulWidget {
 }
 
 class _CountryDetailDialogState extends State<CountryDetailDialog> {
-  // Palet Warna (Sudah Gelap)
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   // Currency Converter
   String? selectedFromCurrency;
@@ -187,7 +194,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: cardColor,
+      backgroundColor: surfaceColor, // Warna permukaan
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         constraints: BoxConstraints(
@@ -214,7 +221,11 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                   ),
                   // Tombol untuk Buka Peta
                   IconButton(
-                    icon: Icon(Icons.map, color: secondaryColor, size: 28),
+                    icon: Icon(
+                      Icons.map,
+                      color: primaryButtonColor,
+                      size: 28,
+                    ), // Warna tombol
                     onPressed: _openCountryMap,
                     tooltip: 'Lihat Negara di Peta',
                   ),
@@ -226,7 +237,10 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                 ],
               ),
             ),
-            Divider(color: tertiaryColor, height: 1),
+            Divider(
+              color: hintColor.withOpacity(0.5),
+              height: 1,
+            ), // Divider warna hint
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
@@ -248,7 +262,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: secondaryColor,
+                              color: accentColor, // Warna aksen
                             ),
                           ),
                           SizedBox(height: 12),
@@ -284,7 +298,9 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                           Divider(
                             height: 32,
                             thickness: 1,
-                            color: tertiaryColor,
+                            color: hintColor.withOpacity(
+                              0.5,
+                            ), // Divider warna hint
                           ),
 
                           // Konversi Mata Uang
@@ -293,7 +309,9 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                           Divider(
                             height: 32,
                             thickness: 1,
-                            color: tertiaryColor,
+                            color: hintColor.withOpacity(
+                              0.5,
+                            ), // Divider warna hint
                           ),
 
                           // Waktu Real-time
@@ -355,19 +373,22 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
         labelText: label,
         labelStyle: TextStyle(color: hintColor),
         prefixIcon: icon != null
-            ? Icon(icon, color: hintColor, size: 20)
+            ? Icon(icon, color: accentColor, size: 20) // Ikon warna aksen
             : null,
         prefixText: prefixText,
         prefixStyle: TextStyle(color: textColor, fontSize: 16),
         filled: true,
-        fillColor: tertiaryColor.withOpacity(0.3),
+        fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: tertiaryColor),
+          borderSide: BorderSide(color: hintColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: secondaryColor, width: 2),
+          borderSide: BorderSide(
+            color: primaryButtonColor,
+            width: 2,
+          ), // Fokus warna tombol
         ),
       ),
     );
@@ -383,20 +404,23 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: cardColor,
+      dropdownColor: surfaceColor, // Warna dropdown
       style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: hintColor),
         filled: true,
-        fillColor: tertiaryColor.withOpacity(0.3),
+        fillColor: surfaceColor.withOpacity(0.5), // Warna isian field
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: tertiaryColor),
+          borderSide: BorderSide(color: hintColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: secondaryColor, width: 2),
+          borderSide: BorderSide(
+            color: primaryButtonColor,
+            width: 2,
+          ), // Fokus warna tombol
         ),
       ),
     );
@@ -411,7 +435,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: secondaryColor,
+            color: accentColor, // Warna aksen
           ),
         ),
         SizedBox(height: 16),
@@ -467,8 +491,8 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
               onPressed: isLoadingConversion ? null : _convertCurrency,
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 14),
-                backgroundColor: secondaryColor,
-                disabledBackgroundColor: tertiaryColor,
+                backgroundColor: primaryButtonColor, // Warna tombol
+                disabledBackgroundColor: surfaceColor.withOpacity(0.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -520,7 +544,9 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: tertiaryColor.withOpacity(0.3),
+                color: surfaceColor.withOpacity(
+                  0.5,
+                ), // Warna permukaan diredupkan
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -537,7 +563,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.greenAccent,
+                          color: primaryButtonColor, // Warna tombol
                         ),
                       ),
                     ],
@@ -573,7 +599,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: secondaryColor,
+            color: accentColor, // Warna aksen
           ),
         ),
         SizedBox(height: 16),
@@ -583,7 +609,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
             widget.country.timezones[0],
             'Waktu ${widget.country.name}',
             countryTime,
-            secondaryColor,
+            primaryButtonColor, // Warna tombol untuk border
           ),
           SizedBox(height: 16),
           // Dropdown untuk memilih timezone
@@ -602,7 +628,7 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
               selectedTimezone!,
               TimezoneService.getTimezoneName(selectedTimezone!),
               convertedTime,
-              tertiaryColor,
+              accentColor, // Warna aksen untuk border
             ),
           ],
         ] else
@@ -618,9 +644,12 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: surfaceColor.withOpacity(0.5), // Warna permukaan diredupkan
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: color,
+          width: 1.5,
+        ), // Menggunakan warna yang dipass untuk batas
       ),
       child: Row(
         children: [

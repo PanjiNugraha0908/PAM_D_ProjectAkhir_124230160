@@ -10,11 +10,21 @@ class CountryMapPage extends StatelessWidget {
 
   CountryMapPage({required this.country});
 
-  // Warna-warna yang konsisten dengan desain aplikasi Anda
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color textColor = Color(0xFFD9D9D9);
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   @override
   Widget build(BuildContext context) {
@@ -27,17 +37,11 @@ class CountryMapPage extends StatelessWidget {
           'Peta: ${country.name}',
           style: TextStyle(color: textColor),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // Latar belakang datar
         iconTheme: IconThemeData(color: textColor),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
-          ),
-        ),
+        color: backgroundColor, // Latar belakang datar
         child: FlutterMap(
           options: MapOptions(
             initialCenter: countryLocation,
@@ -63,7 +67,11 @@ class CountryMapPage extends StatelessWidget {
                   point: countryLocation,
                   child: Column(
                     children: [
-                      Icon(Icons.location_pin, color: Colors.red, size: 40),
+                      Icon(
+                        Icons.location_pin,
+                        color: accentColor,
+                        size: 40,
+                      ), // Warna aksen
                       Flexible(
                         child: Container(
                           padding: EdgeInsets.symmetric(

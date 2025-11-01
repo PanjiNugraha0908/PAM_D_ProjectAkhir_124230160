@@ -31,13 +31,21 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = false;
   // HAPUS: String _errorMessage = '';
 
-  // Palet Warna
-  final Color primaryColor = Color(0xFF010A1E);
-  final Color secondaryColor = Color(0xFF103070);
-  final Color tertiaryColor = Color(0xFF2A364B);
-  final Color cardColor = Color(0xFF21252F);
-  final Color textColor = Color(0xFFD9D9D9);
-  final Color hintColor = Color(0xFF898989);
+  // Palet Warna BARU (Datar dan Kontras)
+  final Color backgroundColor = Color(
+    0xFF1A202C,
+  ); // Latar Belakang Utama Aplikasi (Biru Sangat Gelap)
+  final Color surfaceColor = Color(
+    0xFF2D3748,
+  ); // Warna Permukaan (Card, Input Field, Bottom Navigation)
+  final Color accentColor = Color(
+    0xFF66B3FF,
+  ); // Aksen Utama (Logo, Judul, Ikon Penting, Selected Item)
+  final Color primaryButtonColor = Color(0xFF4299E1); // Warna Tombol Utama
+  final Color textColor = Color(0xFFE2E8F0); // Warna Teks Standar
+  final Color hintColor = Color(
+    0xFFA0AEC0,
+  ); // Warna Teks Petunjuk (Hint text, ikon minor)
 
   @override
   void initState() {
@@ -128,25 +136,6 @@ class _HomePageState extends State<HomePage> {
     }
     // Tidak ada return value, _allCountries akan kosong jika gagal.
   }
-
-  // FUNGSI INI SUDAH TIDAK DIGUNAKAN KARENA _errorMessage DIHAPUS
-  // String _getErrorMessage(dynamic error) {
-  //   String errorStr = error.toString();
-
-  //   if (errorStr.contains('SocketException') ||
-  //       errorStr.contains('NetworkException')) {
-  //     return 'Tidak ada koneksi internet.\nPastikan WiFi/data seluler aktif.';
-  //   } else if (errorStr.contains('timeout') ||
-  //       errorStr.contains('TimeoutException')) {
-  //     return 'Koneksi terlalu lambat.\nCoba lagi dengan koneksi lebih baik.';
-  //   } else if (errorStr.contains('FormatException')) {
-  //     return 'Data dari server tidak valid.\nCoba lagi nanti.';
-  //   } else if (errorStr.contains('400') || errorStr.contains('Bad Request')) {
-  //     return 'Gagal memuat semua negara.\nGunakan fitur search untuk mencari negara tertentu.';
-  //   } else {
-  //     return 'Gagal memuat data.\nCoba gunakan search atau refresh.';
-  //   }
-  // }
 
   void _filterCountries() {
     final query = _searchController.text.trim().toLowerCase();
@@ -345,16 +334,16 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       // 👇 PERBAIKAN UTAMA: Cegah Scaffold mengubah ukuran ketika keyboard muncul
-      resizeToAvoidBottomInset: false, 
+      resizeToAvoidBottomInset: false,
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: cardColor,
+        backgroundColor: surfaceColor, // Warna permukaan
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: hintColor, // <-- PERUBAHAN: Menyamakan warna
+        selectedItemColor: accentColor, // Warna aksen untuk item terpilih
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -369,13 +358,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [primaryColor, secondaryColor, tertiaryColor],
-          ),
-        ),
+        color: backgroundColor, // Menggunakan warna latar belakang datar
         child: SafeArea(
           child: Column(
             children: [
@@ -396,7 +379,7 @@ class _HomePageState extends State<HomePage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: textColor,
+                          color: textColor, // Icon warna aksen
                         ),
                         SizedBox(width: 8),
                         Text(
@@ -427,7 +410,10 @@ class _HomePageState extends State<HomePage> {
                   decoration: InputDecoration(
                     hintText: 'Cari negara...',
                     hintStyle: TextStyle(color: hintColor.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.search, color: hintColor),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: accentColor,
+                    ), // Icon warna aksen
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(Icons.clear, color: hintColor),
@@ -435,14 +421,17 @@ class _HomePageState extends State<HomePage> {
                           )
                         : null,
                     filled: true,
-                    fillColor: tertiaryColor.withOpacity(0.5),
+                    fillColor: surfaceColor, // Warna isian field
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.transparent),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: secondaryColor, width: 2),
+                      borderSide: BorderSide(
+                        color: primaryButtonColor,
+                        width: 2,
+                      ), // Fokus warna tombol
                     ),
                   ),
                   // PERBAIKAN: Gunakan search API jika load all gagal
@@ -485,9 +474,9 @@ class _HomePageState extends State<HomePage> {
                           onSelected: hasCountries
                               ? (_) => _filterByAlphabet(letter)
                               : null,
-                          backgroundColor: tertiaryColor.withOpacity(0.3),
-                          selectedColor: secondaryColor,
-                          disabledColor: tertiaryColor.withOpacity(0.1),
+                          backgroundColor: surfaceColor.withOpacity(0.5),
+                          selectedColor: primaryButtonColor, // Warna tombol
+                          disabledColor: surfaceColor.withOpacity(0.1),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -523,7 +512,7 @@ class _HomePageState extends State<HomePage> {
                           child: Text(
                             'Reset',
                             style: TextStyle(
-                              color: secondaryColor,
+                              color: accentColor, // Warna aksen
                               fontSize: 12,
                             ),
                           ),
@@ -540,7 +529,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(
-                          color: secondaryColor,
+                          color: primaryButtonColor, // Warna tombol
                           strokeWidth: 3,
                         ),
                         SizedBox(height: 24),
@@ -573,19 +562,16 @@ class _HomePageState extends State<HomePage> {
                             padding: EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  secondaryColor.withOpacity(0.3),
-                                  tertiaryColor.withOpacity(0.3),
-                                ],
-                              ),
+                              color: surfaceColor, // Warna permukaan
                             ),
                             // Mengganti Icons.public dengan Logoprojek.png
                             child: Image.asset(
                               'assets/Logoprojek.png',
                               height: 80,
                               width: 80,
-                              color: textColor.withOpacity(0.8),
+                              color: accentColor.withOpacity(
+                                0.8,
+                              ), // Ikon warna aksen
                             ),
                           ),
                           SizedBox(height: 32),
@@ -614,10 +600,14 @@ class _HomePageState extends State<HomePage> {
                             Container(
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: tertiaryColor.withOpacity(0.3),
+                                color: surfaceColor.withOpacity(
+                                  0.5,
+                                ), // Warna permukaan yang diredupkan
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: secondaryColor.withOpacity(0.3),
+                                  color: accentColor.withOpacity(
+                                    0.3,
+                                  ), // Batas warna aksen yang diredupkan
                                 ),
                               ),
                               child: Row(
@@ -681,13 +671,13 @@ class _HomePageState extends State<HomePage> {
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: secondaryColor,
+                                  color: accentColor, // Warna aksen
                                 ),
                               ),
                             ),
 
                           Card(
-                            color: cardColor.withOpacity(0.5),
+                            color: surfaceColor, // Warna permukaan
                             margin: EdgeInsets.only(bottom: 8),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -711,7 +701,9 @@ class _HomePageState extends State<HomePage> {
                                               return Container(
                                                 width: 60,
                                                 height: 40,
-                                                color: tertiaryColor,
+                                                color: surfaceColor.withOpacity(
+                                                  0.8,
+                                                ),
                                                 child: Icon(
                                                   Icons.flag,
                                                   color: hintColor,
@@ -726,7 +718,9 @@ class _HomePageState extends State<HomePage> {
                                               return Container(
                                                 width: 60,
                                                 height: 40,
-                                                color: tertiaryColor,
+                                                color: surfaceColor.withOpacity(
+                                                  0.8,
+                                                ),
                                                 child: Center(
                                                   child: SizedBox(
                                                     width: 20,
