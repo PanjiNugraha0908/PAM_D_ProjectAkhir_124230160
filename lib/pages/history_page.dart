@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/history_item.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
+// Tambahkan import halaman lain untuk navigasi BottomNavBar dan kembali ke Home
+import 'profile_page.dart';
+import 'location_page.dart';
+import 'login_page.dart';
+import 'home_page.dart';
 
 class HistoryPage extends StatefulWidget {
   @override
@@ -73,11 +78,82 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  // Tambahkan navigasi helper untuk BottomNavBar dan kembali ke Home
+  void _openHome() {
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(username: username)),
+      );
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _openProfile() {
+    // Menggunakan pushReplacement untuk navigasi antar tab utama agar stack tetap bersih
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => ProfilePage()),
+    );
+  }
+
+  void _openLocation() {
+    // Menggunakan pushReplacement untuk navigasi antar tab utama agar stack tetap bersih
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LocationPage()),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    switch (index) {
+      case 0: // Profil
+        _openProfile();
+        break;
+      case 1: // Lokasi
+        _openLocation();
+        break;
+      case 2: // History (Tetap di halaman ini)
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // === Tambahkan BottomNavigationBar di sini ===
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: cardColor,
+        type: BottomNavigationBarType.fixed,
+        unselectedItemColor: hintColor,
+        selectedItemColor: hintColor, // Agar semua icon seragam/tidak berwarna
+        currentIndex: 2, // Index untuk 'History'
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.my_location),
+            label: 'Lokasi',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+        ],
+      ),
       backgroundColor: Colors.transparent, // Untuk gradient
       appBar: AppBar(
+        // Tambahkan tombol kembali dan fungsi _openHome
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: textColor),
+          onPressed: _openHome,
+        ),
         title: Text('History Pencarian', style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
         iconTheme: IconThemeData(color: textColor),

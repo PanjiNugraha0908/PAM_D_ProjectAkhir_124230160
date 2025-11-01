@@ -52,10 +52,7 @@ class _RegisterPageState extends State<RegisterPage> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
     }
   }
@@ -68,11 +65,7 @@ class _RegisterPageState extends State<RegisterPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              primaryColor,
-              secondaryColor,
-              tertiaryColor,
-            ],
+            colors: [primaryColor, secondaryColor, tertiaryColor],
           ),
         ),
         child: Center(
@@ -124,7 +117,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     SizedBox(height: 32),
-                    
+
                     // Label Username
                     Text(
                       'Masukkan Username',
@@ -138,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       icon: Icons.person,
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Label Password
                     Text(
                       'Masukkan Password',
@@ -181,7 +174,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextButton(
                           onPressed: () {
                             // Cukup pop untuk kembali ke halaman Login
-                            Navigator.pop(context); 
+                            Navigator.pop(context);
                           },
                           style: TextButton.styleFrom(
                             padding: EdgeInsets.zero,

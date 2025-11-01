@@ -9,6 +9,7 @@ import 'login_page.dart';
 import 'history_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
+import 'home_page.dart'; // <-- Pastikan ini ada
 
 class LocationPage extends StatefulWidget {
   @override
@@ -67,15 +68,36 @@ class _LocationPageState extends State<LocationPage> {
     }
   }
 
+  // PERBAIKAN: Fungsi untuk kembali ke HomePage
+  void _openHome() {
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      // Menggunakan pushReplacement agar kembali ke HomePage dan mengganti LocationPage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(username: username)),
+      );
+    } else {
+      // Fallback ke Login Page jika sesi hilang
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
   void _openHistory() {
-    Navigator.push(
+    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HistoryPage()),
     );
   }
 
   void _openProfile() {
-    Navigator.push(
+    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
     );
@@ -111,7 +133,7 @@ class _LocationPageState extends State<LocationPage> {
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: secondaryColor,
+        selectedItemColor: hintColor, // Menyamakan warna
         currentIndex: 1, // Lokasi sekarang di index 1
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -119,7 +141,6 @@ class _LocationPageState extends State<LocationPage> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-          // Item Feedback (Dihapus)
           BottomNavigationBarItem(
             icon: Icon(Icons.my_location),
             label: 'Lokasi',
@@ -185,7 +206,8 @@ class _LocationPageState extends State<LocationPage> {
                   children: [
                     IconButton(
                       icon: Icon(Icons.arrow_back, color: textColor),
-                      onPressed: () => Navigator.pop(context),
+                      // PERBAIKAN: Ganti Navigator.pop dengan _openHome
+                      onPressed: _openHome,
                     ),
                     Text(
                       'Lokasi Saya',

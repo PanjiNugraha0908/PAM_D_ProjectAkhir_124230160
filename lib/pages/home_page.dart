@@ -301,21 +301,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openHistory() {
-    Navigator.push(
+    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HistoryPage()),
     );
   }
 
   void _openLocation() {
-    Navigator.push(
+    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LocationPage()),
     );
   }
 
   void _openProfile() {
-    Navigator.push(
+    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
     );
@@ -349,8 +352,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: cardColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: secondaryColor,
-        currentIndex: 0,
+        selectedItemColor: hintColor, // <-- PERUBAHAN: Menyamakan warna
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
