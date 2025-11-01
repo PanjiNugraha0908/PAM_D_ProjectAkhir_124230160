@@ -56,10 +56,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadAllCountries() async {
-    setState(() {
-      _isLoading = true;
-      // HAPUS: _errorMessage = '';
-    });
+    // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        // HAPUS: _errorMessage = '';
+      });
+    }
 
     try {
       print('🌍 Fetching all countries from API...');
@@ -113,48 +116,59 @@ class _HomePageState extends State<HomePage> {
           (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
         );
 
-        setState(() {
-          _allCountries = countries;
-          _filteredCountries = countries;
-          _isLoading = false;
-        });
+        // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+        if (mounted) {
+          setState(() {
+            _allCountries = countries;
+            _filteredCountries = countries;
+            _isLoading = false;
+          });
+        }
 
         print('🎉 UI updated with ${countries.length} countries');
       } else {
         // JIKA GAGAL: Tidak perlu set error message, cukup pastikan _allCountries tetap kosong.
         print('❌ Server error: ${response.statusCode}');
-        setState(() {
-          _isLoading = false;
-        });
+        // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       // JIKA EXCEPTION (Network error dll.): Cukup log error dan nonaktifkan loading.
       print('❌ Error loading countries: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
     // Tidak ada return value, _allCountries akan kosong jika gagal.
   }
 
   void _filterCountries() {
-    final query = _searchController.text.trim().toLowerCase();
+    // Pengecekan mounted tidak wajib di sini karena dipanggil oleh listener,
+    // yang seharusnya aman. Namun, jika ragu, tambahkan if (mounted)
+    if (mounted) {
+      setState(() {
+        final query = _searchController.text.trim().toLowerCase();
 
-    if (query.isEmpty) {
-      setState(() {
-        _filteredCountries = _allCountries;
-      });
-    } else {
-      setState(() {
-        _filteredCountries = _allCountries
-            .where(
-              (country) =>
-                  // PERBAIKAN: Mengganti .contains() dengan .startsWith() untuk filtering yang benar.
-                  country.name.toLowerCase().startsWith(query) ||
-                  country.capital.toLowerCase().startsWith(query) ||
-                  country.region.toLowerCase().startsWith(query),
-            )
-            .toList();
+        if (query.isEmpty) {
+          _filteredCountries = _allCountries;
+        } else {
+          _filteredCountries = _allCountries
+              .where(
+                (country) =>
+                    // PERBAIKAN: Mengganti .contains() dengan .startsWith() untuk filtering yang benar.
+                    country.name.toLowerCase().startsWith(query) ||
+                    country.capital.toLowerCase().startsWith(query) ||
+                    country.region.toLowerCase().startsWith(query),
+              )
+              .toList();
+        }
       });
     }
   }
@@ -163,10 +177,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _searchCountriesByName(String query) async {
     if (query.trim().isEmpty) return;
 
-    setState(() {
-      _isLoading = true;
-      // HAPUS: _errorMessage = '';
-    });
+    // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        // HAPUS: _errorMessage = '';
+      });
+    }
 
     try {
       print('🔍 Searching for: $query');
@@ -183,32 +200,38 @@ class _HomePageState extends State<HomePage> {
 
       print('📡 Search response: ${response.statusCode}');
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        final List<Country> countries = data
-            .map((json) => Country.fromJson(json))
-            .toList();
+      if (mounted) {
+        // 🟢 PERBAIKAN FREEZE: Cek mounted setelah await
+        if (response.statusCode == 200) {
+          final List<dynamic> data = json.decode(response.body);
+          final List<Country> countries = data
+              .map((json) => Country.fromJson(json))
+              .toList();
 
-        setState(() {
-          _filteredCountries = countries;
-          _isLoading = false;
-        });
+          setState(() {
+            _filteredCountries = countries;
+            _isLoading = false;
+          });
 
-        print('✅ Found ${countries.length} countries');
-      } else if (response.statusCode == 404) {
-        setState(() {
-          _filteredCountries = [];
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Search failed: ${response.statusCode}');
+          print('✅ Found ${countries.length} countries');
+        } else if (response.statusCode == 404) {
+          setState(() {
+            _filteredCountries = [];
+            _isLoading = false;
+          });
+        } else {
+          throw Exception('Search failed: ${response.statusCode}');
+        }
       }
     } catch (e) {
       print('❌ Search error: $e');
-      setState(() {
-        // HAPUS: _errorMessage = 'Pencarian gagal. Coba kata kunci lain.';
-        _isLoading = false;
-      });
+      // 🟢 PERBAIKAN FREEZE: Pastikan widget masih ada sebelum setState
+      if (mounted) {
+        setState(() {
+          // HAPUS: _errorMessage = 'Pencarian gagal. Coba kata kunci lain.';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -274,15 +297,11 @@ class _HomePageState extends State<HomePage> {
         .toSet();
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
-    // 🟢 LOGIKA NOTIFIKASI BARU (KELIPATAN 3 NEGARA UNIK)
-
-    // Cek jika jumlah negara unik mencapai kelipatan 3 (3, 6, 9, dst.)
+    // 🟢 LOGIKA NOTIFIKASI (KELIPATAN 3 NEGARA UNIK)
     if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
-      // Pastikan negara unik yang dilihat sebelumnya BUKAN kelipatan 3
-      // Notifikasi hanya dikirim saat AMBANG BATAS kelipatan 3 tercapai (mis. dari 2 ke 3, atau dari 5 ke 6).
       if (totalUnikSebelum % 3 != 0) {
         NotificationService.showNotification(
-          id: totalUnikSesudah, // ID unik berdasarkan jumlah negara unik
+          id: totalUnikSesudah,
           title: 'Wawasan Bertambah! 🌍',
           body: 'Selamat, kamu sudah melihat $totalUnikSesudah negara baru!',
         );
@@ -299,7 +318,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openHistory() {
-    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HistoryPage()),
@@ -307,7 +325,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openLocation() {
-    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LocationPage()),
@@ -315,7 +332,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openProfile() {
-    // FIX: Menggunakan pushReplacement untuk navigasi antar tab utama
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => ProfilePage()),
@@ -346,13 +362,14 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 👇 PERBAIKAN UTAMA: Cegah Scaffold mengubah ukuran ketika keyboard muncul
       resizeToAvoidBottomInset: false,
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: surfaceColor, // Warna permukaan
+        backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
-        selectedItemColor: accentColor, // Warna aksen untuk item terpilih
+        // 🟢 PERBAIKAN HIGHLIGHT: Set selected color ke HINT color (abu-abu)
+        // Ini memastikan tidak ada ikon yang ter-highlight di Home Page
+        selectedItemColor: hintColor,
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -388,13 +405,15 @@ class _HomePageState extends State<HomePage> {
                           'assets/Logoprojek.png',
                           height: 24,
                           width: 24,
-                          color: textColor, // ICON MENGGUNAKAN ACCENT COLOR
+                          // 🟢 PERBAIKAN WARNA HEADER: Kembali ke textColor
+                          color: textColor,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'ExploreUnity',
                           style: TextStyle(
-                            color: textColor, // JUDUL MENGGUNAKAN ACCENT COLOR
+                            // 🟢 PERBAIKAN WARNA HEADER: Kembali ke textColor
+                            color: textColor,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -422,7 +441,7 @@ class _HomePageState extends State<HomePage> {
                     prefixIcon: Icon(
                       Icons.search,
                       color: accentColor,
-                    ), // Icon warna aksen
+                    ), // Icon search tetap accent (biru cerah)
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(Icons.clear, color: hintColor),
@@ -443,7 +462,6 @@ class _HomePageState extends State<HomePage> {
                       ), // Fokus warna tombol
                     ),
                   ),
-                  // PERBAIKAN: Gunakan search API jika load all gagal
                   onSubmitted:
                       (_allCountries.isEmpty &&
                           _searchController.text.isNotEmpty)
@@ -557,7 +575,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 )
-              // HAPUS BLOK ERROR STATE. Fallthrough ke default state jika _allCountries kosong.
               else if (_filteredCountries.isEmpty)
                 Expanded(
                   child: Center(
@@ -566,14 +583,12 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Logo Proyek
                           Container(
                             padding: EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: surfaceColor, // Warna permukaan
+                              color: surfaceColor,
                             ),
-                            // Mengganti Icons.public dengan Logoprojek.png
                             child: Image.asset(
                               'assets/Logoprojek.png',
                               height: 80,
@@ -596,27 +611,21 @@ class _HomePageState extends State<HomePage> {
                           ),
                           SizedBox(height: 12),
                           Text(
-                            // Teks yang akan ditampilkan saat gagal muat SEMUA negara atau saat hasil pencarian kosong.
                             _allCountries.isEmpty
                                 ? 'Cari negara yang ingin kamu ketahui'
                                 : 'untuk "${_searchController.text}"',
                             style: TextStyle(color: hintColor, fontSize: 14),
                             textAlign: TextAlign.center,
                           ),
-                          // Bagian instruksi pencarian (Gambar Kedua)
                           if (_allCountries.isEmpty) ...[
                             SizedBox(height: 32),
                             Container(
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: surfaceColor.withOpacity(
-                                  0.5,
-                                ), // Warna permukaan yang diredupkan
+                                color: surfaceColor.withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: accentColor.withOpacity(
-                                    0.3,
-                                  ), // Batas warna aksen yang diredupkan
+                                  color: accentColor.withOpacity(0.3),
                                 ),
                               ),
                               child: Row(

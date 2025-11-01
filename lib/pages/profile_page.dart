@@ -81,7 +81,8 @@ class ProfilePage extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: hintColor,
         selectedItemColor: accentColor, // Warna aksen
-        currentIndex: 0, // Index untuk 'Profil'
+        currentIndex:
+            0, // Index untuk 'Profil' (karena ini adalah Profile Page)
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
@@ -125,10 +126,9 @@ class ProfilePage extends StatelessWidget {
         valueListenable: Hive.box('profile').listenable(),
         builder: (context, Box box, _) {
           String username = AuthService.getCurrentUsername() ?? 'User';
-          // DATA YANG DIAMBIL DARI REGISTRASI DAN BISA DIEDIT DI EDIT PROFILE
+          // Data yang diambil dari registrasi dan bisa diedit
           String email = box.get('email', defaultValue: 'Email Belum Diatur');
           String noHp = box.get('noHp', defaultValue: 'No. HP Belum Diatur');
-
           // Data tambahan yang mungkin ada
           String nama = box.get('nama', defaultValue: 'Nama Belum Diatur');
           String prodi = box.get('prodi', defaultValue: 'Prodi Belum Diatur');
@@ -160,8 +160,9 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 24),
 
+                  // 👇 PERBAIKAN: NAMA sebagai Judul Utama
                   Text(
-                    username, // Menampilkan Username Login
+                    nama,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -171,7 +172,11 @@ class ProfilePage extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
 
-                  Text(nama, style: TextStyle(fontSize: 16, color: hintColor)),
+                  // 👇 PERBAIKAN: USERNAME sebagai Subtitle
+                  Text(
+                    '@$username',
+                    style: TextStyle(fontSize: 16, color: hintColor),
+                  ),
                   SizedBox(height: 32),
 
                   Card(
