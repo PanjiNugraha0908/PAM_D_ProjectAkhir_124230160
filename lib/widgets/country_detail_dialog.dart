@@ -125,6 +125,10 @@ class _CountryDetailDialogState extends State<CountryDetailDialog> {
 
   void _updateTimes() {
     if (widget.country.timezones.isEmpty) return;
+
+    // 👇 PERBAIKAN: Selalu cek 'mounted' sebelum memanggil setState
+    if (!mounted) return;
+
     setState(() {
       countryTime = TimezoneService.getCurrentTimeForCountry(
         widget.country.timezones[0],
