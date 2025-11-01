@@ -1,4 +1,4 @@
-// panjinugraha0908/mobileteori/mobileteori-7f413ce1fa96f0055ff7cae5adf0a95d644ffbf5/lib/services/database_service.dart
+// lib/services/database_service.dart
 
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/user.dart';
@@ -8,7 +8,7 @@ class DatabaseService {
   static const String _userBoxName = 'users';
   static const String _historyBoxName = 'history';
   static const String _currentUserKey = 'current_user';
-  static const String _profileBoxName = 'profile'; //
+  static const String _profileBoxName = 'profile';
 
   // Initialize Hive
   static Future<void> init() async {
@@ -22,7 +22,7 @@ class DatabaseService {
     await Hive.openBox<User>(_userBoxName);
     await Hive.openBox<HistoryItem>(_historyBoxName);
     await Hive.openBox<String>(_currentUserKey);
-    await Hive.openBox(_profileBoxName); //
+    await Hive.openBox(_profileBoxName);
   }
 
   // User Box
@@ -35,20 +35,21 @@ class DatabaseService {
   // Current User Box
   static Box<String> get _currentUserBox => Hive.box<String>(_currentUserKey);
 
-  // Profile Box (untuk data yang diakses Profile Page)
+  // Profile Box (BARU: Untuk menyimpan data yang dapat diedit di Profile Page)
   static Box get _profileBox => Hive.box(_profileBoxName);
 
   // Get user by username
   static User? getUser(String username) {
-    // KODE ASLI ANDA
+    // Catatan: Pastikan konstruktor User di orElse() juga sudah diupdate untuk email/noHp
     return _userBox.values
             .firstWhere(
               (user) => user.username == username,
               orElse: () => User(
                 username: '',
                 passwordHash: '',
-                email: '', // Perlu ditambahkan di model User
-                noHp: '', // Perlu ditambahkan di model User
+                // Asumsi field baru (email/noHp) sudah ada di model User
+                email: '',
+                noHp: '',
                 createdAt: DateTime.now(),
                 lastLogin: DateTime.now(),
               ),
@@ -118,15 +119,14 @@ class DatabaseService {
     return _userBox.values.toList();
   }
 
-  // 🟢 BARU: Fungsi untuk menyimpan/mengupdate data profil
+  // 🟢 BARU: Metode untuk menyimpan/mengupdate data profil yang dapat diedit
   static Future<void> updateProfileData(
     String username,
     Map<String, dynamic> data,
   ) async {
-    // Karena _profileBox digunakan untuk menyimpan data yang dapat diedit,
-    // kita akan menyimpan data ini sebagai pasangan kunci-nilai.
-    // Jika Anda ingin mendukung banyak user, struktur ini harus diubah.
-    // Untuk saat ini, kita ikuti konvensi kode Anda yang hanya menyimpan data profil user yang sedang aktif.
+    // Menyimpan data profil (email, noHp, dll.) ke profile box.
+    // Catatan: Karena box ini tidak menggunakan kunci username, data ini akan menimpa data user sebelumnya.
+    // Ini mengasumsikan hanya ada satu user yang mengakses profil pada satu waktu.
     await _profileBox.putAll(data);
   }
 }

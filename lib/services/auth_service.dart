@@ -1,4 +1,4 @@
-// panjinugraha0908/mobileteori/mobileteori-7f413ce1fa96f0055ff7cae5adf0a95d644ffbf5/lib/services/auth_service.dart
+// lib/services/auth_service.dart
 
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
@@ -98,6 +98,7 @@ class AuthService {
     await DatabaseService.setCurrentUser(username);
 
     // 🟢 BARU: Sinkronkan data profil ke profile box saat login
+    // Asumsi properti email dan noHp sudah ada di User model
     await DatabaseService.updateProfileData(username, {
       'email': user.email,
       'noHp': user.noHp,
