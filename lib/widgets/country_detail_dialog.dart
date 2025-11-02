@@ -1,5 +1,3 @@
-// lib/widgets/country_detail_dialog.dart
-
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/country.dart';
