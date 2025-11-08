@@ -1,58 +1,47 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import 'dart:io';
 import '../services/auth_service.dart';
 
-/// Halaman (Page) Stateful untuk mengedit data profil pengguna.
-///
-/// Halaman ini mengambil data profil yang ada dari Hive berdasarkan
-/// username yang sedang login (didapat dari [AuthService]),
-/// menampilkannya dalam form, dan menyimpannya kembali ke Hive.
 class EditProfilePage extends StatefulWidget {
+  const EditProfilePage({Key? key}) : super(key: key);
+
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  // --- Kunci dan State ---
   final _formKey = GlobalKey<FormState>();
   late Box _profileBox;
-  String? _username; // Username pengguna yang sedang login
-  String? _imagePath; // Path lokal ke gambar profil yang dipilih
+  String? _username;
 
-  // --- Controller untuk Form ---
+  // Controller untuk Form
   late TextEditingController _namaController;
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  late TextEditingController _saranKesanController;
+  // --- PERUBAHAN 4 (Goal 2) ---
+  // Controller saranKesan dihapus
+  // late TextEditingController _saranKesanController;
+  // --- AKHIR PERUBAHAN 4 ---
 
-  // --- Palet Warna Halaman ---
-  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
-  // agar konsisten dan mudah dikelola di seluruh aplikasi.
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
+  String? _imagePath;
+  final ImagePicker _picker = ImagePicker();
+
+  // Palet Warna (konsisten dengan ProfilePage)
+  final Color primaryColor = const Color(0xFF1A237E); // Biru Gelap
+  final Color accentColor = const Color(0xFFFFAB00); // Kuning/Emas
+  final Color hintColor = Colors.grey[600]!;
 
   @override
   void initState() {
     super.initState();
     _profileBox = Hive.box('profile');
-
-    // 1. Dapatkan username yang sedang login
     _username = AuthService.getCurrentUsername();
-
-    // 2. Ambil data profil spesifik untuk user tersebut dari Hive
-    // Jika tidak ada, gunakan Map kosong sebagai default
     var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
 
-    // 3. Inisialisasi controller dengan data yang ada
+    // Inisialisasi controller
     _namaController = TextEditingController(
       text: userProfileData['nama'] ?? '',
     );
@@ -65,63 +54,51 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(
       text: userProfileData['email'] ?? '',
     );
-    _saranKesanController = TextEditingController(
-      text: userProfileData['saranKesan'] ?? '',
-    );
+
+    // --- PERUBAHAN 5 (Goal 2) ---
+    // Inisialisasi saranKesan dihapus
+    // _saranKesanController = TextEditingController(
+    //   text: userProfileData['saranKesan'] ?? '',
+    // );
+    // --- AKHIR PERUBAHAN 5 ---
+
     _imagePath = userProfileData['fotoPath'];
   }
 
-  /// Membuka galeri gambar, menyalin gambar terpilih ke direktori aplikasi,
-  /// dan memperbarui state [_imagePath].
   Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
-
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      // Dapatkan direktori dokumen aplikasi
-      final Directory appDir = await getApplicationDocumentsDirectory();
-      final String fileName = path.basename(pickedFile.path);
-      final String newPath = path.join(appDir.path, fileName);
-
-      // Salin file gambar ke path baru di dalam direktori aplikasi
-      // Ini memastikan gambar tetap ada meskipun gambar asli di galeri dihapus
-      final File newImage = await File(pickedFile.path).copy(newPath);
-
       setState(() {
-        _imagePath = newImage.path;
+        _imagePath = pickedFile.path;
       });
     }
   }
 
-  /// Memvalidasi form dan menyimpan semua data profil ke Hive
-  /// di bawah [key] username yang sedang login.
   void _saveProfile() {
-    // Pastikan form valid dan kita memiliki username
     if (_formKey.currentState!.validate() && _username != null) {
-      // Ambil data yang mungkin sudah ada, atau buat Map baru
       var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
 
-      // Update Map dengan data baru dari controllers
+      // Update Map dengan data baru
       userProfileData['nama'] = _namaController.text;
       userProfileData['noHp'] = _noHpController.text;
       userProfileData['prodi'] = _prodiController.text;
       userProfileData['email'] = _emailController.text;
       userProfileData['fotoPath'] = _imagePath;
-      userProfileData['saranKesan'] = _saranKesanController.text;
 
-      // Simpan kembali Map yang sudah diupdate ke Hive
+      // --- PERUBAHAN 6 (Goal 2) ---
+      // Penyimpanan saranKesan dihapus
+      // userProfileData['saranKesan'] = _saranKesanController.text;
+      // --- AKHIR PERUBAHAN 6 ---
+
       _profileBox.put(_username, userProfileData);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Profil berhasil disimpan!'),
-          backgroundColor: Colors.green,
+          content: Text('Profil berhasil diperbarui'),
+          backgroundColor: Colors.green[700],
         ),
       );
-
-      // Kembali ke halaman sebelumnya (misal: halaman profil)
       Navigator.pop(context);
     }
   }
@@ -129,100 +106,84 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Agar keyboard tidak menutupi UI
-      backgroundColor: backgroundColor,
-      // --- 1. AppBar ---
       appBar: AppBar(
-        title: Text('Edit Profil', style: TextStyle(color: textColor)),
-        backgroundColor: backgroundColor,
-        iconTheme: IconThemeData(color: textColor),
+        title: Text(
+          'Edit Profil',
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: primaryColor,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.save, color: accentColor),
-            onPressed: _saveProfile,
-            tooltip: 'Simpan',
-          ),
-        ],
+        iconTheme: IconThemeData(color: Colors.white),
       ),
-      // --- 2. Body ---
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: backgroundColor,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [primaryColor, Color(0xFF303F9F)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             padding: EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // --- 2A. Pemilih Gambar (Avatar) ---
-                Center(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 80,
-                          backgroundColor: surfaceColor,
-                          backgroundImage:
-                              (_imagePath != null && _imagePath!.isNotEmpty)
-                              ? FileImage(File(_imagePath!))
-                              : null,
-                          child: (_imagePath == null || _imagePath!.isEmpty)
-                              ? Icon(
-                                  Icons.person_add_alt_1,
-                                  size: 80,
-                                  color: textColor,
-                                )
-                              : null,
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          'Ketuk gambar untuk mengubah',
-                          style: TextStyle(color: hintColor),
-                        ),
-                      ],
-                    ),
+                // --- 1. Pemilih Gambar (Avatar) ---
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundImage: _imagePath != null
+                        ? FileImage(File(_imagePath!))
+                        : null,
+                    child: _imagePath == null
+                        ? Icon(Icons.camera_alt,
+                            size: 50, color: Colors.white)
+                        : null,
                   ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Ketuk untuk Ganti Foto',
+                  style: TextStyle(color: Colors.white70),
                 ),
                 SizedBox(height: 32),
 
-                // --- 2B. Judul Bagian: Data Diri ---
+                // --- 2. Form Fields ---
+                // A. Data Diri
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Data Diri',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: primaryButtonColor,
-                    ),
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 Divider(color: hintColor.withOpacity(0.5), height: 24),
 
-                // --- 2C. Form Fields: Data Diri ---
+                // Fields: Nama, No HP, Prodi, Email
                 _buildTextField(
                   controller: _namaController,
                   label: 'Nama Lengkap',
                   icon: Icons.person,
-                  mustBeFilled: true,
                 ),
                 SizedBox(height: 16),
                 _buildTextField(
                   controller: _noHpController,
-                  label: 'No. HP',
+                  label: 'Nomor HP',
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone,
-                  mustBeFilled: true,
                 ),
                 SizedBox(height: 16),
                 _buildTextField(
                   controller: _prodiController,
                   label: 'Program Studi',
                   icon: Icons.school,
-                  mustBeFilled: true,
                 ),
                 SizedBox(height: 16),
                 _buildTextField(
@@ -230,55 +191,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   label: 'Email',
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
-                  mustBeFilled: true,
                 ),
                 SizedBox(height: 32),
 
-                // --- 2D. Judul Bagian: Saran & Kesan ---
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Saran & Kesan',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: primaryButtonColor,
-                    ),
-                  ),
-                ),
-                Divider(color: hintColor.withOpacity(0.5), height: 24),
-
-                // --- 2E. Form Field: Saran & Kesan ---
-                _buildTextField(
-                  controller: _saranKesanController,
-                  label: 'Tulis saran atau kesan Anda...',
-                  icon: Icons.comment,
-                  maxLines: 5,
-                  minLines: 3,
-                  mustBeFilled: false, // Boleh kosong, jadi validasi dimatikan
-                ),
-                SizedBox(height: 32),
+                // --- PERUBAHAN 7 (Goal 2) ---
+                // Bagian Saran & Kesan dihapus seluruhnya dari halaman edit
+                // --- AKHIR PERUBAHAN 7 ---
 
                 // --- 2F. Tombol Simpan (Utama) ---
                 ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: primaryButtonColor,
-                    minimumSize: Size(double.infinity, 50),
+                    backgroundColor: accentColor,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 60, vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                   child: Text(
                     'Simpan Perubahan',
                     style: TextStyle(
-                      color: textColor,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: primaryColor,
                     ),
                   ),
                 ),
-                SizedBox(height: 100), // Ruang ekstra di bawah
+                SizedBox(height: 100), // Padding bawah
               ],
             ),
           ),
@@ -287,66 +227,63 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  /// Widget helper (pabrik) untuk membuat [TextFormField] yang seragam
-  /// dengan styling yang sudah ditentukan.
+  // Helper widget untuk membangun text field
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    String? hint,
-    TextInputType? keyboardType,
-    int? maxLines = 1,
-    int? minLines = 1,
-    bool mustBeFilled = false, // Menentukan apakah validator wajib diisi aktif
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    int minLines = 1,
+    bool mustBeFilled = true,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: TextStyle(color: textColor),
       maxLines: maxLines,
       minLines: minLines,
+      style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor),
-        hintText: hint,
-        hintStyle: TextStyle(color: hintColor.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: accentColor),
+        labelStyle: TextStyle(color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.white70),
         filled: true,
-        fillColor: surfaceColor.withOpacity(0.5),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor),
+        fillColor: Colors.white.withOpacity(0.1),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryButtonColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accentColor, width: 2),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.redAccent, width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.redAccent, width: 2),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
         ),
       ),
       validator: (value) {
         if (mustBeFilled && (value == null || value.isEmpty)) {
           return '$label tidak boleh kosong';
         }
-        return null; // Valid
+        if (label == 'Email' &&
+            !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!)) {
+          return 'Email tidak valid';
+        }
+        return null;
       },
     );
   }
 
   @override
   void dispose() {
-    // Selalu dispose controller untuk mencegah kebocoran memori
     _namaController.dispose();
     _noHpController.dispose();
     _prodiController.dispose();
     _emailController.dispose();
-    _saranKesanController.dispose();
+    // --- PERUBAHAN 8 (Goal 2) ---
+    // _saranKesanController.dispose(); // Dihapus
+    // --- AKHIR PERUBAHAN 8 ---
     super.dispose();
   }
 }
