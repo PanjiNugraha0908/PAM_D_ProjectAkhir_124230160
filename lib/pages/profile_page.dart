@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mobileprojek/pages/edit_profile_page.dart';
 import 'package:mobileprojek/pages/login_page.dart';
 import '../services/auth_service.dart';
+import 'home_page.dart'; // <-- PERLU IMPORT INI UNTUK NAVIGASI KEMBALI
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -16,28 +17,40 @@ class _ProfilePageState extends State<ProfilePage> {
   final String? _username = AuthService.getCurrentUsername();
   late final Box _profileBox;
 
-  // Palet Warna
-  final Color primaryColor = const Color(0xFF1A237E); // Biru Gelap
-  final Color accentColor = const Color(0xFFFFAB00); // Kuning/Emas
-  final Color cardColor = Colors.white;
-  final Color shadowColor = Colors.blueGrey[200]!;
+  // --- PERUBAHAN 1: Palet Warna (Disesuaikan dengan Dark Mode) ---
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  // final Color primaryButtonColor = Color(0xFF4299E1); // Tidak terpakai di sini
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+  // --- AKHIR PERUBAHAN 1 ---
 
   @override
   void initState() {
     super.initState();
-    // Pastikan box 'profile' sudah dibuka di main.dart
     _profileBox = Hive.box('profile');
   }
 
-  // Fungsi untuk logout
-  void _logout() async {
-    await AuthService.logout();
-    // Navigasi ke halaman Login dan hapus semua halaman sebelumnya
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => LoginPage()),
-      (Route<dynamic> route) => false,
-    );
+  // --- PERUBAHAN 2: Fungsi untuk Tombol "Kembali" ---
+  /// Navigasi kembali ke [HomePage].
+  void _openHome() {
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(username: username)),
+      );
+    } else {
+      // Fallback jika session hilang, kembali ke Login
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
+      );
+    }
   }
+  // --- AKHIR PERUBAHAN 2 ---
 
   // Fungsi untuk navigasi ke Edit Profile
   void _navigateToEditProfile() {
@@ -45,7 +58,6 @@ class _ProfilePageState extends State<ProfilePage> {
       context,
       MaterialPageRoute(builder: (context) => const EditProfilePage()),
     ).then((_) {
-      // Refresh halaman (setState) setelah kembali dari edit
       setState(() {});
     });
   }
@@ -53,20 +65,15 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
       body: ValueListenableBuilder(
         valueListenable: _profileBox.listenable(keys: [_username]),
         builder: (context, Box box, _) {
           if (_username == null) {
-            // Pengaman jika username null
-            return Center(
-                child: Text("Error: Pengguna tidak ditemukan. Silakan login ulang."));
+            return Center(child: Text("Error: Pengguna tidak ditemukan."));
           }
-          // Ambil data profil dari Hive
-          var userProfileData =
-              box.get(_username) ?? <String, dynamic>{};
+          var userProfileData = box.get(_username) ?? <String, dynamic>{};
 
-          // Data fallback jika null
           String nama = userProfileData['nama'] ?? 'Nama Belum Diatur';
           String prodi = userProfileData['prodi'] ?? 'Prodi Belum Diatur';
           String email = userProfileData['email'] ?? 'Email';
@@ -75,54 +82,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
           return CustomScrollView(
             slivers: [
-              // --- AppBar Kustom ---
               _buildSliverAppBar(context, nama, prodi, fotoPath),
-
-              // --- Konten Body (Info Card) ---
               SliverToBoxAdapter(
                 child: Container(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoCard(
-                        'Informasi Kontak',
-                        Icons.contact_mail,
-                        [
-                          _buildInfoRow(Icons.email, email),
-                          _buildInfoRow(Icons.phone, noHp),
-                        ],
-                      ),
+                      _buildInfoCard('Informasi Kontak', Icons.contact_mail, [
+                        _buildInfoRow(Icons.email, email),
+                        _buildInfoRow(Icons.phone, noHp),
+                      ]),
                       const SizedBox(height: 20),
-
-                      // --- PERUBAHAN 9 (Goal 2) ---
-                      // Mengubah Saran & Kesan menjadi statis
-                      _buildInfoCard(
-                        'Saran & Kesan',
-                        Icons.lightbulb_outline,
-                        [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 16.0),
-                            child: Text(
-                              // Ini adalah teks statis yang kamu minta
-                              'Aplikasi ini sangat membantu untuk melihat informasi mata uang dan zona waktu. Tampilannya juga menarik!',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[700],
-                                height: 1.4,
-                                fontStyle: FontStyle.italic,
-                              ),
+                      _buildInfoCard('Saran & Kesan', Icons.lightbulb_outline, [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8.0,
+                            horizontal: 16.0,
+                          ),
+                          child: Text(
+                            'Aplikasi ini sangat membantu untuk melihat informasi mata uang dan zona waktu. Tampilannya juga menarik!',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: hintColor, // <-- PERUBAHAN WARNA
+                              height: 1.4,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
-                        ],
-                      ),
-                      // --- AKHIR PERUBAHAN 9 ---
+                        ),
+                      ]),
 
-                      const SizedBox(height: 20),
-
-                      // --- Tombol Logout ---
-                      _buildLogoutButton(),
+                      // --- PERUBAHAN 4: Tombol Logout Dihapus ---
+                      // const SizedBox(height: 20),
+                      // _buildLogoutButton(),
+                      // --- AKHIR PERUBAHAN 4 ---
                     ],
                   ),
                 ),
@@ -134,18 +127,29 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget untuk AppBar
   SliverAppBar _buildSliverAppBar(
-      BuildContext context, String nama, String prodi, String? fotoPath) {
+    BuildContext context,
+    String nama,
+    String prodi,
+    String? fotoPath,
+  ) {
     return SliverAppBar(
       expandedHeight: 250.0,
       floating: false,
       pinned: true,
-      backgroundColor: primaryColor,
-      iconTheme: IconThemeData(color: Colors.white),
+      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
+      iconTheme: IconThemeData(color: textColor), // <-- PERUBAHAN WARNA
+      // --- PERUBAHAN 3: Tombol "Kembali" Ditambahkan ---
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: textColor),
+        onPressed: _openHome,
+        tooltip: 'Kembali ke Home',
+      ),
+
+      // --- AKHIR PERUBAHAN 3 ---
       actions: [
         IconButton(
-          icon: Icon(Icons.edit, color: Colors.white),
+          icon: Icon(Icons.edit, color: textColor), // <-- PERUBAHAN WARNA
           onPressed: _navigateToEditProfile,
           tooltip: 'Edit Profil',
         ),
@@ -153,44 +157,41 @@ class _ProfilePageState extends State<ProfilePage> {
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
         title: Text(
-          _username!, // Username yang sedang login
+          _username!,
           style: TextStyle(
-            color: Colors.white,
+            color: textColor, // <-- PERUBAHAN WARNA
             fontSize: 18.0,
             fontWeight: FontWeight.bold,
-            shadows: [
-              Shadow(blurRadius: 2.0, color: Colors.black.withOpacity(0.5))
-            ],
           ),
         ),
         background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [primaryColor, Color(0xFF303F9F)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
+          color: backgroundColor, // <-- PERUBAHAN WARNA (Gradient Dihapus)
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Foto Profil
               Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: 55,
-                      backgroundColor: Colors.white.withOpacity(0.9),
+                      backgroundColor: surfaceColor.withOpacity(
+                        0.5,
+                      ), // <-- PERUBAHAN WARNA
                       child: CircleAvatar(
                         radius: 52,
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage: (fotoPath != null
-                            ? FileImage(File(fotoPath))
-                            : null) as ImageProvider?,
+                        backgroundColor: surfaceColor, // <-- PERUBAHAN WARNA
+                        backgroundImage:
+                            (fotoPath != null
+                                    ? FileImage(File(fotoPath))
+                                    : null)
+                                as ImageProvider?,
                         child: fotoPath == null
-                            ? Icon(Icons.person,
-                                size: 60, color: Colors.grey[400])
+                            ? Icon(
+                                Icons.person,
+                                size: 60,
+                                color: hintColor,
+                              ) // <-- PERUBAHAN WARNA
                             : null,
                       ),
                     ),
@@ -198,16 +199,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     Text(
                       nama,
                       style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ), // <-- PERUBAHAN WARNA
                     ),
                     SizedBox(height: 4),
                     Text(
                       prodi,
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: hintColor,
+                      ), // <-- PERUBAHAN WARNA
                     ),
-                    SizedBox(height: 40), // Ruang untuk title
+                    SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -218,35 +223,44 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget untuk Card Info
-  Widget _buildInfoCard(String title, IconData titleIcon, List<Widget> children) {
+  Widget _buildInfoCard(
+    String title,
+    IconData titleIcon,
+    List<Widget> children,
+  ) {
     return Card(
-      elevation: 5,
-      shadowColor: shadowColor,
+      elevation: 0, // <-- PERUBAHAN (Flat)
+      shadowColor: Colors.transparent, // <-- PERUBAHAN
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: cardColor,
+      color: surfaceColor, // <-- PERUBAHAN WARNA
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Judul Card
             Row(
               children: [
-                Icon(titleIcon, color: primaryColor, size: 22),
+                Icon(
+                  titleIcon,
+                  color: accentColor,
+                  size: 22,
+                ), // <-- PERUBAHAN WARNA
                 SizedBox(width: 8),
                 Text(
                   title,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: primaryColor,
+                    color: textColor, // <-- PERUBAHAN WARNA
                   ),
                 ),
               ],
             ),
-            Divider(height: 20, thickness: 1, color: Colors.grey[200]),
-            // Konten Card
+            Divider(
+              height: 20,
+              thickness: 1,
+              color: hintColor.withOpacity(0.2),
+            ), // <-- PERUBAHAN WARNA
             ...children,
           ],
         ),
@@ -254,18 +268,20 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget untuk baris info (Icon + Teks)
   Widget _buildInfoRow(IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[600], size: 20),
+          Icon(icon, color: hintColor, size: 20), // <-- PERUBAHAN WARNA
           SizedBox(width: 16),
           Flexible(
             child: Text(
               text,
-              style: TextStyle(fontSize: 15, color: Colors.grey[800]),
+              style: TextStyle(
+                fontSize: 15,
+                color: textColor.withOpacity(0.9),
+              ), // <-- PERUBAHAN WARNA
             ),
           ),
         ],
@@ -273,26 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Widget untuk tombol logout
-  Widget _buildLogoutButton() {
-    return Center(
-      child: ElevatedButton.icon(
-        icon: Icon(Icons.logout, color: Colors.red[700]),
-        label: Text(
-          'Logout',
-          style: TextStyle(color: Colors.red[700], fontSize: 16),
-        ),
-        onPressed: _logout,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red[50],
-          elevation: 0,
-          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-            side: BorderSide(color: Colors.red[100]!),
-          ),
-        ),
-      ),
-    );
-  }
+  // --- PERUBAHAN 5: Seluruh Fungsi Logout Dihapus ---
+  // Widget _buildLogoutButton() { ... }
+  // --- AKHIR PERUBAHAN 5 ---
 }

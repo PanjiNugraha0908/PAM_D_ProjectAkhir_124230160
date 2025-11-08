@@ -16,23 +16,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late Box _profileBox;
   String? _username;
 
-  // Controller untuk Form
   late TextEditingController _namaController;
   late TextEditingController _noHpController;
   late TextEditingController _prodiController;
   late TextEditingController _emailController;
-  // --- PERUBAHAN 4 (Goal 2) ---
-  // Controller saranKesan dihapus
-  // late TextEditingController _saranKesanController;
-  // --- AKHIR PERUBAHAN 4 ---
 
   String? _imagePath;
   final ImagePicker _picker = ImagePicker();
 
-  // Palet Warna (konsisten dengan ProfilePage)
-  final Color primaryColor = const Color(0xFF1A237E); // Biru Gelap
-  final Color accentColor = const Color(0xFFFFAB00); // Kuning/Emas
-  final Color hintColor = Colors.grey[600]!;
+  // --- PERUBAHAN 1: Palet Warna (Disesuaikan dengan Dark Mode) ---
+  final Color backgroundColor = Color(0xFF1A202C);
+  final Color surfaceColor = Color(0xFF2D3748);
+  final Color accentColor = Color(0xFF66B3FF);
+  final Color primaryButtonColor = Color(0xFF4299E1);
+  final Color textColor = Color(0xFFE2E8F0);
+  final Color hintColor = Color(0xFFA0AEC0);
+  // --- AKHIR PERUBAHAN 1 ---
 
   @override
   void initState() {
@@ -41,7 +40,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _username = AuthService.getCurrentUsername();
     var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
 
-    // Inisialisasi controller
     _namaController = TextEditingController(
       text: userProfileData['nama'] ?? '',
     );
@@ -54,20 +52,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController = TextEditingController(
       text: userProfileData['email'] ?? '',
     );
-
-    // --- PERUBAHAN 5 (Goal 2) ---
-    // Inisialisasi saranKesan dihapus
-    // _saranKesanController = TextEditingController(
-    //   text: userProfileData['saranKesan'] ?? '',
-    // );
-    // --- AKHIR PERUBAHAN 5 ---
-
     _imagePath = userProfileData['fotoPath'];
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _imagePath = pickedFile.path;
@@ -79,17 +70,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (_formKey.currentState!.validate() && _username != null) {
       var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
 
-      // Update Map dengan data baru
       userProfileData['nama'] = _namaController.text;
       userProfileData['noHp'] = _noHpController.text;
       userProfileData['prodi'] = _prodiController.text;
       userProfileData['email'] = _emailController.text;
       userProfileData['fotoPath'] = _imagePath;
-
-      // --- PERUBAHAN 6 (Goal 2) ---
-      // Penyimpanan saranKesan dihapus
-      // userProfileData['saranKesan'] = _saranKesanController.text;
-      // --- AKHIR PERUBAHAN 6 ---
 
       _profileBox.put(_username, userProfileData);
 
@@ -106,67 +91,65 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
       appBar: AppBar(
         title: Text(
           'Edit Profil',
           style: TextStyle(
-              fontWeight: FontWeight.bold, color: Colors.white),
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ), // <-- PERUBAHAN WARNA
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: textColor), // <-- PERUBAHAN WARNA
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [primaryColor, Color(0xFF303F9F)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        color: backgroundColor, // <-- PERUBAHAN WARNA (Gradient Dihapus)
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             padding: EdgeInsets.all(24.0),
             child: Column(
               children: [
-                // --- 1. Pemilih Gambar (Avatar) ---
                 GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 60,
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: surfaceColor, // <-- PERUBAHAN WARNA
                     backgroundImage: _imagePath != null
                         ? FileImage(File(_imagePath!))
                         : null,
                     child: _imagePath == null
-                        ? Icon(Icons.camera_alt,
-                            size: 50, color: Colors.white)
+                        ? Icon(
+                            Icons.camera_alt,
+                            size: 50,
+                            color: hintColor,
+                          ) // <-- PERUBAHAN WARNA
                         : null,
                   ),
                 ),
                 SizedBox(height: 12),
                 Text(
                   'Ketuk untuk Ganti Foto',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: hintColor), // <-- PERUBAHAN WARNA
                 ),
                 SizedBox(height: 32),
-
-                // --- 2. Form Fields ---
-                // A. Data Diri
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Data Diri',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
+                      color: textColor, // <-- PERUBAHAN WARNA
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                Divider(color: hintColor.withOpacity(0.5), height: 24),
-
-                // Fields: Nama, No HP, Prodi, Email
+                Divider(
+                  color: hintColor.withOpacity(0.3),
+                  height: 24,
+                ), // <-- PERUBAHAN WARNA
                 _buildTextField(
                   controller: _namaController,
                   label: 'Nama Lengkap',
@@ -193,18 +176,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 SizedBox(height: 32),
-
-                // --- PERUBAHAN 7 (Goal 2) ---
-                // Bagian Saran & Kesan dihapus seluruhnya dari halaman edit
-                // --- AKHIR PERUBAHAN 7 ---
-
-                // --- 2F. Tombol Simpan (Utama) ---
                 ElevatedButton(
                   onPressed: _saveProfile,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 60, vertical: 15),
+                    backgroundColor: primaryButtonColor, // <-- PERUBAHAN WARNA
+                    padding: EdgeInsets.symmetric(horizontal: 60, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -214,11 +190,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: primaryColor,
+                      color: textColor, // <-- PERUBAHAN WARNA
                     ),
                   ),
                 ),
-                SizedBox(height: 100), // Padding bawah
+                SizedBox(height: 100),
               ],
             ),
           ),
@@ -227,7 +203,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  // Helper widget untuk membangun text field
+  // --- PERUBAHAN 2: Style _buildTextField disesuaikan Dark Mode ---
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -242,24 +218,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       minLines: minLines,
-      style: TextStyle(color: Colors.white),
+      style: TextStyle(color: textColor), // <-- WARNA TEKS INPUT
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white70),
-        prefixIcon: Icon(icon, color: Colors.white70),
+        labelStyle: TextStyle(color: hintColor), // <-- WARNA LABEL
+        prefixIcon: Icon(icon, color: hintColor), // <-- WARNA IKON
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: surfaceColor, // <-- WARNA BACKGROUND FIELD
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: accentColor, width: 2),
+          borderSide: BorderSide(
+            color: accentColor,
+            width: 2,
+          ), // <-- WARNA FOKUS
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+          borderSide: BorderSide(color: surfaceColor), // <-- WARNA NORMAL
         ),
       ),
       validator: (value) {
@@ -274,6 +253,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       },
     );
   }
+  // --- AKHIR PERUBAHAN 2 ---
 
   @override
   void dispose() {
@@ -281,9 +261,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _noHpController.dispose();
     _prodiController.dispose();
     _emailController.dispose();
-    // --- PERUBAHAN 8 (Goal 2) ---
-    // _saranKesanController.dispose(); // Dihapus
-    // --- AKHIR PERUBAHAN 8 ---
     super.dispose();
   }
 }
