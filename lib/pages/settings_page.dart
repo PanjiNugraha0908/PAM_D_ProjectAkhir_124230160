@@ -3,11 +3,6 @@ import '../services/activity_tracker.dart';
 import '../services/notification_service.dart';
 
 /// Halaman (Page) Stateful untuk mengelola pengaturan aplikasi.
-///
-/// Saat ini digunakan untuk:
-/// 1. Mengaktifkan/menonaktifkan notifikasi pengingat inaktivitas.
-/// 2. Menguji pengiriman notifikasi.
-/// 3. Menampilkan informasi aktivitas terakhir pengguna.
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
@@ -18,8 +13,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notificationEnabled = true;
 
   // --- Palet Warna Halaman ---
-  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
-  // agar konsisten dan mudah dikelola di seluruh aplikasi.
   final Color backgroundColor = Color(0xFF1A202C);
   final Color surfaceColor = Color(0xFF2D3748);
   final Color accentColor = Color(0xFF66B3FF);
@@ -37,8 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // --- Logika Halaman (Page Logic) ---
 
-  /// Memuat status pengaturan notifikasi dari [ActivityTracker] (SharedPreferences)
-  /// dan memperbarui state [_notificationEnabled].
+  /// Memuat status pengaturan notifikasi dari [ActivityTracker]
   Future<void> _loadSettings() async {
     bool enabled = await ActivityTracker.isNotificationEnabled();
     if (mounted) {
@@ -49,8 +41,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   /// Mengubah status notifikasi pengingat.
-  ///
-  /// Menyimpan pengaturan baru ke [ActivityTracker] dan memperbarui state.
   Future<void> _toggleNotification(bool value) async {
     await ActivityTracker.setNotificationEnabled(value);
     if (mounted) {
@@ -158,10 +148,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Pengingat Aktivitas',
                       style: TextStyle(color: textColor),
                     ),
+
+                    // --- PERUBAHAN TEKS SUBTITLE ---
                     subtitle: Text(
-                      'Kirim notifikasi jika tidak aktif selama 1 hari',
+                      'Kirim notifikasi jika tidak aktif selama 5 menit',
                       style: TextStyle(color: hintColor),
                     ),
+
+                    // --- AKHIR PERUBAHAN ---
                     value: _notificationEnabled,
                     onChanged: _toggleNotification,
                     activeColor: primaryButtonColor,
@@ -211,7 +205,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Divider(height: 1, color: hintColor.withOpacity(0.5)),
                   ListTile(
                     title: Text(
-                      'Terakhir Aktif',
+                      'Terakhir Aktif (Saat App Ditutup)', // Teks diperjelas
                       style: TextStyle(color: textColor),
                     ),
                     subtitle: Text(
@@ -263,10 +257,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                     SizedBox(height: 12),
+
+                    // --- PERUBAHAN TEKS PENJELASAN ---
                     Text(
-                      'Notifikasi pengingat akan dikirim setelah 1 hari tidak membuka aplikasi. Pesan: "Masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
+                      'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi. Pesan: "Masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
                       style: TextStyle(fontSize: 14, color: hintColor),
                     ),
+
+                    // --- AKHIR PERUBAHAN ---
                   ],
                 ),
               ),

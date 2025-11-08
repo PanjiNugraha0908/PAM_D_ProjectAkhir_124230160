@@ -6,7 +6,6 @@ import '../models/history_item.dart';
 import '../widgets/country_detail_dialog.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
-import '../services/activity_tracker.dart';
 import 'login_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
@@ -52,7 +51,6 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     // 1. Perbarui waktu aktif pengguna
-    ActivityTracker.updateLastActive();
     // 2. Mulai ambil data semua negara dari API
     _loadAllCountries();
     // 3. Tambahkan listener ke search bar untuk memfilter secara real-time
@@ -266,7 +264,6 @@ class _HomePageState extends State<HomePage> {
     );
 
     // Perbarui waktu aktif terakhir pengguna
-    ActivityTracker.updateLastActive();
 
     // 3. Hitung negara unik SESUDAH menambah riwayat
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(

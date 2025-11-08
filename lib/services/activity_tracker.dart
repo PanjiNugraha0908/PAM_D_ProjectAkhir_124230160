@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart'; // Diperlukan untuk WidgetsBindingObserver
 import 'package:hive/hive.dart';
 import 'notification_service.dart';
-import 'auth_service.dart'; // Diperlukan untuk cek status login
+// AuthService tidak diperlukan di sini lagi
+// import 'auth_service.dart';
 
 // --- Kelas Observer Internal ---
 // Kelas privat ini yang akan mendengarkan siklus hidup aplikasi.
@@ -13,15 +14,15 @@ class _ActivityObserver with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.resumed) {
       // --- Aplikasi Dibuka Lagi ---
-      print("ActivityTracker: App Resumed");
-      // Panggil fungsi pengecekan statis
-      ActivityTracker._checkInactivityOnResume();
+      print("ActivityTracker: App Resumed. Membatalkan notifikasi terjadwal.");
+      // Panggil fungsi pembatalan statis
+      ActivityTracker._cancelScheduledNotification();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       // --- Aplikasi Ditutup atau Masuk Background ---
-      print("ActivityTracker: App Paused/Detached");
-      // Perbarui timestamp terakhir kali aktif
-      ActivityTracker._updateLastActiveTimestamp();
+      print("ActivityTracker: App Paused/Detached. Menjadwalkan notifikasi.");
+      // Panggil fungsi penjadwalan statis
+      ActivityTracker._scheduleInactivityNotification();
     }
   }
 }
@@ -30,23 +31,20 @@ class _ActivityObserver with WidgetsBindingObserver {
 ///
 /// Menggunakan [WidgetsBindingObserver] dan [Hive] untuk
 /// pelacakan aktivitas yang persisten (tahan app-kill).
-/// API publik (nama fungsi) dijaga agar tetap sama dengan versi lama
-/// untuk kompatibilitas.
 class ActivityTracker {
   // Box 'app_state' (dari database_service)
   static const String _boxName = 'app_state';
   // Key untuk simpan waktu
-  static const String _lastActiveKey = 'lastActiveTime';
-  // Key untuk simpan setting notif (dari file aslimu)
+  static const String _lastActiveKey = 'last_active';
+  // Key untuk simpan setting notif
   static const String _notificationEnabledKey = 'notification_enabled';
 
   // --- PERMINTAAN BARU: 5 MENIT ---
-  // Durasi untuk tes
   static final Duration _inactivityDuration = const Duration(minutes: 5);
   // Durasi asli (bisa kamu kembalikan nanti)
   // static final Duration _inactivityDuration = const Duration(hours: 24);
 
-  // ID Notifikasi unik untuk inaktivitas (sama seperti di notification_service.dart)
+  // ID Notifikasi unik untuk inaktivitas (harus sama dengan di notification_service.dart)
   static const int _inactivityNotificationId = 1000;
 
   static Box? _box;
@@ -57,6 +55,8 @@ class ActivityTracker {
   /// Dipanggil oleh main.dart
   static Future<void> initialize() async {
     // 1. Pastikan box 'app_state' terbuka
+    // (Box ini sudah dibuka di database_service.dart, tapi kita panggil lagi
+    // di sini untuk memastikan _box ter-inisialisasi)
     if (!Hive.isBoxOpen(_boxName)) {
       await Hive.openBox(_boxName);
     }
@@ -70,20 +70,17 @@ class ActivityTracker {
     // 3. Daftarkan observer siklus hidup aplikasi
     WidgetsBinding.instance.addObserver(_observer);
 
-    // 4. Langsung cek inaktivitas saat aplikasi pertama kali dimulai
-    _checkInactivityOnResume();
+    // 4. Saat aplikasi baru dimulai, batalkan notifikasi yang mungkin tertunda
+    // (misal, jika app crash sebelum sempat 'resume')
+    _cancelScheduledNotification();
   }
 
-  /// [PUBLIK] Memperbarui stempel waktu 'terakhir aktif'.
-  /// Dipanggil oleh home_page.dart saat ada aksi.
+  /// [PUBLIK] (DEPRECATED) Fungsi ini sengaja dikosongkan.
+  /// Logika pelacakan sekarang otomatis via AppLifecycleState.
   static Future<void> updateLastActive() async {
-    if (_box == null) await initialize();
-
-    // 1. Update timestamp di Hive
-    await _updateLastActiveTimestamp();
-
-    // 2. Atur ulang notifikasi (jadwalkan yang baru / batalkan)
-    await _resetInactivityNotification();
+    // Tidak melakukan apa-apa.
+    // Panggilan dari home_page (jika belum dihapus) tidak akan berpengaruh.
+    print("ActivityTracker: updateLastActive() is deprecated.");
   }
 
   /// [PUBLIK] Mengatur preferensi pengguna untuk notifikasi pengingat.
@@ -92,28 +89,33 @@ class ActivityTracker {
     if (_box == null) await initialize();
     await _box!.put(_notificationEnabledKey, enabled);
 
-    // Atur ulang notifikasi berdasarkan pengaturan baru
-    await _resetInactivityNotification();
+    if (!enabled) {
+      // Jika dinonaktifkan, batalkan notifikasi yang sedang terjadwal
+      _cancelScheduledNotification();
+    }
+    // Jika diaktifkan, notifikasi akan otomatis terjadwal
+    // saat aplikasi ditutup berikutnya.
   }
 
   /// [PUBLIK] Memeriksa apakah pengguna mengizinkan notifikasi pengingat.
-  /// Dipanggil oleh settings_page.dart
   static Future<bool> isNotificationEnabled() async {
     if (_box == null) await initialize();
     return _box!.get(_notificationEnabledKey, defaultValue: true);
   }
 
   /// [PUBLIK] Mengambil [DateTime] kapan pengguna terakhir kali aktif.
-  /// Dipanggil oleh settings_page.dart
   static DateTime? getLastActive() {
-    if (_box == null) return null;
+    if (_box == null) {
+      // Coba inisialisasi jika box null, untuk menghindari error
+      // tapi ini seharusnya tidak terjadi jika initialize() dipanggil di main.dart
+      return null;
+    }
     String? lastActiveStr = _box!.get(_lastActiveKey);
     if (lastActiveStr == null) return null;
     return DateTime.parse(lastActiveStr);
   }
 
   /// [PUBLIK] Mendapatkan jumlah hari (dibulatkan ke bawah) sejak pengguna terakhir aktif.
-  /// Dipanggil oleh settings_page.dart
   static int getDaysSinceLastActive() {
     DateTime? lastActive = getLastActive();
     if (lastActive == null) return 0;
@@ -121,100 +123,44 @@ class ActivityTracker {
   }
 
   /// [PUBLIK] Memeriksa apakah pengguna sudah tidak aktif selama 1 hari (>= 24 jam).
-  /// Dipanggil oleh settings_page.dart
   static bool isInactiveForOneDay() {
     return getDaysSinceLastActive() >= 1;
   }
 
   // --- LOGIKA INTERNAL (PRIVAT) ---
 
-  /// [Internal] Memeriksa selisih waktu dan mengirim notifikasi jika perlu.
-  /// Dipanggil saat app 'resume' (dibuka)
-  static Future<void> _checkInactivityOnResume() async {
-    if (_box == null) await initialize();
-
-    // 1. Hanya cek jika user sudah login
-    if (AuthService.isLoggedIn() == false) {
-      print("ActivityTracker: User not logged in, skipping check.");
+  /// [Internal] Menjadwalkan notifikasi inaktivitas.
+  /// Dipanggil saat app 'paused' atau 'detached'.
+  static Future<void> _scheduleInactivityNotification() async {
+    if (_box == null) {
+      // Jika box belum siap (kasus langka), jangan lakukan apa-apa
+      print("ActivityTracker: Box not ready, skipping schedule.");
       return;
     }
+
+    // 1. Simpan waktu saat ini sebagai waktu 'terakhir aktif'
+    await _box!.put(_lastActiveKey, DateTime.now().toIso8601String());
 
     // 2. Cek apakah notifikasi diaktifkan
     final bool enabled = await isNotificationEnabled();
-    if (!enabled) {
-      print("ActivityTracker: Notifications disabled, skipping check.");
-      // Saat app dibuka, langsung update waktu & reset notif
-      await updateLastActive();
-      return;
-    }
-
-    // 3. Ambil data waktu terakhir
-    final lastActiveString = _box!.get(_lastActiveKey) as String?;
-    if (lastActiveString == null) {
-      print("ActivityTracker: No last active time found. Updating timestamp.");
-      await updateLastActive(); // Pertama kali, update & jadwalkan
-      return;
-    }
-
-    // 4. Hitung selisih
-    final lastActiveTime = DateTime.parse(lastActiveString);
-    final now = DateTime.now();
-    final difference = now.difference(lastActiveTime);
-
-    print(
-      'ActivityTracker: Check! Last active: $lastActiveTime, Difference: $difference',
-    );
-
-    // 5. Kirim notifikasi jika > 5 menit
-    if (difference > _inactivityDuration) {
-      print('ActivityTracker: Inactivity detected! Sending notification.');
-      // --- PERBAIKAN ERROR ---
-      // Menggunakan 'showNotification' (dari file-mu)
-      // bukan 'showSimpleNotification' (yang saya buat-buat)
-      NotificationService.showNotification(
-        id: 99, // ID Notifikasi Inaktivitas (berbeda dari ID terjadwal)
-        title: 'Kami Merindukanmu!',
-        body: 'Kamu sudah lama tidak mampir. Yuk, cek info negara terbaru!',
-      );
-    }
-
-    // 6. Selalu update waktu dan jadwalkan ulang saat app dibuka
-    await updateLastActive();
-  }
-
-  /// [Internal] Hanya memperbarui timestamp di Hive.
-  static Future<void> _updateLastActiveTimestamp() async {
-    if (_box == null) return; // Jangan inisialisasi jika app ditutup
-    try {
-      if (_box!.isOpen) {
-        await _box!.put(_lastActiveKey, DateTime.now().toIso8601String());
-        print('ActivityTracker: Timestamp updated to ${DateTime.now()}');
-      }
-    } catch (e) {
-      print(
-        "ActivityTracker: Error updating timestamp (box might be closed): $e",
-      );
-    }
-  }
-
-  /// [Internal] Menjadwal ulang atau membatalkan notif berdasarkan setting.
-  static Future<void> _resetInactivityNotification() async {
-    if (_box == null) await initialize();
-
-    // Selalu batalkan notifikasi terjadwal yang lama
-    await NotificationService.cancelNotification(_inactivityNotificationId);
-
-    final bool enabled = await isNotificationEnabled();
     if (enabled) {
-      // Jika diaktifkan, jadwalkan notifikasi baru
-      print(
-        "ActivityTracker: Scheduling new inactivity notification for $_inactivityDuration",
-      );
+      // 3. Batalkan notifikasi lama (jika ada) dan jadwalkan yang baru
+      await NotificationService.cancelNotification(_inactivityNotificationId);
       await NotificationService.scheduleInactivityReminder(
         after: _inactivityDuration,
       );
+      print(
+        "ActivityTracker: Notifikasi inaktivitas DIJADWALKAN untuk $_inactivityDuration dari sekarang.",
+      );
     } else {
-      print("ActivityTracker: Notifications disabled, cancelling reminder.");
+      print("ActivityTracker: Notifikasi nonaktif, penjadwalan dibatalkan.");
     }
+  }
+
+  /// [Internal] Membatalkan notifikasi inaktivitas yang terjadwal.
+  /// Dipanggil saat app 'resume' (dibuka).
+  static Future<void> _cancelScheduledNotification() async {
+    await NotificationService.cancelNotification(_inactivityNotificationId);
+    print("ActivityTracker: Notifikasi inaktivitas terjadwal DIBATALKAN.");
   }
 }
