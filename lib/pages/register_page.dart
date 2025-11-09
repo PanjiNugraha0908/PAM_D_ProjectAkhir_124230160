@@ -165,7 +165,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
-                    iconColor: Color(0xFF66B3FF), // Biru
+                    iconColor: Color(0xFFA0AEC0), // Biru
                     fillColor: Color(0xFF2D3748), // Standar
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -204,7 +204,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   decoration: _buildInputDecoration(
                     label: 'Konfirmasi Password',
                     icon: Icons.lock_outline,
-                    iconColor: Color(0xFF66B3FF), // Biru
+                    iconColor: Color(0xFFA0AEC0), // Biru
                     fillColor: Color(0xFF2D3748).withOpacity(0.7), // Fill Beda
                     suffixIcon: IconButton(
                       icon: Icon(

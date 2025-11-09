@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
-                    iconColor: Color(0xFF66B3FF), // Icon biru (berbeda)
+                    iconColor: Color(0xFFA0AEC0), // Icon biru (berbeda)
                     fillColor: Color(0xFF2D3748).withOpacity(0.7), // Fill beda
                     suffixIcon: IconButton(
                       icon: Icon(
