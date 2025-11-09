@@ -1,11 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/auth_service.dart';
+import 'dart:io';
+import '../models/user.dart';
+import '../services/database_service.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({Key? key}) : super(key: key);
+  final User user;
+
+  EditProfilePage({required this.user});
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
@@ -13,254 +15,214 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  late Box _profileBox;
-  String? _username;
-
-  late TextEditingController _namaController;
-  late TextEditingController _noHpController;
-  late TextEditingController _prodiController;
+  late TextEditingController _nameController;
   late TextEditingController _emailController;
-
+  late TextEditingController _noHpController;
   String? _imagePath;
-  final ImagePicker _picker = ImagePicker();
-
-  // --- PERUBAHAN 1: Palet Warna (Disesuaikan dengan Dark Mode) ---
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
-  // --- AKHIR PERUBAHAN 1 ---
 
   @override
   void initState() {
     super.initState();
-    _profileBox = Hive.box('profile');
-    _username = AuthService.getCurrentUsername();
-    var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
-
-    _namaController = TextEditingController(
-      text: userProfileData['nama'] ?? '',
-    );
-    _noHpController = TextEditingController(
-      text: userProfileData['noHp'] ?? '',
-    );
-    _prodiController = TextEditingController(
-      text: userProfileData['prodi'] ?? '',
-    );
-    _emailController = TextEditingController(
-      text: userProfileData['email'] ?? '',
-    );
-    _imagePath = userProfileData['fotoPath'];
+    _nameController = TextEditingController(
+      text: widget.user.fullName,
+    ); // GANTI
+    _emailController = TextEditingController(text: widget.user.email);
+    _noHpController = TextEditingController(text: widget.user.noHp); // BARU
+    _imagePath = widget.user.profilePicturePath; // GANTI
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
       setState(() {
-        _imagePath = pickedFile.path;
+        _imagePath = image.path;
       });
     }
   }
 
-  void _saveProfile() {
-    if (_formKey.currentState!.validate() && _username != null) {
-      var userProfileData = _profileBox.get(_username) ?? <String, dynamic>{};
+  Future<void> _saveProfile() async {
+    if (_formKey.currentState!.validate()) {
+      // Buat objek User baru dengan data yang diperbarui
+      User updatedUser = User(
+        username: widget.user.username,
+        passwordHash: widget.user.passwordHash, // Tidak berubah
+        createdAt: widget.user.createdAt, // Tidak berubah
+        lastLogin: DateTime.now(), // Perbarui waktu login
+        fullName: _nameController.text, // GANTI
+        email: _emailController.text,
+        noHp: _noHpController.text, // BARU
+        profilePicturePath: _imagePath, // GANTI
+      );
 
-      userProfileData['nama'] = _namaController.text;
-      userProfileData['noHp'] = _noHpController.text;
-      userProfileData['prodi'] = _prodiController.text;
-      userProfileData['email'] = _emailController.text;
-      userProfileData['fotoPath'] = _imagePath;
-
-      _profileBox.put(_username, userProfileData);
+      await DatabaseService.updateUser(updatedUser);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Profil berhasil diperbarui'),
-          backgroundColor: Colors.green[700],
+          content: Text('Profil berhasil diperbarui!'),
+          backgroundColor: Color(0xFF4299E1),
         ),
       );
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
+      backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
-        title: Text(
-          'Edit Profil',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ), // <-- PERUBAHAN WARNA
-        ),
-        backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
+        title: Text('Edit Profil', style: TextStyle(color: Color(0xFFE2E8F0))),
+        backgroundColor: Color(0xFF1A202C),
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
         elevation: 0,
-        iconTheme: IconThemeData(color: textColor), // <-- PERUBAHAN WARNA
       ),
-      body: Container(
-        color: backgroundColor, // <-- PERUBAHAN WARNA (Gradient Dihapus)
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: surfaceColor, // <-- PERUBAHAN WARNA
-                    backgroundImage: _imagePath != null
-                        ? FileImage(File(_imagePath!))
-                        : null,
-                    child: _imagePath == null
-                        ? Icon(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Color(0xFF2D3748),
+                      backgroundImage: _imagePath != null
+                          ? FileImage(File(_imagePath!))
+                          : null,
+                      child: _imagePath == null
+                          ? Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Color(0xFFA0AEC0),
+                            )
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Color(0xFF66B3FF),
+                        child: IconButton(
+                          icon: Icon(
                             Icons.camera_alt,
-                            size: 50,
-                            color: hintColor,
-                          ) // <-- PERUBAHAN WARNA
-                        : null,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Ketuk untuk Ganti Foto',
-                  style: TextStyle(color: hintColor), // <-- PERUBAHAN WARNA
-                ),
-                SizedBox(height: 32),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Data Diri',
-                    style: TextStyle(
-                      color: textColor, // <-- PERUBAHAN WARNA
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                            size: 20,
+                            color: Color(0xFF1A202C),
+                          ),
+                          onPressed: _pickImage,
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 32),
+              _buildTextFormField(
+                controller: _nameController,
+                label: 'Nama Lengkap',
+                icon: Icons.person_outline,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nama tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              _buildTextFormField(
+                controller: _emailController,
+                label: 'Email',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email tidak boleh kosong';
+                  }
+                  if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
+                    return 'Format email tidak valid';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              _buildTextFormField(
+                controller: _noHpController, // BARU
+                label: 'Nomor HP',
+                icon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Nomor HP tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF4299E1),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                Divider(
-                  color: hintColor.withOpacity(0.3),
-                  height: 24,
-                ), // <-- PERUBAHAN WARNA
-                _buildTextField(
-                  controller: _namaController,
-                  label: 'Nama Lengkap',
-                  icon: Icons.person,
-                ),
-                SizedBox(height: 16),
-                _buildTextField(
-                  controller: _noHpController,
-                  label: 'Nomor HP',
-                  icon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                ),
-                SizedBox(height: 16),
-                _buildTextField(
-                  controller: _prodiController,
-                  label: 'Program Studi',
-                  icon: Icons.school,
-                ),
-                SizedBox(height: 16),
-                _buildTextField(
-                  controller: _emailController,
-                  label: 'Email',
-                  icon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _saveProfile,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryButtonColor, // <-- PERUBAHAN WARNA
-                    padding: EdgeInsets.symmetric(horizontal: 60, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: Text(
-                    'Simpan Perubahan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: textColor, // <-- PERUBAHAN WARNA
-                    ),
+                child: Text(
+                  'Simpan Perubahan',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE2E8F0),
                   ),
                 ),
-                SizedBox(height: 100),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // --- PERUBAHAN 2: Style _buildTextField disesuaikan Dark Mode ---
-  Widget _buildTextField({
+  Widget _buildTextFormField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    int minLines = 1,
-    bool mustBeFilled = true,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
+      style: TextStyle(color: Color(0xFFE2E8F0)),
       keyboardType: keyboardType,
-      maxLines: maxLines,
-      minLines: minLines,
-      style: TextStyle(color: textColor), // <-- WARNA TEKS INPUT
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor), // <-- WARNA LABEL
-        prefixIcon: Icon(icon, color: hintColor), // <-- WARNA IKON
+        labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
+        prefixIcon: Icon(icon, color: Color(0xFFA0AEC0)),
         filled: true,
-        fillColor: surfaceColor, // <-- WARNA BACKGROUND FIELD
+        fillColor: Color(0xFF2D3748),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: accentColor,
-            width: 2,
-          ), // <-- WARNA FOKUS
+          borderSide: BorderSide(color: Color(0xFF66B3FF)),
         ),
-        enabledBorder: OutlineInputBorder(
+        errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: surfaceColor), // <-- WARNA NORMAL
+          borderSide: BorderSide(color: Colors.red.shade400),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.red.shade400, width: 2),
         ),
       ),
-      validator: (value) {
-        if (mustBeFilled && (value == null || value.isEmpty)) {
-          return '$label tidak boleh kosong';
-        }
-        if (label == 'Email' &&
-            !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value!)) {
-          return 'Email tidak valid';
-        }
-        return null;
-      },
     );
-  }
-  // --- AKHIR PERUBAHAN 2 ---
-
-  @override
-  void dispose() {
-    _namaController.dispose();
-    _noHpController.dispose();
-    _prodiController.dispose();
-    _emailController.dispose();
-    super.dispose();
   }
 }

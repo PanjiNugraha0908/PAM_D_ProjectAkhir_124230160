@@ -1,125 +1,246 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+// --- IMPORT YANG SAYA LUPAKAN ---
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+// --- AKHIR IMPORT ---
 import '../models/country.dart';
 
-/// Halaman (Page) untuk menampilkan lokasi geografis suatu negara pada peta.
-///
-/// Halaman ini menerima data [Country] melalui constructor untuk
-/// menentukan titik tengah peta dan lokasi marker.
-class CountryMapPage extends StatelessWidget {
+/// Halaman yang menampilkan lokasi sebuah [Country] di [GoogleMap].
+class CountryMapPage extends StatefulWidget {
   final Country country;
 
   CountryMapPage({required this.country});
 
-  // --- Palet Warna Halaman ---
-  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
-  // agar konsisten dan mudah dikelola di seluruh aplikasi.
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
+  @override
+  _CountryMapPageState createState() => _CountryMapPageState();
+}
+
+class _CountryMapPageState extends State<CountryMapPage> {
+  late GoogleMapController _mapController;
+  late LatLng _countryPosition;
+  final Set<Marker> _markers = {};
 
   @override
-  Widget build(BuildContext context) {
-    // Ambil koordinat dari objek negara yang diterima
-    final LatLng countryLocation = LatLng(country.latitude, country.longitude);
+  void initState() {
+    super.initState();
+    _countryPosition = LatLng(
+      widget.country.latitude,
+      widget.country.longitude,
+    );
 
-    return Scaffold(
-      // --- 1. AppBar ---
-      appBar: AppBar(
-        title: Text(
-          'Peta: ${country.name}',
-          style: TextStyle(color: textColor),
-        ),
-        backgroundColor: backgroundColor,
-        iconTheme: IconThemeData(color: textColor),
-      ),
-      // --- 2. Body ---
-      body: Container(
-        color: backgroundColor,
-        child: FlutterMap(
-          // --- 2A. Opsi Peta ---
-          options: MapOptions(
-            initialCenter: countryLocation, // Pusatkan peta ke lokasi negara
-            initialZoom: 4.0,
-            minZoom: 1.0,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
-          ),
-
-          // --- 2B. Layer-layer Peta ---
-          // Ditampilkan dari bawah ke atas (index 0 adalah yang paling bawah)
-          children: [
-            // [Layer 1] Layer Tile (Dasar Peta)
-            TileLayer(
-              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              subdomains: const ['a', 'b', 'c'],
-              userAgentPackageName: 'com.example.mobileprojek',
-            ),
-
-            // [Layer 2] Layer Marker (Penanda Lokasi)
-            MarkerLayer(
-              markers: [
-                Marker(
-                  width: 100,
-                  height: 100,
-                  point: countryLocation,
-                  child: Column(
-                    children: [
-                      // Ikon Pin
-                      Icon(Icons.location_pin, color: accentColor, size: 40),
-                      // Label Nama Negara
-                      Flexible(
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white70, // Semi-transparan
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            country.name,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow
-                                .ellipsis, // Cegah teks terlalu panjang
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            // [Layer 3] Layer Atribusi/Copyright
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  '© OpenStreetMap contributors',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.black54,
-                    backgroundColor: Colors.white70, // Semi-transparan
-                  ),
-                ),
-              ),
-            ),
-          ],
+    _markers.add(
+      Marker(
+        markerId: MarkerId(widget.country.name),
+        position: _countryPosition,
+        infoWindow: InfoWindow(
+          title: widget.country.name,
+          snippet: widget.country.capital,
         ),
       ),
     );
   }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _mapController.setMapStyle(mapStyle); // Set style Peta ke mode gelap
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFF1A202C), // backgroundColor
+      appBar: AppBar(
+        title: Text(
+          'Lokasi ${widget.country.name}',
+          style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+        ),
+        backgroundColor: Color(0xFF2D3748), // surfaceColor
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
+        elevation: 0,
+      ),
+      body: GoogleMap(
+        onMapCreated: _onMapCreated,
+        initialCameraPosition: CameraPosition(
+          target: _countryPosition,
+          zoom: 4.0,
+        ),
+        markers: _markers,
+        mapType: MapType.normal,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _mapController.animateCamera(
+            CameraUpdate.newLatLngZoom(_countryPosition, 4.0),
+          );
+        },
+        backgroundColor: Color(0xFF4299E1), // primaryButtonColor
+        child: Icon(Icons.center_focus_strong, color: Color(0xFFE2E8F0)), // textColor
+        tooltip: 'Kembali ke tengah',
+      ),
+    );
+  }
 }
+
+/// JSON String untuk style Google Maps mode gelap.
+const String mapStyle = '''
+[
+  {
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#242f3e"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#746855"
+      }
+    ]
+  },
+  {
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#242f3e"
+      }
+    ]
+  },
+  {
+    "featureType": "administrative.locality",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "poi",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#263c3f"
+      }
+    ]
+  },
+  {
+    "featureType": "poi.park",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#6b9a76"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#38414e"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#212a37"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#9ca5b3"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#746855"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "geometry.stroke",
+    "stylers": [
+      {
+        "color": "#1f2835"
+      }
+    ]
+  },
+  {
+    "featureType": "road.highway",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#f3d19c"
+      }
+    ]
+  },
+  {
+    "featureType": "transit",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#2f3948"
+      }
+    ]
+  },
+  {
+    "featureType": "transit.station",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#d59563"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#17263c"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.fill",
+    "stylers": [
+      {
+        "color": "#515c6d"
+      }
+    ]
+  },
+  {
+    "featureType": "water",
+    "elementType": "labels.text.stroke",
+    "stylers": [
+      {
+        "color": "#17263c"
+      }
+    ]
+  }
+]
+''';

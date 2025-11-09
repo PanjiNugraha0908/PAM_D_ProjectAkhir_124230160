@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../models/country.dart';
-import '../models/history_item.dart';
-// --- PERUBAHAN DI SINI ---
-// Ganti dialog dengan halaman baru
-import '../pages/country_detail_page.dart';
-// import '../widgets/country_detail_dialog.dart'; // <-- Hapus impor ini
-// --- AKHIR PERUBAHAN ---
-import '../services/database_service.dart';
-import '../services/auth_service.dart';
-import 'login_page.dart';
-import 'history_page.dart';
-import 'location_page.dart';
-import 'profile_page.dart';
-import 'settings_page.dart';
-import '../services/notification_service.dart';
+import '../controllers/home_controller.dart'; // Import controller
 
-/// Halaman utama aplikasi.
+/// Halaman utama aplikasi (Tampilan/View).
 ///
-/// Menampilkan daftar semua negara yang diambil dari API,
-/// menyediakan fitur pencarian, filter, dan navigasi utama
-/// aplikasi (via BottomNavBar).
+/// File ini sekarang hanya bertanggung jawab untuk me-render UI (metode `build`).
+/// Semua logika, state, dan fungsi-fungsi di-handle oleh [HomeController]
+/// yang di-mixin ke dalam `_HomePageState`.
 class HomePage extends StatefulWidget {
   final String username;
 
@@ -31,348 +16,37 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  // --- State dan Controller ---
-  final _searchController = TextEditingController();
-  List<Country> _allCountries = []; // Daftar master semua negara
-  List<Country> _filteredCountries =
-      []; // Daftar yang ditampilkan (hasil filter)
-  bool _isLoading = false;
-
-  // --- Palet Warna Halaman ---
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
-
+class _HomePageState extends State<HomePage> with HomeController {
   // --- Lifecycle Methods ---
-
+  // Kita panggil fungsi onInit dan onDispose dari Controller
   @override
   void initState() {
     super.initState();
-    _loadAllCountries();
-    // Tambahkan listener ke search bar untuk memfilter secara real-time
-    _searchController.addListener(_filterCountries);
+    onInit(); // Panggil onInit dari mixin
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_filterCountries);
-    _searchController.dispose();
+    onDispose(); // Panggil onDispose dari mixin
     super.dispose();
   }
 
-  // --- Logika Pengambilan Data (API) ---
-
-  /// Mengambil semua data negara dari API restcountries.com.
-  Future<void> _loadAllCountries() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
-    try {
-      print('🌍 Mengambil data semua negara dari API...');
-      final response = await http
-          .get(
-            Uri.parse('https://restcountries.com/v3.1/all'),
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
-              'Accept-Encoding': 'gzip, deflate, br',
-            },
-          )
-          .timeout(
-            Duration(seconds: 20), // Batas waktu 20 detik
-            onTimeout: () {
-              throw Exception('Koneksi timeout. Periksa internet Anda.');
-            },
-          );
-
-      print('📡 Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        final List<Country> countries = [];
-
-        for (var json in data) {
-          try {
-            countries.add(Country.fromJson(json));
-          } catch (e) {
-            print(
-              '⚠️ Error parsing negara: ${json['name']?['common'] ?? 'Unknown'} - $e',
-            );
-          }
-        }
-
-        // Urutkan daftar negara berdasarkan abjad
-        countries.sort(
-          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-        );
-
-        if (mounted) {
-          setState(() {
-            _allCountries = countries; // Simpan ke daftar master
-            _filteredCountries = countries; // Tampilkan semua di awal
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('❌ Server error: ${response.statusCode}');
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    } catch (e) {
-      print('❌ Error memuat negara: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  /// [Fallback] Pencarian langsung ke API jika data [_allCountries] gagal dimuat.
-  Future<void> _searchCountriesByName(String query) async {
-    if (query.trim().isEmpty) return;
-
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
-    try {
-      final response = await http
-          .get(
-            Uri.parse('https://restcountries.com/v3.1/name/$query'),
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
-            },
-          )
-          .timeout(Duration(seconds: 10));
-
-      if (mounted) {
-        if (response.statusCode == 200) {
-          final List<dynamic> data = json.decode(response.body);
-          final List<Country> countries = data
-              .map((json) => Country.fromJson(json))
-              .toList();
-          setState(() {
-            _filteredCountries = countries; // Tampilkan hasil pencarian API
-            _isLoading = false;
-          });
-        } else if (response.statusCode == 404) {
-          setState(() {
-            _filteredCountries = []; // Tidak ditemukan
-            _isLoading = false;
-          });
-        } else {
-          throw Exception('Pencarian gagal: ${response.statusCode}');
-        }
-      }
-    } catch (e) {
-      print('❌ Error pencarian: $e');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  // --- Logika Filter dan UI ---
-
-  /// Memfilter daftar [_allCountries] berdasarkan teks di [_searchController].
-  void _filterCountries() {
-    if (mounted) {
-      setState(() {
-        final query = _searchController.text.trim().toLowerCase();
-
-        if (query.isEmpty) {
-          _filteredCountries = _allCountries; // Tampilkan semua jika kosong
-        } else {
-          // Filter berdasarkan nama, ibu kota, atau region
-          _filteredCountries = _allCountries
-              .where(
-                (country) =>
-                    // Menggunakan startsWith untuk hasil yang lebih relevan
-                    country.name.toLowerCase().startsWith(query) ||
-                    country.capital.toLowerCase().startsWith(query) ||
-                    country.region.toLowerCase().startsWith(query),
-              )
-              .toList();
-        }
-      });
-    }
-  }
-
-  /// Memfilter daftar negara berdasarkan huruf awal yang dipilih.
-  void _filterByAlphabet(String letter) {
-    setState(() {
-      _searchController.clear(); // Hapus teks pencarian
-      _filteredCountries = _allCountries
-          .where((country) => country.name.toUpperCase().startsWith(letter))
-          .toList();
-    });
-  }
-
-  /// Mengembalikan filter ke kondisi awal (menampilkan semua negara).
-  void _resetFilter() {
-    setState(() {
-      _searchController.clear();
-      _filteredCountries = _allCountries;
-    });
-  }
-
-  /// Menavigasi ke [CountryDetailPage] untuk [Country] yang dipilih.
-  /// Juga mencatat item ini ke [DatabaseService] sebagai riwayat
-  /// dan memicu notifikasi jika mencapai milestone.
-  void _showCountryDetail(Country country) async {
-    String username = widget.username;
-
-    // 1. Hitung negara unik yang sudah dilihat SEBELUM menambah riwayat
-    List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
-      username,
-    );
-    var negaraUnikSebelum = historySebelum
-        .map((item) => item.countryName)
-        .toSet();
-    final int totalUnikSebelum = negaraUnikSebelum.length;
-
-    // 2. Tambahkan entri riwayat baru
-    await DatabaseService.addHistory(
-      HistoryItem(
-        username: username,
-        countryName: country.name,
-        flagUrl: country.flagUrl,
-        capital: country.capital,
-        region: country.region,
-        viewedAt: DateTime.now(),
-      ),
-    );
-
-    // 3. Hitung negara unik SESUDAH menambah riwayat
-    List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
-      username,
-    );
-    var negaraUnikSesudah = historySesudah
-        .map((item) => item.countryName)
-        .toSet();
-    final int totalUnikSesudah = negaraUnikSesudah.length;
-
-    // --- LOGIKA NOTIFIKASI ---
-    // Tampilkan notifikasi setiap kelipatan 3 negara unik *baru* yang dilihat
-    if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
-      // Pastikan notifikasi tidak terpicu lagi jika pengguna membuka negara yang sama
-      if (totalUnikSebelum % 3 != 0) {
-        NotificationService.showNotification(
-          id: totalUnikSesudah,
-          title: 'Wawasan Bertambah! 🌍',
-          body: 'Selamat, kamu sudah melihat $totalUnikSesudah negara baru!',
-        );
-      }
-    }
-    // --- AKHIR LOGIKA NOTIFIKASI ---
-
-    if (mounted) {
-      // --- PERUBAHAN DI SINI ---
-      // Ganti showDialog dengan Navigator.push
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CountryDetailPage(country: country),
-        ),
-      );
-      // --- AKHIR PERUBAHAN ---
-    }
-  }
-
-  // --- Navigasi ---
-
-  /// Melakukan proses logout dan mengarahkan pengguna ke [LoginPage].
-  Future<void> _logout() async {
-    await AuthService.logout();
-    if (mounted) {
-      // Kembali ke halaman Login dan hapus semua rute sebelumnya
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    }
-  }
-
-  /// Navigasi ke [HistoryPage] (Tab)
-  void _openHistory() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HistoryPage()),
-    );
-  }
-
-  /// Navigasi ke [LocationPage] (Tab)
-  void _openLocation() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LocationPage()),
-    );
-  }
-
-  /// Navigasi ke [ProfilePage] (Tab)
-  void _openProfile() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => ProfilePage()),
-    );
-  }
-
-  /// Navigasi ke [SettingsPage] (Bukan tab, membuka di atas tumpukan)
-  void _openSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SettingsPage()),
-    );
-  }
-
-  /// Handler untuk [BottomNavigationBar] onTap.
-  void _onItemTapped(int index) {
-    switch (index) {
-      case 0: // Profil
-        _openProfile();
-        break;
-      case 1: // Lokasi
-        _openLocation();
-        break;
-      case 2: // History
-        _openHistory();
-        break;
-    }
-  }
-
-  // --- Build Method ---
-
+  // --- Build Method (Tampilan/Style) ---
+  // File ini sekarang hanya berisi kode untuk tampilan.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // Hindari UI terdorong keyboard
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Color(0xFF1A202C), // backgroundColor
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: Color(0xFF2D3748), // surfaceColor
         type: BottomNavigationBarType.fixed,
-        unselectedItemColor: hintColor,
-        // Di halaman Home, semua ikon tidak di-highlight
-        // karena Home dianggap sebagai "dasar"
-        selectedItemColor: hintColor,
+        unselectedItemColor: Color(0xFFA0AEC0), // hintColor
+        selectedItemColor: Color(0xFFA0AEC0), // hintColor
         showUnselectedLabels: true,
         selectedFontSize: 12,
         unselectedFontSize: 12,
-        onTap: _onItemTapped,
+        onTap: onItemTapped, // Panggil fungsi dari controller
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
           BottomNavigationBarItem(
@@ -382,431 +56,470 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
         ],
       ),
-
-      body: Container(
-        color: backgroundColor,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.settings, color: hintColor),
-                      onPressed: _openSettings,
-                      tooltip: 'Pengaturan',
-                    ),
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/Logoprojek.png',
-                          height: 24,
-                          width: 24,
-                          color: textColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // --- 1. Header ---
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.settings,
+                      color: Color(0xFFA0AEC0),
+                    ), // hintColor
+                    onPressed: openSettings, // Panggil fungsi dari controller
+                    tooltip: 'Pengaturan',
+                  ),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/Logoprojek.png',
+                        height: 24,
+                        width: 24,
+                        color: Color(0xFFE2E8F0), // textColor
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'ExploreUnity',
+                        style: TextStyle(
+                          color: Color(0xFFE2E8F0), // textColor
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        SizedBox(width: 8),
-                        Text(
-                          'ExploreUnity',
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.logout,
+                      color: Color(0xFFA0AEC0),
+                    ), // hintColor
+                    onPressed: logout, // Panggil fungsi dari controller
+                    tooltip: 'Logout',
+                  ),
+                ],
+              ),
+            ),
+
+            // --- 2. Search Bar ---
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: TextField(
+                controller: searchController, // Gunakan controller
+                style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                decoration: InputDecoration(
+                  hintText: 'Cari negara...',
+                  hintStyle: TextStyle(
+                    color: Color(0xFFA0AEC0).withOpacity(0.7),
+                  ), // hintColor
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Color(0xFF66B3FF),
+                  ), // accentColor
+                  suffixIcon: searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: Color(0xFFA0AEC0),
+                          ), // hintColor
+                          onPressed:
+                              resetFilter, // Panggil fungsi dari controller
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Color(0xFF2D3748), // surfaceColor
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Color(0xFF4299E1), // primaryButtonColor
+                      width: 2,
+                    ),
+                  ),
+                ),
+                onSubmitted:
+                    (allCountries.isEmpty && searchController.text.isNotEmpty)
+                    ? (value) => searchCountriesByName(value)
+                    : null,
+              ),
+            ),
+            SizedBox(height: 8),
+
+            // --- 3. Filter Abjad ---
+            if (!isLoading && allCountries.isNotEmpty)
+              Container(
+                height: 50,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: 26,
+                  itemBuilder: (context, index) {
+                    final letter = String.fromCharCode(65 + index);
+                    final hasCountries = allCountries.any(
+                      (c) => c.name.toUpperCase().startsWith(letter),
+                    );
+
+                    return Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: FilterChip(
+                        label: Text(
+                          letter,
                           style: TextStyle(
-                            color: textColor,
-                            fontSize: 18,
+                            color: hasCountries
+                                ? Color(0xFFE2E8F0) // textColor
+                                : Color(
+                                    0xFFA0AEC0,
+                                  ).withOpacity(0.3), // hintColor
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
+                        onSelected: hasCountries
+                            ? (_) =>
+                                  filterByAlphabet(letter) // Panggil controller
+                            : null,
+                        backgroundColor: Color(
+                          0xFF2D3748,
+                        ).withOpacity(0.5), // surfaceColor
+                        selectedColor: Color(0xFF4299E1), // primaryButtonColor
+                        disabledColor: Color(
+                          0xFF2D3748,
+                        ).withOpacity(0.1), // surfaceColor
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            SizedBox(height: 8),
+
+            // --- 4. Info Jumlah Hasil ---
+            if (!isLoading && filteredCountries.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      allCountries.isNotEmpty
+                          ? 'Menampilkan ${filteredCountries.length} dari ${allCountries.length} negara'
+                          : '${filteredCountries.length} hasil',
+                      style: TextStyle(
+                        color: Color(0xFFA0AEC0),
+                        fontSize: 12,
+                      ), // hintColor
                     ),
-                    IconButton(
-                      icon: Icon(Icons.logout, color: hintColor),
-                      onPressed: _logout,
-                      tooltip: 'Logout',
-                    ),
+                    if (filteredCountries.length != allCountries.length &&
+                        allCountries.isNotEmpty)
+                      TextButton(
+                        onPressed: resetFilter, // Panggil controller
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size(0, 30),
+                        ),
+                        child: Text(
+                          'Reset',
+                          style: TextStyle(
+                            color: Color(0xFF66B3FF),
+                            fontSize: 12,
+                          ), // accentColor
+                        ),
+                      ),
                   ],
                 ),
               ),
 
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: TextField(
-                  controller: _searchController,
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    hintText: 'Cari negara...',
-                    hintStyle: TextStyle(color: hintColor.withOpacity(0.7)),
-                    prefixIcon: Icon(Icons.search, color: accentColor),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.clear, color: hintColor),
-                            onPressed: _resetFilter,
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: surfaceColor,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.transparent),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: primaryButtonColor,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                  // Jika data negara kosong (gagal load),
-                  // gunakan onSubmitted untuk memicu pencarian API langsung
-                  onSubmitted:
-                      (_allCountries.isEmpty &&
-                          _searchController.text.isNotEmpty)
-                      ? (value) => _searchCountriesByName(value)
-                      : null,
-                ),
-              ),
-              SizedBox(height: 8),
-
-              // Hanya tampilkan jika data sudah dimuat
-              if (!_isLoading && _allCountries.isNotEmpty)
-                Container(
-                  height: 50,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: 26,
-                    itemBuilder: (context, index) {
-                      final letter = String.fromCharCode(65 + index);
-                      // Cek apakah ada negara yang dimulai dengan huruf ini
-                      final hasCountries = _allCountries.any(
-                        (c) => c.name.toUpperCase().startsWith(letter),
-                      );
-
-                      return Padding(
-                        padding: EdgeInsets.only(right: 8.0),
-                        child: FilterChip(
-                          label: Text(
-                            letter,
-                            style: TextStyle(
-                              color: hasCountries
-                                  ? textColor
-                                  : hintColor.withOpacity(0.3),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onSelected: hasCountries
-                              ? (_) => _filterByAlphabet(letter)
-                              : null,
-                          backgroundColor: surfaceColor.withOpacity(0.5),
-                          selectedColor: primaryButtonColor,
-                          disabledColor: surfaceColor.withOpacity(0.1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              SizedBox(height: 8),
-
-              // Hanya tampilkan jika tidak loading dan ada hasil
-              if (!_isLoading && _filteredCountries.isNotEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // --- 5. Daftar Negara (atau Loading / Empty State) ---
+            if (isLoading)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        _allCountries.isNotEmpty
-                            ? 'Menampilkan ${_filteredCountries.length} dari ${_allCountries.length} negara'
-                            : '${_filteredCountries.length} hasil',
-                        style: TextStyle(color: hintColor, fontSize: 12),
+                      CircularProgressIndicator(
+                        color: Color(0xFF4299E1), // primaryButtonColor
+                        strokeWidth: 3,
                       ),
-                      // Tampilkan tombol "Reset" jika sedang memfilter
-                      if (_filteredCountries.length != _allCountries.length &&
-                          _allCountries.isNotEmpty)
-                        TextButton(
-                          onPressed: _resetFilter,
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            minimumSize: Size(0, 30),
-                          ),
-                          child: Text(
-                            'Reset',
-                            style: TextStyle(color: accentColor, fontSize: 12),
-                          ),
-                        ),
+                      SizedBox(height: 24),
+                      Text(
+                        allCountries.isEmpty
+                            ? 'Memuat data negara...'
+                            : 'Mencari...',
+                        style: TextStyle(
+                          color: Color(0xFFE2E8F0),
+                          fontSize: 16,
+                        ), // textColor
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Mohon tunggu sebentar',
+                        style: TextStyle(
+                          color: Color(0xFFA0AEC0),
+                          fontSize: 12,
+                        ), // hintColor
+                      ),
                     ],
                   ),
                 ),
-
-              if (_isLoading)
-                Expanded(
-                  child: Center(
+              )
+            else if (filteredCountries.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(
-                          color: primaryButtonColor,
-                          strokeWidth: 3,
+                        Container(
+                          padding: EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF2D3748), // surfaceColor
+                          ),
+                          child: Image.asset(
+                            'assets/Logoprojek.png',
+                            height: 80,
+                            width: 80,
+                            color: Color(
+                              0xFF66B3FF,
+                            ).withOpacity(0.8), // accentColor
+                          ),
                         ),
-                        SizedBox(height: 24),
+                        SizedBox(height: 32),
                         Text(
-                          _allCountries.isEmpty
-                              ? 'Memuat data negara...'
-                              : 'Mencari...',
-                          style: TextStyle(color: textColor, fontSize: 16),
+                          allCountries.isEmpty
+                              ? 'Jelajahi Dunia'
+                              : 'Tidak Ada Hasil',
+                          style: TextStyle(
+                            color: Color(0xFFE2E8F0), // textColor
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        SizedBox(height: 8),
+                        SizedBox(height: 12),
                         Text(
-                          'Mohon tunggu sebentar',
-                          style: TextStyle(color: hintColor, fontSize: 12),
+                          allCountries.isEmpty
+                              ? 'Cari negara yang ingin kamu ketahui'
+                              : 'untuk "${searchController.text}"',
+                          style: TextStyle(
+                            color: Color(0xFFA0AEC0),
+                            fontSize: 14,
+                          ), // hintColor
+                          textAlign: TextAlign.center,
                         ),
+                        if (allCountries.isEmpty) ...[
+                          SizedBox(height: 32),
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Color(
+                                0xFF2D3748,
+                              ).withOpacity(0.5), // surfaceColor
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Color(
+                                  0xFF66B3FF,
+                                ).withOpacity(0.3), // accentColor
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Color(0xFFA0AEC0), // hintColor
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Ketik di search bar dan tekan Enter',
+                                    style: TextStyle(
+                                      color: Color(0xFFA0AEC0), // hintColor
+                                      fontSize: 12,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                )
-              else if (_filteredCountries.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: surfaceColor,
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: filteredCountries.length,
+                  itemBuilder: (context, index) {
+                    final country = filteredCountries[index];
+                    bool showHeader = false;
+                    if (allCountries.isNotEmpty && index == 0) {
+                      showHeader = true;
+                    } else if (allCountries.isNotEmpty && index > 0) {
+                      final currentLetter = country.name[0].toUpperCase();
+                      final prevLetter = filteredCountries[index - 1].name[0]
+                          .toUpperCase();
+                      showHeader = currentLetter != prevLetter;
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showHeader)
+                          Padding(
+                            padding: EdgeInsets.only(
+                              top: 16,
+                              bottom: 8,
+                              left: 4,
                             ),
-                            child: Image.asset(
-                              'assets/Logoprojek.png',
-                              height: 80,
-                              width: 80,
-                              color: accentColor.withOpacity(0.8),
-                            ),
-                          ),
-                          SizedBox(height: 32),
-                          Text(
-                            _allCountries.isEmpty
-                                ? 'Jelajahi Dunia' // Tampilan awal
-                                : 'Tidak Ada Hasil', // Hasil filter 0
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            _allCountries.isEmpty
-                                ? 'Cari negara yang ingin kamu ketahui'
-                                : 'untuk "${_searchController.text}"',
-                            style: TextStyle(color: hintColor, fontSize: 14),
-                            textAlign: TextAlign.center,
-                          ),
-                          // Petunjuk tambahan jika data negara gagal dimuat
-                          if (_allCountries.isEmpty) ...[
-                            SizedBox(height: 32),
-                            Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: surfaceColor.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: accentColor.withOpacity(0.3),
-                                ),
+                            child: Text(
+                              country.name[0].toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF66B3FF), // accentColor
                               ),
+                            ),
+                          ),
+                        // Card untuk setiap negara
+                        Card(
+                          color: Color(0xFF2D3748), // surfaceColor
+                          margin: EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: InkWell(
+                            onTap: () => showCountryDetail(
+                              country,
+                            ), // Panggil controller
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: hintColor,
-                                    size: 18,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      'Ketik di search bar dan tekan Enter',
-                                      style: TextStyle(
-                                        color: hintColor,
-                                        fontSize: 12,
-                                      ),
-                                      textAlign: TextAlign.center,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      country.flagUrl,
+                                      width: 60,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Container(
+                                              width: 60,
+                                              height: 40,
+                                              color: Color(0xFF2D3748)
+                                                  .withOpacity(
+                                                    0.8,
+                                                  ), // surfaceColor
+                                              child: Icon(
+                                                Icons.flag,
+                                                color: Color(
+                                                  0xFFA0AEC0,
+                                                ), // hintColor
+                                                size: 24,
+                                              ),
+                                            );
+                                          },
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return Container(
+                                              width: 60,
+                                              height: 40,
+                                              color: Color(0xFF2D3748)
+                                                  .withOpacity(
+                                                    0.8,
+                                                  ), // surfaceColor
+                                              child: Center(
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Color(
+                                                          0xFFA0AEC0,
+                                                        ), // hintColor
+                                                      ),
+                                                ),
+                                              ),
+                                            );
+                                          },
                                     ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          country.name,
+                                          style: TextStyle(
+                                            color: Color(
+                                              0xFFE2E8F0,
+                                            ), // textColor
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          '🏛️ ${country.capital}',
+                                          style: TextStyle(
+                                            color: Color(
+                                              0xFFA0AEC0,
+                                            ), // hintColor
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          '🌏 ${country.region}',
+                                          style: TextStyle(
+                                            color: Color(
+                                              0xFFA0AEC0,
+                                            ), // hintColor
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Color(0xFFA0AEC0), // hintColor
+                                    size: 16,
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    itemCount: _filteredCountries.length,
-                    itemBuilder: (context, index) {
-                      final country = _filteredCountries[index];
-
-                      // Logika untuk menampilkan header abjad (A, B, C, dst)
-                      bool showHeader = false;
-                      if (_allCountries.isNotEmpty && index == 0) {
-                        showHeader =
-                            true; // Selalu tampilkan header di item pertama
-                      } else if (_allCountries.isNotEmpty && index > 0) {
-                        // Tampilkan header jika huruf pertama berbeda dari item sebelumnya
-                        final currentLetter = country.name[0].toUpperCase();
-                        final prevLetter = _filteredCountries[index - 1].name[0]
-                            .toUpperCase();
-                        showHeader = currentLetter != prevLetter;
-                      }
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Tampilkan Header Abjad jika perlu
-                          if (showHeader)
-                            Padding(
-                              padding: EdgeInsets.only(
-                                top: 16,
-                                bottom: 8,
-                                left: 4,
-                              ),
-                              child: Text(
-                                country.name[0].toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: accentColor,
-                                ),
-                              ),
-                            ),
-
-                          // Card untuk setiap negara
-                          Card(
-                            color: surfaceColor,
-                            margin: EdgeInsets.only(bottom: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: InkWell(
-                              onTap: () => _showCountryDetail(country),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    // Bendera Negara
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        country.flagUrl,
-                                        width: 60,
-                                        height: 40,
-                                        fit: BoxFit.cover,
-                                        // Error Builder: Tampil jika gambar gagal dimuat
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                              return Container(
-                                                width: 60,
-                                                height: 40,
-                                                color: surfaceColor.withOpacity(
-                                                  0.8,
-                                                ),
-                                                child: Icon(
-                                                  Icons.flag,
-                                                  color: hintColor,
-                                                  size: 24,
-                                                ),
-                                              );
-                                            },
-                                        // Loading Builder: Tampil saat gambar sedang dimuat
-                                        loadingBuilder:
-                                            (context, child, loadingProgress) {
-                                              if (loadingProgress == null)
-                                                return child;
-                                              return Container(
-                                                width: 60,
-                                                height: 40,
-                                                color: surfaceColor.withOpacity(
-                                                  0.8,
-                                                ),
-                                                child: Center(
-                                                  child: SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          color: hintColor,
-                                                        ),
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      ),
-                                    ),
-                                    SizedBox(width: 12),
-                                    // Info Teks (Nama, Ibu Kota, Region)
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            country.name,
-                                            style: TextStyle(
-                                              color: textColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            '🏛️ ${country.capital}',
-                                            style: TextStyle(
-                                              color: hintColor,
-                                              fontSize: 12,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            '🌏 ${country.region}',
-                                            style: TextStyle(
-                                              color: hintColor,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Ikon Navigasi (>)
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      color: hintColor,
-                                      size: 16,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

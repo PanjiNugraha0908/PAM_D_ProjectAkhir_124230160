@@ -2,25 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/activity_tracker.dart';
 import '../services/notification_service.dart';
 
-/// Halaman (Page) Stateful untuk mengelola pengaturan aplikasi.
+/// Halaman untuk mengelola pengaturan aplikasi.
 class SettingsPage extends StatefulWidget {
   @override
   _SettingsPageState createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // --- State ---
   bool _notificationEnabled = true;
-
-  // --- Palet Warna Halaman ---
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
-
-  // --- Lifecycle Methods ---
 
   @override
   void initState() {
@@ -28,9 +17,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadSettings();
   }
 
-  // --- Logika Halaman (Page Logic) ---
-
-  /// Memuat status pengaturan notifikasi dari [ActivityTracker]
   Future<void> _loadSettings() async {
     bool enabled = await ActivityTracker.isNotificationEnabled();
     if (mounted) {
@@ -40,7 +26,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  /// Mengubah status notifikasi pengingat.
   Future<void> _toggleNotification(bool value) async {
     await ActivityTracker.setNotificationEnabled(value);
     if (mounted) {
@@ -55,35 +40,30 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? 'Notifikasi pengingat diaktifkan'
                 : 'Notifikasi pengingat dinonaktifkan',
           ),
-          backgroundColor: primaryButtonColor,
+          backgroundColor: Color(0xFF4299E1), // primaryButtonColor
         ),
       );
     }
   }
 
-  /// Memicu notifikasi tes secara manual menggunakan [NotificationService].
   Future<void> _testNotification() async {
-    // --- PERUBAHAN ---
-    // Menggunakan username "Test" untuk notifikasi manual
     await NotificationService.showNotification(
       id: 999,
       title: '🌍 Test Notifikasi',
       body:
           'Hai Test, notifikasi berhasil! Sistem notifikasi berfungsi dengan baik.',
     );
-    // --- AKHIR PERUBAHAN ---
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Notifikasi test dikirim!'),
-          backgroundColor: primaryButtonColor,
+          backgroundColor: Color(0xFF4299E1), // primaryButtonColor
         ),
       );
     }
   }
 
-  /// Memformat [DateTime] menjadi string waktu relatif (misal: "5 menit lalu").
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
@@ -97,179 +77,192 @@ class _SettingsPageState extends State<SettingsPage> {
     } else if (diff.inDays == 1) {
       return 'Kemarin';
     } else {
-      // Format tanggal standar jika sudah lama
       return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
     }
   }
 
-  // --- Build Method ---
-
   @override
   Widget build(BuildContext context) {
-    // Ambil data aktivitas terakhir untuk ditampilkan
     DateTime? lastActive = ActivityTracker.getLastActive();
     int daysSinceActive = ActivityTracker.getDaysSinceLastActive();
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      // --- 1. AppBar ---
+      backgroundColor: Color(0xFF1A202C), // backgroundColor
       appBar: AppBar(
-        title: Text('Pengaturan', style: TextStyle(color: textColor)),
-        backgroundColor: backgroundColor,
-        iconTheme: IconThemeData(color: textColor),
+        title: Text(
+          'Pengaturan',
+          style: TextStyle(color: Color(0xFFE2E8F0)),
+        ), // textColor
+        backgroundColor: Color(0xFF1A202C), // backgroundColor
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
         elevation: 0,
       ),
-
-      // --- 2. Body ---
-      body: Container(
-        color: backgroundColor,
-        child: ListView(
-          children: [
-            // --- 2A. Kartu Pengaturan Notifikasi ---
-            Card(
-              color: surfaceColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.notifications, color: accentColor),
-                    title: Text(
-                      'Notifikasi',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-                  Divider(height: 1, color: hintColor.withOpacity(0.5)),
-                  // Toggle Pengingat Aktivitas
-                  SwitchListTile(
-                    secondary: Icon(Icons.alarm, color: hintColor),
-                    title: Text(
-                      'Pengingat Aktivitas',
-                      style: TextStyle(color: textColor),
-                    ),
-                    subtitle: Text(
-                      'Kirim notifikasi jika tidak aktif selama 5 menit',
-                      style: TextStyle(color: hintColor),
-                    ),
-                    value: _notificationEnabled,
-                    onChanged: _toggleNotification,
-                    activeColor: primaryButtonColor,
-                    inactiveThumbColor: hintColor,
-                  ),
-                  // Tombol Test Notifikasi
-                  ListTile(
-                    leading: Icon(Icons.send, color: hintColor),
-                    title: Text(
-                      'Test Notifikasi',
-                      style: TextStyle(color: textColor),
-                    ),
-                    subtitle: Text(
-                      'Kirim notifikasi test',
-                      style: TextStyle(color: hintColor),
-                    ),
-                    trailing: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: hintColor,
-                    ),
-                    onTap: _testNotification,
-                  ),
-                ],
-              ),
+      body: ListView(
+        children: [
+          Card(
+            color: Color(0xFF2D3748), // surfaceColor
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-
-            // --- 2B. Kartu Informasi Aktivitas ---
-            Card(
-              color: surfaceColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.info, color: accentColor),
-                    title: Text(
-                      'Informasi Aktivitas',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
+            margin: EdgeInsets.all(16),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.notifications,
+                    color: Color(0xFF66B3FF),
+                  ), // accentColor
+                  title: Text(
+                    'Notifikasi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE2E8F0), // textColor
                     ),
                   ),
-                  Divider(height: 1, color: hintColor.withOpacity(0.5)),
-                  ListTile(
-                    title: Text(
-                      'Terakhir Aktif (Saat App Ditutup)', // Teks diperjelas
-                      style: TextStyle(color: textColor),
-                    ),
-                    subtitle: Text(
-                      lastActive != null
-                          ? _formatDateTime(lastActive)
-                          : 'Belum ada data',
-                      style: TextStyle(color: hintColor),
-                    ),
-                    trailing: Icon(Icons.access_time, color: hintColor),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Hari Sejak Terakhir Aktif',
-                      style: TextStyle(color: textColor),
-                    ),
-                    subtitle: Text(
-                      '$daysSinceActive hari',
-                      style: TextStyle(color: hintColor),
-                    ),
-                    trailing: Icon(Icons.calendar_today, color: hintColor),
-                  ),
-                ],
-              ),
-            ),
-
-            // --- 2C. Kartu Info Penjelasan Notifikasi ---
-            Card(
-              margin: EdgeInsets.all(16),
-              color: surfaceColor.withOpacity(0.8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: primaryButtonColor),
-                        SizedBox(width: 8),
-                        Text(
-                          'Tentang Notifikasi',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-
-                    // --- PERUBAHAN TEKS PENJELASAN ---
-                    Text(
-                      'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi (jika sedang login). Pesan: "Hai [Username], masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
-                      style: TextStyle(fontSize: 14, color: hintColor),
-                    ),
-                    // --- AKHIR PERUBAHAN ---
-                  ],
                 ),
+                Divider(
+                  height: 1,
+                  color: Color(0xFFA0AEC0).withOpacity(0.5),
+                ), // hintColor
+                SwitchListTile(
+                  secondary: Icon(
+                    Icons.alarm,
+                    color: Color(0xFFA0AEC0),
+                  ), // hintColor
+                  title: Text(
+                    'Pengingat Aktivitas',
+                    style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                  ),
+                  subtitle: Text(
+                    'Kirim notifikasi jika tidak aktif selama 5 menit',
+                    style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+                  ),
+                  value: _notificationEnabled,
+                  onChanged: _toggleNotification,
+                  activeColor: Color(0xFF4299E1), // primaryButtonColor
+                  inactiveThumbColor: Color(0xFFA0AEC0), // hintColor
+                ),
+                ListTile(
+                  leading: Icon(
+                    Icons.send,
+                    color: Color(0xFFA0AEC0),
+                  ), // hintColor
+                  title: Text(
+                    'Test Notifikasi',
+                    style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                  ),
+                  subtitle: Text(
+                    'Kirim notifikasi test',
+                    style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Color(0xFFA0AEC0), // hintColor
+                  ),
+                  onTap: _testNotification,
+                ),
+              ],
+            ),
+          ),
+          Card(
+            color: Color(0xFF2D3748), // surfaceColor
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.info,
+                    color: Color(0xFF66B3FF),
+                  ), // accentColor
+                  title: Text(
+                    'Informasi Aktivitas',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE2E8F0), // textColor
+                    ),
+                  ),
+                ),
+                Divider(
+                  height: 1,
+                  color: Color(0xFFA0AEC0).withOpacity(0.5),
+                ), // hintColor
+                ListTile(
+                  title: Text(
+                    'Terakhir Aktif (Saat App Ditutup)',
+                    style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                  ),
+                  subtitle: Text(
+                    lastActive != null
+                        ? _formatDateTime(lastActive)
+                        : 'Belum ada data',
+                    style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+                  ),
+                  trailing: Icon(
+                    Icons.access_time,
+                    color: Color(0xFFA0AEC0),
+                  ), // hintColor
+                ),
+                ListTile(
+                  title: Text(
+                    'Hari Sejak Terakhir Aktif',
+                    style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                  ),
+                  subtitle: Text(
+                    '$daysSinceActive hari',
+                    style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+                  ),
+                  trailing: Icon(
+                    Icons.calendar_today,
+                    color: Color(0xFFA0AEC0),
+                  ), // hintColor
+                ),
+              ],
+            ),
+          ),
+          Card(
+            margin: EdgeInsets.all(16),
+            color: Color(0xFF2D3748).withOpacity(0.8), // surfaceColor
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Color(0xFF4299E1),
+                      ), // primaryButtonColor
+                      SizedBox(width: 8),
+                      Text(
+                        'Tentang Notifikasi',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE2E8F0), // textColor
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi (jika sedang login). Pesan: "Hai [Username], masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFFA0AEC0),
+                    ), // hintColor
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

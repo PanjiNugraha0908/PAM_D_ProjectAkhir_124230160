@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-// --- TAMBAHKAN IMPORT INI ---
 import 'package:intl/intl.dart';
-// --- AKHIR TAMBAHAN ---
 import '../models/country.dart';
-import '../services/currency_service.dart';
-import '../services/timezone_service.dart';
-import 'country_map_page.dart'; // Import untuk Peta
+import '../controllers/country_detail_controller.dart'; // Import controller
 
-/// Halaman yang menampilkan informasi detail lengkap dari sebuah [Country].
+/// Halaman yang menampilkan informasi detail lengkap dari sebuah [Country] (Tampilan/View).
 ///
-/// Mencakup informasi umum, konverter mata uang, dan perbandingan
-/// zona waktu real-time, disajikan dalam tata letak Scrollable.
+/// File ini hanya berisi metode `build` dan helper `_build...` untuk UI.
+/// Semua logika, state, dan pemformatan data di-handle oleh
+/// [CountryDetailController] yang di-mixin ke `_CountryDetailPageState`.
 class CountryDetailPage extends StatefulWidget {
   final Country country;
 
@@ -21,230 +18,24 @@ class CountryDetailPage extends StatefulWidget {
   _CountryDetailPageState createState() => _CountryDetailPageState();
 }
 
-class _CountryDetailPageState extends State<CountryDetailPage> {
-  // --- Palet Warna Halaman ---
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  final Color primaryButtonColor = Color(0xFF4299E1);
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
-
-  // --- State Konverter Mata Uang ---
-  String? selectedFromCurrency;
-  String? selectedToCurrency;
-  final _amountController = TextEditingController(text: '1');
-  double convertedAmount = 0.0;
-  double exchangeRate = 0.0;
-  bool isLoadingConversion = false;
-  String conversionError = '';
-
-  // --- State Zona Waktu Real-time ---
-  Timer? _timer;
-  String? selectedTimezone;
-  String countryTime = ''; // Waktu di negara yang dilihat
-  String convertedTime = ''; // Waktu di zona waktu yang dipilih pengguna
-
+class _CountryDetailPageState extends State<CountryDetailPage>
+    with CountryDetailController {
   @override
   void initState() {
     super.initState();
-    // Inisialisasi default konverter mata uang
-    if (widget.country.currencies.isNotEmpty) {
-      selectedFromCurrency = widget.country.currencies.keys.first;
-      selectedToCurrency = 'IDR'; // Default konversi ke IDR
-    }
-    // Inisialisasi default zona waktu
-    selectedTimezone = 'WIB';
-    _updateTimes();
-    // Timer untuk memperbarui jam setiap detik
-    _timer = Timer.periodic(Duration(seconds: 1), (_) => _updateTimes());
+    onInit(); // Panggil onInit dari controller
   }
 
   @override
   void dispose() {
-    _timer?.cancel(); // Pastikan timer dibatalkan
-    _amountController.dispose();
+    onDispose(); // Panggil onDispose dari controller
     super.dispose();
-  }
-
-  /// Memperbarui state [countryTime] dan [convertedTime]
-  /// berdasarkan [TimezoneService].
-  void _updateTimes() {
-    if (widget.country.timezones.isEmpty) return;
-    // Cek 'mounted' untuk mencegah setState dipanggil setelah dispose()
-    if (!mounted) return;
-
-    setState(() {
-      countryTime = TimezoneService.getCurrentTimeForCountry(
-        widget.country.timezones[0],
-      );
-      if (selectedTimezone != null) {
-        convertedTime = TimezoneService.getTimeForSelectedTimezone(
-          widget.country.timezones[0],
-          selectedTimezone!,
-        );
-      }
-    });
-  }
-
-  /// Memanggil [CurrencyService] untuk mengkonversi mata uang
-  /// dan memperbarui state UI.
-  Future<void> _convertCurrency() async {
-    if (selectedFromCurrency == null || selectedToCurrency == null) {
-      setState(() {
-        conversionError = 'Pilih mata uang terlebih dahulu';
-      });
-      return;
-    }
-    setState(() {
-      isLoadingConversion = true;
-      conversionError = '';
-      convertedAmount = 0.0;
-    });
-
-    Map<String, dynamic> result = await CurrencyService.convertCurrency(
-      selectedFromCurrency!,
-      selectedToCurrency!,
-      double.tryParse(_amountController.text) ?? 1.0,
-    );
-
-    // Cek 'mounted' sebelum setState pasca-await
-    if (!mounted) return;
-
-    setState(() {
-      isLoadingConversion = false;
-      if (result['success']) {
-        convertedAmount = result['result'];
-        exchangeRate = result['rate'];
-      } else {
-        conversionError = result['error'] ?? 'Gagal konversi';
-      }
-    });
-  }
-
-  /// Navigasi ke [CountryMapPage] untuk menampilkan lokasi negara.
-  void _openCountryMap() {
-    // Cek apakah koordinat valid (bukan 0.0, 0.0)
-    if (widget.country.latitude == 0.0 && widget.country.longitude == 0.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Koordinat lokasi untuk ${widget.country.name} tidak tersedia.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CountryMapPage(country: widget.country),
-      ),
-    );
-  }
-
-  // --- Helper Getters (Formatter) ---
-
-  // --- FUNGSI BARU UNTUK FORMAT ANGKA ---
-  /// Memformat angka double menjadi format mata uang yang mudah dibaca.
-  /// Contoh: 1000000.50 -> "Rp 1.000.000,50"
-  String _formatCurrency(double amount, String? currencyCode) {
-    // Gunakan NumberFormat untuk format desimal dengan pemisah
-    // Locale "id_ID" akan menggunakan titik sebagai pemisah ribuan
-    // dan koma sebagai pemisah desimal.
-    final formatter = NumberFormat("#,##0.00", "id_ID");
-
-    String symbol = _getCurrencySymbol(currencyCode);
-    String formattedAmount = formatter.format(amount);
-
-    // Letakkan simbol 'Rp' menempel di depan
-    if (currencyCode == 'IDR') {
-      return '$symbol$formattedAmount';
-    }
-    // Mata uang lain (seperti $) diberi spasi
-    return '$symbol $formattedAmount';
-  }
-
-  // --- FUNGSI BARU UNTUK FORMAT ANGKA INPUT ---
-  /// Memformat angka input (String) menjadi format desimal.
-  /// Contoh: "1000000" -> "1.000.000"
-  String _formatInputAmount(String amountStr, String? currencyCode) {
-    final double amount = double.tryParse(amountStr) ?? 0.0;
-    // Gunakan NumberFormat tanpa desimal untuk angka input
-    final formatter = NumberFormat("#,##0", "id_ID");
-    String symbol = _getCurrencySymbol(currencyCode);
-
-    if (currencyCode == 'IDR') {
-      return '$symbol${formatter.format(amount)}';
-    }
-    return '$symbol ${formatter.format(amount)}';
-  }
-
-  List<DropdownMenuItem<String>> _buildTimezoneItems() {
-    return TimezoneService.getAvailableTimezones().map((timezone) {
-      return DropdownMenuItem<String>(
-        value: timezone,
-        child: Text(
-          '${TimezoneService.getTimezoneName(timezone)}',
-          style: TextStyle(color: textColor),
-        ),
-      );
-    }).toList();
-  }
-
-  /// Mendapatkan simbol mata uang.
-  String _getCurrencySymbol(String? code) {
-    if (code == null) return '';
-    try {
-      if (widget.country.currencies.containsKey(code)) {
-        final v = widget.country.currencies[code];
-        if (v is Map &&
-            v['symbol'] != null &&
-            v['symbol'].toString().isNotEmpty) {
-          return v['symbol'].toString();
-        }
-      }
-    } catch (e) {
-      // Abaikan error parsing dan lanjut ke fallback
-    }
-    // Fallback jika simbol tidak ada di data API
-    const fallbacks = {
-      'USD': '\$',
-      'EUR': '€',
-      'GBP': '£',
-      'JPY': '¥',
-      'IDR': 'Rp',
-      'AUD': 'A\$',
-      'CAD': 'C\$',
-      'SGD': 'S\$',
-      'MYR': 'RM',
-      'THB': '฿',
-      'CNY': '¥',
-      'KRW': '₩',
-      'INR': '₹',
-    };
-    return fallbacks[code] ?? code; // Default ke kode jika tidak ada fallback
-  }
-
-  /// Mengambil dan memformat string mata uang dari data negara.
-  String _getCurrencyString() {
-    if (widget.country.currencies.isEmpty) return 'N/A';
-    return widget.country.currencies.entries
-        .map((e) => '${e.value['name']} (${e.value['symbol'] ?? ''})')
-        .join(', ');
-  }
-
-  /// Mengembalikan daftar mata uang (hardcoded) yang didukung untuk konversi.
-  List<String> _getAvailableCurrencies() {
-    return ['IDR', 'USD', 'EUR'];
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Color(0xFF1A202C), // backgroundColor
       body: CustomScrollView(
         slivers: [
           // --- 1. AppBar yang bisa mengecil (Bendera & Judul) ---
@@ -252,17 +43,19 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             expandedHeight: 250.0,
             floating: false,
             pinned: true,
-            backgroundColor: surfaceColor,
-            iconTheme: IconThemeData(color: textColor),
+            backgroundColor: Color(0xFF2D3748), // surfaceColor
+            iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.country.name,
-                style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Color(0xFFE2E8F0), // textColor
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               background: Image.network(
                 widget.country.flagUrl,
                 fit: BoxFit.cover,
-                // Efek gelap agar teks 'title' lebih mudah dibaca
                 color: Colors.black.withOpacity(0.3),
                 colorBlendMode: BlendMode.darken,
               ),
@@ -287,14 +80,16 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                       ),
                       _buildDetailRow('Ibu Kota', widget.country.capital),
                       _buildDetailRow('Region', widget.country.region),
-                      _buildDetailRow('Sub-region', widget.country.subregion),
+                      _buildDetailRow(
+                        'Sub-region',
+                        widget.country.subregion,
+                      ),
                       _buildDetailRow(
                         'Populasi',
-                        // Format angka dengan pemisah titik
                         widget.country.population.toString().replaceAllMapped(
-                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                          (Match m) => '${m[1]}.',
-                        ),
+                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                              (Match m) => '${m[1]}.',
+                            ),
                       ),
                       _buildDetailRow(
                         'Luas',
@@ -304,20 +99,20 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                         'Bahasa',
                         widget.country.languages.join(', '),
                       ),
-                      _buildDetailRow('Mata Uang', _getCurrencyString()),
+                      _buildDetailRow('Mata Uang', getCurrencyString()), // Panggil controller
                       SizedBox(height: 16),
-                      // Tombol Lihat Peta
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          icon: Icon(Icons.map, color: textColor),
+                          icon: Icon(Icons.map, color: Color(0xFFE2E8F0)), // textColor
                           label: Text(
                             'Lihat di Peta',
-                            style: TextStyle(color: textColor),
+                            style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
                           ),
-                          onPressed: _openCountryMap,
+                          onPressed: openCountryMap, // Panggil controller
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryButtonColor,
+                            backgroundColor:
+                                Color(0xFF4299E1), // primaryButtonColor
                             padding: EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -333,7 +128,9 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                   _buildSectionCard(
                     title: 'Konversi Mata Uang',
                     icon: Icons.currency_exchange,
-                    children: [_buildCurrencyConverter()],
+                    children: [
+                      _buildCurrencyConverter(), // Panggil helper UI
+                    ],
                   ),
                   SizedBox(height: 24),
 
@@ -341,7 +138,9 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                   _buildSectionCard(
                     title: 'Waktu Real-time',
                     icon: Icons.watch_later_outlined,
-                    children: [_buildTimezone()],
+                    children: [
+                      _buildTimezone(), // Panggil helper UI
+                    ],
                   ),
                   SizedBox(height: 16),
                 ],
@@ -353,9 +152,8 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
     );
   }
 
-  // --- Helper Widgets ---
+  // --- Helper Widgets (Bagian dari "Style" / Tampilan) ---
 
-  /// [Helper Widget] Membangun 'Card' kustom untuk setiap bagian.
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
@@ -364,7 +162,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: surfaceColor,
+        color: Color(0xFF2D3748), // surfaceColor
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -372,26 +170,29 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
         children: [
           Row(
             children: [
-              Icon(icon, color: accentColor, size: 22),
+              Icon(icon, color: Color(0xFF66B3FF), size: 22), // accentColor
               SizedBox(width: 12),
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: accentColor,
+                  color: Color(0xFF66B3FF), // accentColor
                 ),
               ),
             ],
           ),
-          Divider(height: 24, thickness: 1, color: hintColor.withOpacity(0.3)),
+          Divider(
+            height: 24,
+            thickness: 1,
+            color: Color(0xFFA0AEC0).withOpacity(0.3), // hintColor
+          ),
           ...children,
         ],
       ),
     );
   }
 
-  /// [Helper Widget] Membangun baris info (Label: Value).
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: EdgeInsets.only(bottom: 10.0),
@@ -399,17 +200,20 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120, // Lebar tetap untuk label
+            width: 120,
             child: Text(
               '$label:',
-              style: TextStyle(fontWeight: FontWeight.w600, color: hintColor),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFA0AEC0), // hintColor
+              ),
             ),
           ),
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              value.isEmpty ? 'N/A' : value, // Fallback jika value kosong
-              style: TextStyle(color: textColor, fontSize: 15),
+              value.isEmpty ? 'N/A' : value,
+              style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 15), // textColor
             ),
           ),
         ],
@@ -417,42 +221,35 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
     );
   }
 
-  /// [Helper Widget] Membangun [TextFormField] kustom.
   Widget _buildCustomTextField({
     TextEditingController? controller,
     String? label,
     IconData? icon,
-    String? prefixText,
-    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
-      readOnly: readOnly,
-      style: TextStyle(color: textColor),
-      keyboardType: readOnly ? TextInputType.none : TextInputType.number,
+      style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+      keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor),
+        labelStyle: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
         prefixIcon: icon != null
-            ? Icon(icon, color: accentColor, size: 20)
+            ? Icon(icon, color: Color(0xFF66B3FF), size: 20) // accentColor
             : null,
-        prefixText: prefixText,
-        prefixStyle: TextStyle(color: textColor, fontSize: 16),
         filled: true,
-        fillColor: backgroundColor.withOpacity(0.5), // Warna lebih gelap
+        fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor.withOpacity(0.7)),
+          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)), // hintColor
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryButtonColor, width: 2),
+          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2), // primaryButtonColor
         ),
       ),
     );
   }
 
-  /// [Helper Widget] Membangun [DropdownButtonFormField] kustom.
   Widget _buildCustomDropdown({
     String? value,
     String? label,
@@ -463,32 +260,31 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: surfaceColor,
-      style: TextStyle(color: textColor),
+      dropdownColor: Color(0xFF2D3748), // surfaceColor
+      style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: hintColor),
+        labelStyle: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
         filled: true,
-        fillColor: backgroundColor.withOpacity(0.5), // Warna lebih gelap
+        fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor.withOpacity(0.7)),
+          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)), // hintColor
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryButtonColor, width: 2),
+          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2), // primaryButtonColor
         ),
       ),
     );
   }
 
-  /// [Helper Widget] Membangun UI untuk bagian Konverter Mata Uang.
   Widget _buildCurrencyConverter() {
-    // Cek jika negara punya data mata uang
     if (widget.country.currencies.isEmpty) {
       return Text(
         'Tidak ada informasi mata uang yang tersedia.',
-        style: TextStyle(color: hintColor, fontStyle: FontStyle.italic),
+        style: TextStyle(
+            color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic), // hintColor
       );
     }
 
@@ -505,7 +301,8 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                 items: widget.country.currencies.keys.map((currency) {
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(currency, style: TextStyle(color: textColor)),
+                    child: Text(currency,
+                        style: TextStyle(color: Color(0xFFE2E8F0))), // textColor
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -518,10 +315,11 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
               child: _buildCustomDropdown(
                 label: 'Ke',
                 value: selectedToCurrency,
-                items: _getAvailableCurrencies().map((currency) {
+                items: getAvailableCurrencies().map((currency) { // Panggil controller
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(currency, style: TextStyle(color: textColor)),
+                    child: Text(currency,
+                        style: TextStyle(color: Color(0xFFE2E8F0))), // textColor
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -533,7 +331,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
         ),
         SizedBox(height: 12),
         _buildCustomTextField(
-          controller: _amountController,
+          controller: amountController,
           label: 'Jumlah',
           icon: Icons.monetization_on,
         ),
@@ -541,11 +339,12 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: isLoadingConversion ? null : _convertCurrency,
+            onPressed: isLoadingConversion ? null : convertCurrency, // Panggil controller
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: primaryButtonColor,
-              disabledBackgroundColor: surfaceColor.withOpacity(0.5),
+              backgroundColor: Color(0xFF4299E1), // primaryButtonColor
+              disabledBackgroundColor:
+                  Color(0xFF2D3748).withOpacity(0.5), // surfaceColor
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -555,17 +354,16 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      color: textColor,
+                      color: Color(0xFFE2E8F0), // textColor
                       strokeWidth: 2,
                     ),
                   )
                 : Text(
                     'Konversi',
-                    style: TextStyle(fontSize: 16, color: textColor),
+                    style: TextStyle(fontSize: 16, color: Color(0xFFE2E8F0)), // textColor
                   ),
           ),
         ),
-        // Tampilan Error (jika ada)
         if (conversionError.isNotEmpty) ...[
           SizedBox(height: 12),
           Container(
@@ -577,7 +375,11 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
             child: Row(
               children: [
-                Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red.shade200,
+                  size: 20,
+                ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -589,61 +391,53 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
           ),
         ],
-        // --- BLOK HASIL KONVERSI YANG DIUBAH ---
         if (convertedAmount > 0) ...[
           SizedBox(height: 16),
           Container(
-            width: double.infinity, // Penuhi lebar card
+            width: double.infinity,
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: backgroundColor.withOpacity(0.5),
+              color: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start, // Ratakan kiri
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Tampilkan jumlah input (diformat)
                 Text(
-                  _formatInputAmount(
-                    _amountController.text,
-                    selectedFromCurrency,
-                  ),
+                  formatInputAmount(
+                      amountController.text, selectedFromCurrency), // Panggil controller
                   style: TextStyle(
                     fontSize: 18,
-                    color: hintColor, // Warna redup
+                    color: Color(0xFFA0AEC0), // hintColor
                   ),
                 ),
-                // 2. Tanda panah ke bawah
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Icon(
                     Icons.arrow_downward,
-                    color: accentColor,
+                    color: Color(0xFF66B3FF), // accentColor
                     size: 20,
                   ),
                 ),
-                // 3. Hasil konversi (diformat)
-                // Dibungkus FittedBox agar font mengecil jika perlu
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    _formatCurrency(convertedAmount, selectedToCurrency),
+                    formatCurrency(convertedAmount, selectedToCurrency), // Panggil controller
                     style: TextStyle(
-                      fontSize: 28, // Font lebih besar
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: primaryButtonColor,
+                      color: Color(0xFF4299E1), // primaryButtonColor
                     ),
                     maxLines: 1,
                   ),
                 ),
                 SizedBox(height: 12),
-                // 4. Rate (tetap sama)
                 Text(
                   'Rate: 1 $selectedFromCurrency = ${exchangeRate.toStringAsFixed(4)} $selectedToCurrency',
                   style: TextStyle(
                     fontSize: 12,
-                    color: hintColor,
+                    color: Color(0xFFA0AEC0), // hintColor
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -651,65 +445,59 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
           ),
         ],
-        // --- AKHIR BLOK YANG DIUBAH ---
       ],
     );
   }
 
-  /// [Helper Widget] Membangun UI untuk bagian Zona Waktu.
   Widget _buildTimezone() {
-    // Cek jika negara punya data timezone
     if (widget.country.timezones.isEmpty) {
       return Text(
         'Tidak ada informasi timezone untuk negara ini.',
-        style: TextStyle(color: hintColor, fontStyle: FontStyle.italic),
+        style: TextStyle(
+            color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic), // hintColor
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Kartu Waktu Negara (Tujuan)
         _buildTimeCard(
           widget.country.timezones[0],
           'Waktu ${widget.country.name}',
           countryTime,
-          primaryButtonColor, // Border warna primer
+          Color(0xFF4299E1), // primaryButtonColor
         ),
         SizedBox(height: 16),
-        // Dropdown Pilihan Zona Waktu
         _buildCustomDropdown(
           label: 'Bandingkan dengan...',
           value: selectedTimezone,
-          items: _buildTimezoneItems(),
+          items: buildTimezoneItems(), // Panggil controller
           onChanged: (value) {
             setState(() => selectedTimezone = value);
-            _updateTimes();
+            updateTimes(); // Panggil controller
           },
         ),
-        // Kartu Waktu Pilihan (Terkonversi)
         if (selectedTimezone != null && convertedTime.isNotEmpty) ...[
           SizedBox(height: 12),
           _buildTimeCard(
             selectedTimezone!,
             TimezoneService.getTimezoneName(selectedTimezone!),
             convertedTime,
-            accentColor, // Border warna aksen
+            Color(0xFF66B3FF), // accentColor
           ),
         ],
       ],
     );
   }
 
-  /// [Helper Widget] Membangun kartu untuk menampilkan waktu.
   Widget _buildTimeCard(String code, String name, String time, Color color) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(0.5),
+        color: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: color, // Menggunakan warna border yang di-pass
+          color: color,
           width: 1.5,
         ),
       ),
@@ -720,23 +508,22 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name, // Menampilkan nama panjang (misal: "Waktu Indonesia Barat")
+                  name,
                   style: TextStyle(
                     fontSize: 16,
-                    color: hintColor,
+                    color: Color(0xFFA0AEC0), // hintColor
                     fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4),
                 Text(
-                  time, // Waktu (HH:mm:ss)
+                  time,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: textColor,
-                    fontFamily:
-                        'monospace', // Font monospace agar angka tidak 'loncat-loncat'
+                    color: Color(0xFFE2E8F0), // textColor
+                    fontFamily: 'monospace',
                   ),
                 ),
               ],

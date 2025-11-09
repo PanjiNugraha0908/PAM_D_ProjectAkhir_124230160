@@ -1,39 +1,67 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:mobileprojek/pages/edit_profile_page.dart';
-import 'package:mobileprojek/pages/login_page.dart';
+import 'dart:io';
+import '../models/user.dart';
 import '../services/auth_service.dart';
-import 'home_page.dart'; // <-- PERLU IMPORT INI UNTUK NAVIGASI KEMBALI
+import '../services/database_service.dart';
+import 'edit_profile_page.dart';
+import 'history_page.dart';
+import 'location_page.dart';
+import 'login_page.dart';
+import 'home_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
-
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final String? _username = AuthService.getCurrentUsername();
-  late final Box _profileBox;
-
-  // --- PERUBAHAN 1: Palet Warna (Disesuaikan dengan Dark Mode) ---
-  final Color backgroundColor = Color(0xFF1A202C);
-  final Color surfaceColor = Color(0xFF2D3748);
-  final Color accentColor = Color(0xFF66B3FF);
-  // final Color primaryButtonColor = Color(0xFF4299E1); // Tidak terpakai di sini
-  final Color textColor = Color(0xFFE2E8F0);
-  final Color hintColor = Color(0xFFA0AEC0);
-  // --- AKHIR PERUBAHAN 1 ---
+  User? _user;
 
   @override
   void initState() {
     super.initState();
-    _profileBox = Hive.box('profile');
+    _loadUserProfile();
   }
 
-  // --- PERUBAHAN 2: Fungsi untuk Tombol "Kembali" ---
-  /// Navigasi kembali ke [HomePage].
+  Future<void> _loadUserProfile() async {
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      User? user = await DatabaseService.getUser(username);
+      if (mounted) {
+        setState(() {
+          _user = user;
+        });
+      }
+    } else {
+      _logout();
+    }
+  }
+
+  Future<void> _editProfile() async {
+    if (_user == null) return;
+
+    final bool? profileWasUpdated = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditProfilePage(user: _user!)),
+    );
+
+    if (profileWasUpdated == true) {
+      _loadUserProfile();
+    }
+  }
+
+  // --- Navigasi ---
+  Future<void> _logout() async {
+    await AuthService.logout();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -42,254 +70,198 @@ class _ProfilePageState extends State<ProfilePage> {
         MaterialPageRoute(builder: (context) => HomePage(username: username)),
       );
     } else {
-      // Fallback jika session hilang, kembali ke Login
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-        (route) => false,
-      );
+      _logout();
     }
   }
-  // --- AKHIR PERUBAHAN 2 ---
 
-  // Fungsi untuk navigasi ke Edit Profile
-  void _navigateToEditProfile() {
-    Navigator.push(
+  void _openHistory() {
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const EditProfilePage()),
-    ).then((_) {
-      setState(() {});
-    });
+      MaterialPageRoute(builder: (context) => HistoryPage()),
+    );
+  }
+
+  void _openLocation() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LocationPage()),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        _openLocation();
+        break;
+      case 2:
+        _openHistory();
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
-      body: ValueListenableBuilder(
-        valueListenable: _profileBox.listenable(keys: [_username]),
-        builder: (context, Box box, _) {
-          if (_username == null) {
-            return Center(child: Text("Error: Pengguna tidak ditemukan."));
-          }
-          var userProfileData = box.get(_username) ?? <String, dynamic>{};
-
-          String nama = userProfileData['nama'] ?? 'Nama Belum Diatur';
-          String prodi = userProfileData['prodi'] ?? 'Prodi Belum Diatur';
-          String email = userProfileData['email'] ?? 'Email';
-          String noHp = userProfileData['noHp'] ?? 'No HP';
-          String? fotoPath = userProfileData['fotoPath'];
-
-          return CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(context, nama, prodi, fotoPath),
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoCard('Informasi Kontak', Icons.contact_mail, [
-                        _buildInfoRow(Icons.email, email),
-                        _buildInfoRow(Icons.phone, noHp),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildInfoCard('Saran & Kesan', Icons.lightbulb_outline, [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8.0,
-                            horizontal: 16.0,
-                          ),
-                          child: Text(
-                            'Aplikasi ini sangat membantu untuk melihat informasi mata uang dan zona waktu. Tampilannya juga menarik!',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: hintColor, // <-- PERUBAHAN WARNA
-                              height: 1.4,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ]),
-
-                      // --- PERUBAHAN 4: Tombol Logout Dihapus ---
-                      // const SizedBox(height: 20),
-                      // _buildLogoutButton(),
-                      // --- AKHIR PERUBAHAN 4 ---
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  SliverAppBar _buildSliverAppBar(
-    BuildContext context,
-    String nama,
-    String prodi,
-    String? fotoPath,
-  ) {
-    return SliverAppBar(
-      expandedHeight: 250.0,
-      floating: false,
-      pinned: true,
-      backgroundColor: backgroundColor, // <-- PERUBAHAN WARNA
-      iconTheme: IconThemeData(color: textColor), // <-- PERUBAHAN WARNA
-      // --- PERUBAHAN 3: Tombol "Kembali" Ditambahkan ---
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: textColor),
-        onPressed: _openHome,
-        tooltip: 'Kembali ke Home',
-      ),
-
-      // --- AKHIR PERUBAHAN 3 ---
-      actions: [
-        IconButton(
-          icon: Icon(Icons.edit, color: textColor), // <-- PERUBAHAN WARNA
-          onPressed: _navigateToEditProfile,
-          tooltip: 'Edit Profil',
+      backgroundColor: Color(0xFF1A202C),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
+          onPressed: _openHome,
         ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: true,
-        title: Text(
-          _username!,
-          style: TextStyle(
-            color: textColor, // <-- PERUBAHAN WARNA
-            fontSize: 18.0,
-            fontWeight: FontWeight.bold,
+        title: Text('Profil Saya', style: TextStyle(color: Color(0xFFE2E8F0))),
+        backgroundColor: Color(0xFF1A202C),
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit, color: Color(0xFF66B3FF)),
+            onPressed: _editProfile,
+            tooltip: 'Edit Profil',
           ),
-        ),
-        background: Container(
-          color: backgroundColor, // <-- PERUBAHAN WARNA (Gradient Dihapus)
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 55,
-                      backgroundColor: surfaceColor.withOpacity(
-                        0.5,
-                      ), // <-- PERUBAHAN WARNA
-                      child: CircleAvatar(
-                        radius: 52,
-                        backgroundColor: surfaceColor, // <-- PERUBAHAN WARNA
-                        backgroundImage:
-                            (fotoPath != null
-                                    ? FileImage(File(fotoPath))
-                                    : null)
-                                as ImageProvider?,
-                        child: fotoPath == null
-                            ? Icon(
-                                Icons.person,
-                                size: 60,
-                                color: hintColor,
-                              ) // <-- PERUBAHAN WARNA
-                            : null,
+        ],
+      ),
+      body: _user == null
+          ? Center(child: CircularProgressIndicator(color: Color(0xFF4299E1)))
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Color(0xFF2D3748),
+                    backgroundImage:
+                        _user!.profilePicturePath !=
+                            null // GANTI DI SINI
+                        ? FileImage(
+                            File(_user!.profilePicturePath!),
+                          ) // GANTI DI SINI
+                        : null,
+                    child:
+                        _user!.profilePicturePath ==
+                            null // GANTI DI SINI
+                        ? Icon(Icons.person, size: 60, color: Color(0xFFA0AEC0))
+                        : null,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    _user!.fullName, // GANTI DI SINI
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  Text(
+                    '@${_user!.username}',
+                    style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
+                  ),
+                  SizedBox(height: 32),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF2D3748),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildInfoRow(
+                          icon: Icons.email_outlined,
+                          label: 'Email',
+                          value: _user!.email,
+                        ),
+                        Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
+                        _buildInfoRow(
+                          icon: Icons.phone_outlined, // Field baru
+                          label: 'No. HP',
+                          value: _user!.noHp, // Field baru
+                        ),
+                        Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
+                        _buildInfoRow(
+                          icon: Icons.history,
+                          label: 'Negara Dilihat',
+                          value: DatabaseService.getHistoryForUser(
+                            _user!.username,
+                          ).map((h) => h.countryName).toSet().length.toString(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.logout, color: Colors.white),
+                      label: Text(
+                        'Logout',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade600,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      nama,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ), // <-- PERUBAHAN WARNA
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      prodi,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: hintColor,
-                      ), // <-- PERUBAHAN WARNA
-                    ),
-                    SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(
-    String title,
-    IconData titleIcon,
-    List<Widget> children,
-  ) {
-    return Card(
-      elevation: 0, // <-- PERUBAHAN (Flat)
-      shadowColor: Colors.transparent, // <-- PERUBAHAN
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: surfaceColor, // <-- PERUBAHAN WARNA
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  titleIcon,
-                  color: accentColor,
-                  size: 22,
-                ), // <-- PERUBAHAN WARNA
-                SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor, // <-- PERUBAHAN WARNA
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            Divider(
-              height: 20,
-              thickness: 1,
-              color: hintColor.withOpacity(0.2),
-            ), // <-- PERUBAHAN WARNA
-            ...children,
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Color(0xFF2D3748),
+        type: BottomNavigationBarType.fixed,
+        unselectedItemColor: Color(0xFFA0AEC0),
+        selectedItemColor: Color(0xFF66B3FF),
+        currentIndex: 0,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.my_location),
+            label: 'Lokasi',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+        ],
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      padding: EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         children: [
-          Icon(icon, color: hintColor, size: 20), // <-- PERUBAHAN WARNA
+          Icon(icon, color: Color(0xFF66B3FF), size: 20),
           SizedBox(width: 16),
-          Flexible(
+          Text(label, style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 14)),
+          Expanded(
             child: Text(
-              text,
+              value,
+              textAlign: TextAlign.right,
               style: TextStyle(
+                color: Color(0xFFE2E8F0),
                 fontSize: 15,
-                color: textColor.withOpacity(0.9),
-              ), // <-- PERUBAHAN WARNA
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
     );
   }
-
-  // --- PERUBAHAN 5: Seluruh Fungsi Logout Dihapus ---
-  // Widget _buildLogoutButton() { ... }
-  // --- AKHIR PERUBAHAN 5 ---
 }
