@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+// --- TAMBAHKAN IMPORT INI ---
+import 'package:intl/intl.dart';
+// --- AKHIR TAMBAHAN ---
 import '../models/country.dart';
 import '../services/currency_service.dart';
 import '../services/timezone_service.dart';
@@ -120,9 +123,6 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
   }
 
   /// Navigasi ke [CountryMapPage] untuk menampilkan lokasi negara.
-  ///
-  /// Melakukan pengecekan koordinat (0,0) sebagai data tidak valid
-  /// sebelum bernavigasi.
   void _openCountryMap() {
     // Cek apakah koordinat valid (bukan 0.0, 0.0)
     if (widget.country.latitude == 0.0 && widget.country.longitude == 0.0) {
@@ -147,8 +147,41 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
 
   // --- Helper Getters (Formatter) ---
 
-  /// Mengambil daftar zona waktu yang tersedia dari [TimezoneService]
-  /// dan mengubahnya menjadi [DropdownMenuItem].
+  // --- FUNGSI BARU UNTUK FORMAT ANGKA ---
+  /// Memformat angka double menjadi format mata uang yang mudah dibaca.
+  /// Contoh: 1000000.50 -> "Rp 1.000.000,50"
+  String _formatCurrency(double amount, String? currencyCode) {
+    // Gunakan NumberFormat untuk format desimal dengan pemisah
+    // Locale "id_ID" akan menggunakan titik sebagai pemisah ribuan
+    // dan koma sebagai pemisah desimal.
+    final formatter = NumberFormat("#,##0.00", "id_ID");
+
+    String symbol = _getCurrencySymbol(currencyCode);
+    String formattedAmount = formatter.format(amount);
+
+    // Letakkan simbol 'Rp' menempel di depan
+    if (currencyCode == 'IDR') {
+      return '$symbol$formattedAmount';
+    }
+    // Mata uang lain (seperti $) diberi spasi
+    return '$symbol $formattedAmount';
+  }
+
+  // --- FUNGSI BARU UNTUK FORMAT ANGKA INPUT ---
+  /// Memformat angka input (String) menjadi format desimal.
+  /// Contoh: "1000000" -> "1.000.000"
+  String _formatInputAmount(String amountStr, String? currencyCode) {
+    final double amount = double.tryParse(amountStr) ?? 0.0;
+    // Gunakan NumberFormat tanpa desimal untuk angka input
+    final formatter = NumberFormat("#,##0", "id_ID");
+    String symbol = _getCurrencySymbol(currencyCode);
+
+    if (currencyCode == 'IDR') {
+      return '$symbol${formatter.format(amount)}';
+    }
+    return '$symbol ${formatter.format(amount)}';
+  }
+
   List<DropdownMenuItem<String>> _buildTimezoneItems() {
     return TimezoneService.getAvailableTimezones().map((timezone) {
       return DropdownMenuItem<String>(
@@ -162,9 +195,6 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
   }
 
   /// Mendapatkan simbol mata uang.
-  ///
-  /// Mencoba mengambil dari data [country.currencies] terlebih dahulu,
-  /// jika gagal, menggunakan daftar [fallbacks] hardcoded.
   String _getCurrencySymbol(String? code) {
     if (code == null) return '';
     try {
@@ -199,8 +229,6 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
   }
 
   /// Mengambil dan memformat string mata uang dari data negara.
-  ///
-  /// Contoh: "US Dollar ($), Euro (€)"
   String _getCurrencyString() {
     if (widget.country.currencies.isEmpty) return 'N/A';
     return widget.country.currencies.entries
@@ -229,10 +257,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.country.name,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
               ),
               background: Image.network(
                 widget.country.flagUrl,
@@ -262,19 +287,14 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                       ),
                       _buildDetailRow('Ibu Kota', widget.country.capital),
                       _buildDetailRow('Region', widget.country.region),
-                      _buildDetailRow(
-                        'Sub-region',
-                        widget.country.subregion,
-                      ),
+                      _buildDetailRow('Sub-region', widget.country.subregion),
                       _buildDetailRow(
                         'Populasi',
                         // Format angka dengan pemisah titik
-                        widget.country.population
-                            .toString()
-                            .replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                              (Match m) => '${m[1]}.',
-                            ),
+                        widget.country.population.toString().replaceAllMapped(
+                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                          (Match m) => '${m[1]}.',
+                        ),
                       ),
                       _buildDetailRow(
                         'Luas',
@@ -313,9 +333,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                   _buildSectionCard(
                     title: 'Konversi Mata Uang',
                     icon: Icons.currency_exchange,
-                    children: [
-                      _buildCurrencyConverter(),
-                    ],
+                    children: [_buildCurrencyConverter()],
                   ),
                   SizedBox(height: 24),
 
@@ -323,9 +341,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
                   _buildSectionCard(
                     title: 'Waktu Real-time',
                     icon: Icons.watch_later_outlined,
-                    children: [
-                      _buildTimezone(),
-                    ],
+                    children: [_buildTimezone()],
                   ),
                   SizedBox(height: 16),
                 ],
@@ -368,11 +384,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
               ),
             ],
           ),
-          Divider(
-            height: 24,
-            thickness: 1,
-            color: hintColor.withOpacity(0.3),
-          ),
+          Divider(height: 24, thickness: 1, color: hintColor.withOpacity(0.3)),
           ...children,
         ],
       ),
@@ -390,10 +402,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             width: 120, // Lebar tetap untuk label
             child: Text(
               '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: hintColor,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, color: hintColor),
             ),
           ),
           SizedBox(width: 8),
@@ -568,11 +577,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.red.shade200,
-                  size: 20,
-                ),
+                Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -584,35 +589,56 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
           ),
         ],
-        // Tampilan Hasil (jika sukses)
+        // --- BLOK HASIL KONVERSI YANG DIUBAH ---
         if (convertedAmount > 0) ...[
           SizedBox(height: 16),
           Container(
+            width: double.infinity, // Penuhi lebar card
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: backgroundColor.withOpacity(0.5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // Ratakan kiri
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${_getCurrencySymbol(selectedFromCurrency)}${_amountController.text} = ',
-                      style: TextStyle(fontSize: 16, color: textColor),
-                    ),
-                    Text(
-                      '${_getCurrencySymbol(selectedToCurrency)}${convertedAmount.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: primaryButtonColor,
-                      ),
-                    ),
-                  ],
+                // 1. Tampilkan jumlah input (diformat)
+                Text(
+                  _formatInputAmount(
+                    _amountController.text,
+                    selectedFromCurrency,
+                  ),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: hintColor, // Warna redup
+                  ),
                 ),
-                SizedBox(height: 8),
+                // 2. Tanda panah ke bawah
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Icon(
+                    Icons.arrow_downward,
+                    color: accentColor,
+                    size: 20,
+                  ),
+                ),
+                // 3. Hasil konversi (diformat)
+                // Dibungkus FittedBox agar font mengecil jika perlu
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _formatCurrency(convertedAmount, selectedToCurrency),
+                    style: TextStyle(
+                      fontSize: 28, // Font lebih besar
+                      fontWeight: FontWeight.bold,
+                      color: primaryButtonColor,
+                    ),
+                    maxLines: 1,
+                  ),
+                ),
+                SizedBox(height: 12),
+                // 4. Rate (tetap sama)
                 Text(
                   'Rate: 1 $selectedFromCurrency = ${exchangeRate.toStringAsFixed(4)} $selectedToCurrency',
                   style: TextStyle(
@@ -625,6 +651,7 @@ class _CountryDetailPageState extends State<CountryDetailPage> {
             ),
           ),
         ],
+        // --- AKHIR BLOK YANG DIUBAH ---
       ],
     );
   }
