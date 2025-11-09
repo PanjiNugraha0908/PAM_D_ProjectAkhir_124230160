@@ -127,8 +127,9 @@ mixin HomeController on State<HomePage> {
       if (mounted) {
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
-          final List<Country> countries =
-              data.map((json) => Country.fromJson(json)).toList();
+          final List<Country> countries = data
+              .map((json) => Country.fromJson(json))
+              .toList();
           setState(() {
             filteredCountries = countries;
             isLoading = false;
@@ -201,8 +202,9 @@ mixin HomeController on State<HomePage> {
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
-    var negaraUnikSebelum =
-        historySebelum.map((item) => item.countryName).toSet();
+    var negaraUnikSebelum = historySebelum
+        .map((item) => item.countryName)
+        .toSet();
     final int totalUnikSebelum = negaraUnikSebelum.length;
 
     // Tambah riwayat
@@ -220,8 +222,9 @@ mixin HomeController on State<HomePage> {
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
     );
-    var negaraUnikSesudah =
-        historySesudah.map((item) => item.countryName).toSet();
+    var negaraUnikSesudah = historySesudah
+        .map((item) => item.countryName)
+        .toSet();
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
     // Logika Notifikasi

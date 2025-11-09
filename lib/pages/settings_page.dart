@@ -1,3 +1,5 @@
+// lib/pages/settings_page.dart
+
 import 'package:flutter/material.dart';
 import '../services/activity_tracker.dart';
 import '../services/notification_service.dart';
@@ -133,10 +135,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     'Pengingat Aktivitas',
                     style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
                   ),
+                  // --- PERUBAHAN DI SINI ---
                   subtitle: Text(
-                    'Kirim notifikasi jika tidak aktif selama 5 menit',
+                    'Kirim notifikasi jika tidak aktif selama 1 hari',
                     style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
                   ),
+                  // --- AKHIR PERUBAHAN ---
                   value: _notificationEnabled,
                   onChanged: _toggleNotification,
                   activeColor: Color(0xFF4299E1), // primaryButtonColor
@@ -240,6 +244,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         Icons.info_outline,
                         color: Color(0xFF4299E1),
                       ), // primaryButtonColor
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Perubahan pengaturan notifikasi mungkin baru aktif setelah Anda menutup dan membuka kembali aplikasi.',
+                          style: TextStyle(
+                            color: Color(0xFFA0AEC0), // hintColor
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
