@@ -63,11 +63,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
   /// Memicu notifikasi tes secara manual menggunakan [NotificationService].
   Future<void> _testNotification() async {
+    // --- PERUBAHAN ---
+    // Menggunakan username "Test" untuk notifikasi manual
     await NotificationService.showNotification(
       id: 999,
       title: '🌍 Test Notifikasi',
-      body: 'Notifikasi berhasil! Sistem notifikasi berfungsi dengan baik.',
+      body:
+          'Hai Test, notifikasi berhasil! Sistem notifikasi berfungsi dengan baik.',
     );
+    // --- AKHIR PERUBAHAN ---
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,14 +152,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Pengingat Aktivitas',
                       style: TextStyle(color: textColor),
                     ),
-
-                    // --- PERUBAHAN TEKS SUBTITLE ---
                     subtitle: Text(
                       'Kirim notifikasi jika tidak aktif selama 5 menit',
                       style: TextStyle(color: hintColor),
                     ),
-
-                    // --- AKHIR PERUBAHAN ---
                     value: _notificationEnabled,
                     onChanged: _toggleNotification,
                     activeColor: primaryButtonColor,
@@ -260,10 +260,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
                     // --- PERUBAHAN TEKS PENJELASAN ---
                     Text(
-                      'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi. Pesan: "Masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
+                      'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi (jika sedang login). Pesan: "Hai [Username], masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
                       style: TextStyle(fontSize: 14, color: hintColor),
                     ),
-
                     // --- AKHIR PERUBAHAN ---
                   ],
                 ),

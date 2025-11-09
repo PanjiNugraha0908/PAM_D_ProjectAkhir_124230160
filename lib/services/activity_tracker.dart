@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart'; // Diperlukan untuk WidgetsBindingObserver
 import 'package:hive/hive.dart';
 import 'notification_service.dart';
-// AuthService tidak diperlukan di sini lagi
-// import 'auth_service.dart';
+// --- PERUBAHAN DI SINI ---
+// Kita butuh AuthService untuk mendapatkan username yang sedang login
+import 'auth_service.dart';
+// --- AKHIR PERUBAHAN ---
 
 // --- Kelas Observer Internal ---
 // Kelas privat ini yang akan mendengarkan siklus hidup aplikasi.
-// Kita hanya buat satu instance statis dari ini.
+// Kita only buat satu instance statis dari ini.
 class _ActivityObserver with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -143,18 +145,31 @@ class ActivityTracker {
 
     // 2. Cek apakah notifikasi diaktifkan
     final bool enabled = await isNotificationEnabled();
+
+    // --- PERUBAHAN DI SINI ---
     if (enabled) {
-      // 3. Batalkan notifikasi lama (jika ada) dan jadwalkan yang baru
-      await NotificationService.cancelNotification(_inactivityNotificationId);
-      await NotificationService.scheduleInactivityReminder(
-        after: _inactivityDuration,
-      );
-      print(
-        "ActivityTracker: Notifikasi inaktivitas DIJADWALKAN untuk $_inactivityDuration dari sekarang.",
-      );
+      // 3. Dapatkan username yang sedang login
+      String? username = AuthService.getCurrentUsername();
+
+      // 4. Hanya jadwalkan jika user SUDAH login
+      if (username != null) {
+        // Batalkan notifikasi lama (jika ada) dan jadwalkan yang baru
+        await NotificationService.cancelNotification(_inactivityNotificationId);
+        await NotificationService.scheduleInactivityReminder(
+          after: _inactivityDuration,
+          username: username, // <-- Kirim username ke service
+        );
+        print(
+          "ActivityTracker: Notifikasi inaktivitas DIJADWALKAN untuk $username setelah $_inactivityDuration.",
+        );
+      } else {
+        // Jika tidak ada user (misal: di halaman login), jangan kirim notif
+        print("ActivityTracker: User belum login, notifikasi tidak dijadwalkan.");
+      }
     } else {
       print("ActivityTracker: Notifikasi nonaktif, penjadwalan dibatalkan.");
     }
+    // --- AKHIR PERUBAHAN ---
   }
 
   /// [Internal] Membatalkan notifikasi inaktivitas yang terjadwal.

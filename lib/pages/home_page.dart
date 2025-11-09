@@ -3,7 +3,11 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/country.dart';
 import '../models/history_item.dart';
-import '../widgets/country_detail_dialog.dart';
+// --- PERUBAHAN DI SINI ---
+// Ganti dialog dengan halaman baru
+import '../pages/country_detail_page.dart';
+// import '../widgets/country_detail_dialog.dart'; // <-- Hapus impor ini
+// --- AKHIR PERUBAHAN ---
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
@@ -36,8 +40,6 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = false;
 
   // --- Palet Warna Halaman ---
-  // Catatan: Sebaiknya palet warna ini dipindahkan ke file theme/constants terpisah
-  // agar konsisten dan mudah dikelola di seluruh aplikasi.
   final Color backgroundColor = Color(0xFF1A202C);
   final Color surfaceColor = Color(0xFF2D3748);
   final Color accentColor = Color(0xFF66B3FF);
@@ -50,10 +52,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // 1. Perbarui waktu aktif pengguna
-    // 2. Mulai ambil data semua negara dari API
     _loadAllCountries();
-    // 3. Tambahkan listener ke search bar untuk memfilter secara real-time
+    // Tambahkan listener ke search bar untuk memfilter secara real-time
     _searchController.addListener(_filterCountries);
   }
 
@@ -67,7 +67,6 @@ class _HomePageState extends State<HomePage> {
   // --- Logika Pengambilan Data (API) ---
 
   /// Mengambil semua data negara dari API restcountries.com.
-  /// Ini adalah metode pemuatan data utama.
   Future<void> _loadAllCountries() async {
     if (mounted) {
       setState(() {
@@ -101,7 +100,6 @@ class _HomePageState extends State<HomePage> {
 
         for (var json in data) {
           try {
-            // Parsing setiap item JSON ke model Country
             countries.add(Country.fromJson(json));
           } catch (e) {
             print(
@@ -141,7 +139,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// [Fallback] Pencarian langsung ke API jika data [_allCountries] gagal dimuat.
-  /// Ini dipicu oleh `onSubmitted` di [TextField] jika [_allCountries] kosong.
   Future<void> _searchCountriesByName(String query) async {
     if (query.trim().isEmpty) return;
 
@@ -194,7 +191,6 @@ class _HomePageState extends State<HomePage> {
   // --- Logika Filter dan UI ---
 
   /// Memfilter daftar [_allCountries] berdasarkan teks di [_searchController].
-  /// Dipanggil oleh listener setiap kali teks berubah.
   void _filterCountries() {
     if (mounted) {
       setState(() {
@@ -236,7 +232,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  /// Menampilkan dialog detail untuk [Country] yang dipilih.
+  /// Menavigasi ke [CountryDetailPage] untuk [Country] yang dipilih.
   /// Juga mencatat item ini ke [DatabaseService] sebagai riwayat
   /// dan memicu notifikasi jika mencapai milestone.
   void _showCountryDetail(Country country) async {
@@ -263,8 +259,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    // Perbarui waktu aktif terakhir pengguna
-
     // 3. Hitung negara unik SESUDAH menambah riwayat
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
@@ -289,12 +283,15 @@ class _HomePageState extends State<HomePage> {
     // --- AKHIR LOGIKA NOTIFIKASI ---
 
     if (mounted) {
-      // Tampilkan dialog detail
-      showDialog(
-        context: context,
-        barrierColor: Colors.black.withOpacity(0.5),
-        builder: (context) => CountryDetailDialog(country: country),
+      // --- PERUBAHAN DI SINI ---
+      // Ganti showDialog dengan Navigator.push
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CountryDetailPage(country: country),
+        ),
       );
+      // --- AKHIR PERUBAHAN ---
     }
   }
 
@@ -365,7 +362,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false, // Hindari UI terdorong keyboard
-      // --- 1. Bottom Navigation Bar ---
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: surfaceColor,
         type: BottomNavigationBarType.fixed,
@@ -387,13 +383,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      // --- 2. Body Utama (SafeArea) ---
       body: Container(
         color: backgroundColor,
         child: SafeArea(
           child: Column(
             children: [
-              // --- 2A. Header Aplikasi (Settings, Logo, Logout) ---
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
@@ -432,7 +426,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              // --- 2B. Search Bar ---
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextField(
@@ -473,7 +466,6 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 8),
 
-              // --- 2C. Filter Alfabet ---
               // Hanya tampilkan jika data sudah dimuat
               if (!_isLoading && _allCountries.isNotEmpty)
                 Container(
@@ -517,7 +509,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               SizedBox(height: 8),
 
-              // --- 2D. Info Hasil & Tombol Reset ---
               // Hanya tampilkan jika tidak loading dan ada hasil
               if (!_isLoading && _filteredCountries.isNotEmpty)
                 Padding(
@@ -549,10 +540,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
 
-              // --- 2E. Konten Utama (List, Loading, atau Empty) ---
-              // Menggunakan Expanded agar mengisi sisa ruang
               if (_isLoading)
-                // --- Kondisi: Loading ---
                 Expanded(
                   child: Center(
                     child: Column(
@@ -579,7 +567,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )
               else if (_filteredCountries.isEmpty)
-                // --- Kondisi: Kosong (Tidak ada hasil / Awal) ---
                 Expanded(
                   child: Center(
                     child: Padding(
@@ -660,7 +647,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 )
               else
-                // --- Kondisi: Menampilkan Daftar Negara ---
                 Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),

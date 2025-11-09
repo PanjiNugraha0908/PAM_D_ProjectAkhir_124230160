@@ -117,7 +117,14 @@ class NotificationService {
   /// Notifikasi akan dikirim setelah durasi [after] (default 24 jam).
   /// Menggunakan ID notifikasi statis (1000) sehingga penjadwalan
   /// baru akan menimpa (memperbarui) penjadwalan yang lama.
-  static Future<void> scheduleInactivityReminder({Duration? after}) async {
+  //
+  // --- PERUBAHAN DI SINI ---
+  // Menambahkan parameter {required String username}
+  static Future<void> scheduleInactivityReminder({
+    Duration? after,
+    required String username,
+  }) async {
+    // --- AKHIR PERUBAHAN ---
     try {
       final now = tz.TZDateTime.now(tz.local);
       final when = now.add(after ?? Duration(hours: 24));
@@ -133,10 +140,16 @@ class NotificationService {
 
       final details = NotificationDetails(android: androidDetails);
 
+      // --- PERUBAHAN DI SINI ---
+      // Menggunakan username di dalam body notifikasi
+      final String notificationBody =
+          'Hai $username, masih banyak negara menarik untuk kamu jelajahi! ✈️🌍';
+      // --- AKHIR PERUBAHAN ---
+
       await _plugin.zonedSchedule(
         1000, // ID notifikasi (statis agar bisa ditimpa/dibatalkan)
         'Kami merindukanmu!',
-        'Masih banyak negara menarik untuk kamu jelajahi! ✈️🌍',
+        notificationBody, // <-- Menggunakan body yang sudah dipersonalisasi
         when,
         details,
         uiLocalNotificationDateInterpretation:
