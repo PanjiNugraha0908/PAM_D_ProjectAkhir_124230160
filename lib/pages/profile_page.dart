@@ -169,48 +169,50 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SizedBox(height: 24),
 
-                  // Saran dan Kesan
-                  if (_user!.saranKesan.isNotEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF2D3748),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.comment_outlined,
-                                color: Color(0xFF66B3FF),
-                                size: 20,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Saran dan Kesan',
-                                style: TextStyle(
-                                  color: Color(0xFF66B3FF),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            _user!.saranKesan,
-                            style: TextStyle(
-                              color: Color(0xFFE2E8F0),
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                  // --- PERUBAHAN DI SINI ---
+                  // Saran dan Kesan (Statis)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF2D3748),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.comment_outlined,
+                              color: Color(0xFF66B3FF),
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Saran dan Kesan',
+                              style: TextStyle(
+                                color: Color(0xFF66B3FF),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          "Kesan saya untuk mata kuliah Pemrograman Aplikasi Mobile ini... jujur, tugasnya 'sangat mudah'. Mengurus state management, integrasi API, notifikasi, dan database Hive itu ternyata ringan sekali.\n\nPesan saya, terima kasih banyak kepada Pak Bagus atas bimbingan dan materi yang diberikan. Pengalaman mengerjakan project akhir ini sungguh tak terlupakan.\n\nSEGAMPANG ITU!!",
+                          style: TextStyle(
+                            color: Color(0xFFE2E8F0),
+                            fontSize: 14,
+                            height: 1.5,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // --- AKHIR PERUBAHAN ---
                 ],
               ),
             ),

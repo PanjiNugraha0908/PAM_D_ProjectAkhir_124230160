@@ -18,7 +18,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _noHpController;
-  late TextEditingController _saranKesanController;
+  // Controller untuk saranKesan telah dihapus
   String? _imagePath;
 
   @override
@@ -27,7 +27,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController = TextEditingController(text: widget.user.fullName);
     _emailController = TextEditingController(text: widget.user.email);
     _noHpController = TextEditingController(text: widget.user.noHp);
-    _saranKesanController = TextEditingController(text: widget.user.saranKesan);
+    // Inisialisasi saranKesan telah dihapus
     _imagePath = widget.user.profilePicturePath;
   }
 
@@ -53,7 +53,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         email: _emailController.text.trim(),
         noHp: _noHpController.text.trim(),
         profilePicturePath: _imagePath,
-        saranKesan: _saranKesanController.text.trim(),
+        // saranKesan kini mengambil nilai yang sudah ada (tidak bisa diubah)
+        saranKesan: widget.user.saranKesan,
       );
 
       await DatabaseService.updateUser(updatedUser);
@@ -167,17 +168,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               SizedBox(height: 16),
 
-              _buildTextFormField(
-                controller: _saranKesanController,
-                label: 'Saran dan Kesan',
-                icon: Icons.comment_outlined,
-                maxLines: 4,
-                validator: (value) {
-                  // Opsional, tidak wajib diisi
-                  return null;
-                },
-              ),
-              SizedBox(height: 32),
+              // Widget TextFormField untuk 'Saran dan Kesan' telah dihapus dari sini
+              SizedBox(height: 32), // Tetap berikan jarak
 
               ElevatedButton(
                 onPressed: _saveProfile,
@@ -249,7 +241,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController.dispose();
     _emailController.dispose();
     _noHpController.dispose();
-    _saranKesanController.dispose();
+    // dispose controller saranKesan telah dihapus
     super.dispose();
   }
 }
