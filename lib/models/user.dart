@@ -28,6 +28,14 @@ class User extends HiveObject {
   @HiveField(5)
   String noHp;
 
+  // --- TAMBAHAN BARU ---
+  @HiveField(6)
+  String fullName;
+
+  @HiveField(7)
+  String? profilePicturePath;
+  // --- AKHIR TAMBAHAN ---
+
   User({
     required this.username,
     required this.passwordHash,
@@ -35,5 +43,9 @@ class User extends HiveObject {
     required this.lastLogin,
     required this.email,
     required this.noHp,
+    // --- TAMBAHAN BARU ---
+    required this.fullName,
+    this.profilePicturePath,
+    // --- AKHIR TAMBAHAN ---
   });
 }

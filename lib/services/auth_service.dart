@@ -20,13 +20,19 @@ class AuthService {
     // Parameter wajib untuk data profil awal
     required String email,
     required String noHp,
+    required String fullName, // <-- TAMBAHKAN INI
   }) async {
     // --- 1. Validasi Input ---
-    if (username.isEmpty || password.isEmpty || email.isEmpty || noHp.isEmpty) {
+    if (username.isEmpty ||
+        password.isEmpty ||
+        email.isEmpty ||
+        noHp.isEmpty ||
+        fullName.isEmpty) {
+      // <-- TAMBAHKAN VALIDASI fullName
       return {
         'success': false,
         'message':
-            'Semua field (Username, Email, No HP, Password) tidak boleh kosong',
+            'Semua field (Username, Email, No HP, Nama, Password) tidak boleh kosong',
       };
     }
     if (username.length < 3) {
@@ -54,19 +60,24 @@ class AuthService {
       passwordHash: hashPassword(password),
       email: email,
       noHp: noHp,
+      fullName: fullName, // <-- TAMBAHKAN INI
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
+      profilePicturePath: null, // <-- TAMBAHKAN INI
     );
     // --- AKHIR PERBAIKAN ---
 
     await DatabaseService.addUser(newUser);
 
     // --- 3. Buat Entri Profil Terpisah (untuk Data yang Dapat Diedit) ---
+    // (Catatan: Blok ini mungkin tidak lagi diperlukan jika Anda memindahkan
+    // semua data ke model User, tapi kita biarkan dulu agar tidak merusak
+    // logika `profile_page.dart` yang sudah ada)
     final profileBox = Hive.box('profile');
     var newUserProfile = {
       'email': email,
       'noHp': noHp,
-      'nama': '', // Dikosongkan, diisi nanti via Edit Profile
+      'nama': fullName, // <-- PERBAIKI INI (gunakan fullName)
       'prodi': '', // Dikosongkan
       // --- PERUBAHAN (Goal 2): 'saranKesan' dihapus dari sini ---
       // 'saranKesan': '',
@@ -113,10 +124,10 @@ class AuthService {
       var userProfileData = {
         'email': user.email,
         'noHp': user.noHp,
-        'nama': '',
+        'nama': user.fullName, // <-- PERBAIKI INI
         'prodi': '',
         // 'saranKesan': '', // Dihapus juga di fallback
-        'fotoPath': null,
+        'fotoPath': user.profilePicturePath, // <-- PERBAIKI INI
       };
       await profileBox.put(username, userProfileData);
     }

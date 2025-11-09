@@ -131,22 +131,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Color(0xFF2D3748),
-                    backgroundImage:
-                        _user!.profilePicturePath !=
-                            null // GANTI DI SINI
-                        ? FileImage(
-                            File(_user!.profilePicturePath!),
-                          ) // GANTI DI SINI
+                    // --- PERBAIKAN DISINI ---
+                    backgroundImage: _user!.profilePicturePath != null
+                        ? FileImage(File(_user!.profilePicturePath!))
                         : null,
-                    child:
-                        _user!.profilePicturePath ==
-                            null // GANTI DI SINI
+                    child: _user!.profilePicturePath == null
+                        // --- AKHIR PERBAIKAN ---
                         ? Icon(Icons.person, size: 60, color: Color(0xFFA0AEC0))
                         : null,
                   ),
                   SizedBox(height: 16),
                   Text(
-                    _user!.fullName, // GANTI DI SINI
+                    // --- PERBAIKAN DISINI ---
+                    _user!.fullName,
+                    // --- AKHIR PERBAIKAN ---
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -172,12 +170,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           value: _user!.email,
                         ),
                         Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
+                        // --- TAMBAHKAN INI ---
                         _buildInfoRow(
-                          icon: Icons.phone_outlined, // Field baru
+                          icon: Icons.phone_outlined,
                           label: 'No. HP',
-                          value: _user!.noHp, // Field baru
+                          value: _user!.noHp,
                         ),
                         Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
+                        // --- AKHIR TAMBAHAN ---
                         _buildInfoRow(
                           icon: Icons.history,
                           label: 'Negara Dilihat',

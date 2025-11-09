@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../models/user.dart';
+// Hapus import User karena tidak lagi dibuat di sini
+// import '../models/user.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -15,38 +16,61 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _noHpController = TextEditingController(); // Field baru dari modelmu
 
-  void _register() {
-    if (_formKey.currentState!.validate()) {
-      // Buat objek User yang sesuai dengan model user.dart kamu
-      User newUser = User(
-        username: _usernameController.text,
-        email: _emailController.text,
-        fullName: _nameController.text, // 'name' -> 'fullName'
-        noHp: _noHpController.text, // Field baru
-        passwordHash: '', // Dikosongkan, akan di-handle service
-        createdAt: DateTime.now(), // Field baru
-        lastLogin: DateTime.now(), // Field baru
-        profilePicturePath: null, // Default null
-      );
+  // Tambahkan state loading
+  bool _isLoading = false;
+
+  void _register() async {
+    // <-- Tambahkan async
+    if (_formKey.currentState!.validate() && !_isLoading) {
+      setState(() {
+        _isLoading = true; // Mulai loading
+      });
 
       // Ambil password mentah
       String rawPassword = _passwordController.text;
 
       try {
-        // Panggil service dengan 2 argumen
-        AuthService.register(newUser, rawPassword);
+        // Panggil service dengan parameter yang benar
+        final result = await AuthService.register(
+          _usernameController.text,
+          rawPassword,
+          email: _emailController.text,
+          noHp: _noHpController.text,
+          fullName: _nameController.text, // Kirim sebagai named parameter
+        );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Registrasi berhasil! Silakan login.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false; // Selesai loading
+        });
+
+        if (result['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registrasi berhasil! Silakan login.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        } else {
+          // Tampilkan pesan error dari service
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Registrasi gagal'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
+        if (mounted) {
+          setState(() {
+            _isLoading = false; // Selesai loading jika ada error
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
@@ -144,8 +168,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     if (value == null || value.isEmpty) {
                       return 'Username tidak boleh kosong';
                     }
-                    if (value.length < 4) {
-                      return 'Username minimal 4 karakter';
+                    if (value.length < 3) {
+                      // <-- Ubah ke 3 agar konsisten
+                      return 'Username minimal 3 karakter';
                     }
                     return null;
                   },
@@ -173,7 +198,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _register,
+                    onPressed: _isLoading
+                        ? null
+                        : _register, // Tambahkan cek loading
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF4299E1),
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -181,14 +208,24 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE2E8F0),
-                      ),
-                    ),
+                    // Tambahkan indikator loading
+                    child: _isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Daftar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE2E8F0),
+                            ),
+                          ),
                   ),
                 ),
                 SizedBox(height: 24),

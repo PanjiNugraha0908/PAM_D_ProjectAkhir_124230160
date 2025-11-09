@@ -17,18 +17,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
+  // --- TAMBAHKAN INI ---
   late TextEditingController _noHpController;
+  // --- AKHIR TAMBAHAN ---
   String? _imagePath;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: widget.user.fullName,
-    ); // GANTI
+    // --- PERBAIKAN DISINI ---
+    _nameController = TextEditingController(text: widget.user.fullName);
     _emailController = TextEditingController(text: widget.user.email);
     _noHpController = TextEditingController(text: widget.user.noHp); // BARU
-    _imagePath = widget.user.profilePicturePath; // GANTI
+    _imagePath = widget.user.profilePicturePath;
+    // --- AKHIR PERBAIKAN ---
   }
 
   Future<void> _pickImage() async {
@@ -44,17 +46,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // Buat objek User baru dengan data yang diperbarui
+      // --- PERBAIKAN OBJEK USER ---
       User updatedUser = User(
         username: widget.user.username,
-        passwordHash: widget.user.passwordHash, // Tidak berubah
-        createdAt: widget.user.createdAt, // Tidak berubah
-        lastLogin: DateTime.now(), // Perbarui waktu login
-        fullName: _nameController.text, // GANTI
+        passwordHash: widget.user.passwordHash, // Ambil dari user lama
+        createdAt: widget.user.createdAt, // Ambil dari user lama
+        lastLogin: DateTime.now(), // Update waktu login
+        fullName: _nameController.text, // Ganti
         email: _emailController.text,
         noHp: _noHpController.text, // BARU
-        profilePicturePath: _imagePath, // GANTI
+        profilePicturePath: _imagePath, // Ganti
       );
+      // --- AKHIR PERBAIKAN ---
 
       await DatabaseService.updateUser(updatedUser);
 
@@ -150,8 +153,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 },
               ),
               SizedBox(height: 16),
+              // --- TAMBAHKAN FIELD INI ---
               _buildTextFormField(
-                controller: _noHpController, // BARU
+                controller: _noHpController,
                 label: 'Nomor HP',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
@@ -162,6 +166,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
+              // --- AKHIR TAMBAHAN ---
               SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _saveProfile,

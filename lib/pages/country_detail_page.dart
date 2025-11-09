@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:intl/intl.dart';
+// import 'dart:async'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
+// import 'package:intl/intl.dart'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
 import '../models/country.dart';
 import '../controllers/country_detail_controller.dart'; // Import controller
+import '../services/timezone_service.dart'; // Import timezone service
 
 /// Halaman yang menampilkan informasi detail lengkap dari sebuah [Country] (Tampilan/View).
 ///
@@ -80,16 +81,13 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                       ),
                       _buildDetailRow('Ibu Kota', widget.country.capital),
                       _buildDetailRow('Region', widget.country.region),
-                      _buildDetailRow(
-                        'Sub-region',
-                        widget.country.subregion,
-                      ),
+                      _buildDetailRow('Sub-region', widget.country.subregion),
                       _buildDetailRow(
                         'Populasi',
                         widget.country.population.toString().replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                              (Match m) => '${m[1]}.',
-                            ),
+                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                          (Match m) => '${m[1]}.',
+                        ),
                       ),
                       _buildDetailRow(
                         'Luas',
@@ -99,20 +97,29 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                         'Bahasa',
                         widget.country.languages.join(', '),
                       ),
-                      _buildDetailRow('Mata Uang', getCurrencyString()), // Panggil controller
+                      _buildDetailRow(
+                        'Mata Uang',
+                        getCurrencyString(),
+                      ), // Panggil controller
                       SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          icon: Icon(Icons.map, color: Color(0xFFE2E8F0)), // textColor
+                          icon: Icon(
+                            Icons.map,
+                            color: Color(0xFFE2E8F0),
+                          ), // textColor
                           label: Text(
                             'Lihat di Peta',
-                            style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+                            style: TextStyle(
+                              color: Color(0xFFE2E8F0),
+                            ), // textColor
                           ),
                           onPressed: openCountryMap, // Panggil controller
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Color(0xFF4299E1), // primaryButtonColor
+                            backgroundColor: Color(
+                              0xFF4299E1,
+                            ), // primaryButtonColor
                             padding: EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -213,7 +220,10 @@ class _CountryDetailPageState extends State<CountryDetailPage>
           Expanded(
             child: Text(
               value.isEmpty ? 'N/A' : value,
-              style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 15), // textColor
+              style: TextStyle(
+                color: Color(0xFFE2E8F0),
+                fontSize: 15,
+              ), // textColor
             ),
           ),
         ],
@@ -240,11 +250,16 @@ class _CountryDetailPageState extends State<CountryDetailPage>
         fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)), // hintColor
+          borderSide: BorderSide(
+            color: Color(0xFFA0AEC0).withOpacity(0.7),
+          ), // hintColor
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2), // primaryButtonColor
+          borderSide: BorderSide(
+            color: Color(0xFF4299E1),
+            width: 2,
+          ), // primaryButtonColor
         ),
       ),
     );
@@ -269,11 +284,16 @@ class _CountryDetailPageState extends State<CountryDetailPage>
         fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)), // hintColor
+          borderSide: BorderSide(
+            color: Color(0xFFA0AEC0).withOpacity(0.7),
+          ), // hintColor
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2), // primaryButtonColor
+          borderSide: BorderSide(
+            color: Color(0xFF4299E1),
+            width: 2,
+          ), // primaryButtonColor
         ),
       ),
     );
@@ -284,7 +304,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
       return Text(
         'Tidak ada informasi mata uang yang tersedia.',
         style: TextStyle(
-            color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic), // hintColor
+          color: Color(0xFFA0AEC0),
+          fontStyle: FontStyle.italic,
+        ), // hintColor
       );
     }
 
@@ -301,8 +323,10 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 items: widget.country.currencies.keys.map((currency) {
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(currency,
-                        style: TextStyle(color: Color(0xFFE2E8F0))), // textColor
+                    child: Text(
+                      currency,
+                      style: TextStyle(color: Color(0xFFE2E8F0)),
+                    ), // textColor
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -315,11 +339,14 @@ class _CountryDetailPageState extends State<CountryDetailPage>
               child: _buildCustomDropdown(
                 label: 'Ke',
                 value: selectedToCurrency,
-                items: getAvailableCurrencies().map((currency) { // Panggil controller
+                items: getAvailableCurrencies().map((currency) {
+                  // Panggil controller
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(currency,
-                        style: TextStyle(color: Color(0xFFE2E8F0))), // textColor
+                    child: Text(
+                      currency,
+                      style: TextStyle(color: Color(0xFFE2E8F0)),
+                    ), // textColor
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -339,12 +366,15 @@ class _CountryDetailPageState extends State<CountryDetailPage>
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: isLoadingConversion ? null : convertCurrency, // Panggil controller
+            onPressed: isLoadingConversion
+                ? null
+                : convertCurrency, // Panggil controller
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 14),
               backgroundColor: Color(0xFF4299E1), // primaryButtonColor
-              disabledBackgroundColor:
-                  Color(0xFF2D3748).withOpacity(0.5), // surfaceColor
+              disabledBackgroundColor: Color(
+                0xFF2D3748,
+              ).withOpacity(0.5), // surfaceColor
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -360,7 +390,10 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                   )
                 : Text(
                     'Konversi',
-                    style: TextStyle(fontSize: 16, color: Color(0xFFE2E8F0)), // textColor
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFFE2E8F0),
+                    ), // textColor
                   ),
           ),
         ),
@@ -375,11 +408,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.error_outline,
-                  color: Colors.red.shade200,
-                  size: 20,
-                ),
+                Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -405,7 +434,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
               children: [
                 Text(
                   formatInputAmount(
-                      amountController.text, selectedFromCurrency), // Panggil controller
+                    amountController.text,
+                    selectedFromCurrency,
+                  ), // Panggil controller
                   style: TextStyle(
                     fontSize: 18,
                     color: Color(0xFFA0AEC0), // hintColor
@@ -423,7 +454,10 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    formatCurrency(convertedAmount, selectedToCurrency), // Panggil controller
+                    formatCurrency(
+                      convertedAmount,
+                      selectedToCurrency,
+                    ), // Panggil controller
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -454,7 +488,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
       return Text(
         'Tidak ada informasi timezone untuk negara ini.',
         style: TextStyle(
-            color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic), // hintColor
+          color: Color(0xFFA0AEC0),
+          fontStyle: FontStyle.italic,
+        ), // hintColor
       );
     }
 
@@ -496,10 +532,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
       decoration: BoxDecoration(
         color: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color,
-          width: 1.5,
-        ),
+        border: Border.all(color: color, width: 1.5),
       ),
       child: Row(
         children: [

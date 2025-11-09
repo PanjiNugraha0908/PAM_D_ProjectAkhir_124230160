@@ -34,16 +34,35 @@ class _LocationPageState extends State<LocationPage> {
 
   Future<void> _getCurrentLocation() async {
     try {
-      final position = await LocationService.determinePosition();
-      setState(() {
-        _currentPosition = LatLng(position.latitude, position.longitude);
-        _errorMessage = '';
-      });
-      _animateToPosition(_currentPosition!);
+      // --- PERBAIKAN DI SINI ---
+      final Map<String, dynamic> locationData =
+          await LocationService.getCurrentLocation();
+
+      if (locationData['success']) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = LatLng(
+              locationData['latitude'],
+              locationData['longitude'],
+            );
+            _errorMessage = '';
+          });
+          _animateToPosition(_currentPosition!);
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _errorMessage = locationData['error'] ?? 'Gagal mendapatkan lokasi';
+          });
+        }
+      }
+      // --- AKHIR PERBAIKAN ---
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
     }
   }
 

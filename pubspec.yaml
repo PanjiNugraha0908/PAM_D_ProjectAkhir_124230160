@@ -27,6 +27,7 @@ dependencies:
   permission_handler: ^11.0.1 # Meminta izin (lokasi, notifikasi)
   flutter_map: ^8.2.2 # Menampilkan peta
   latlong2: ^0.9.1 # Helper untuk koordinat peta
+  google_maps_flutter: ^2.7.0 # <-- TAMBAHKAN BARIS INI
 
   # Notifikasi & Waktu
   flutter_local_notifications: ^17.2.1 # Menampilkan notifikasi lokal

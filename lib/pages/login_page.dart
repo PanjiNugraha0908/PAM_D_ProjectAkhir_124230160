@@ -24,9 +24,10 @@ class _LoginPageState extends State<LoginPage> {
       String username = _usernameController.text;
       String password = _passwordController.text;
 
-      // Panggil service otentikasi
-      // Ini sekarang mengembalikan Map, bukan bool
+      // --- PERBAIKAN DI SINI ---
+      // AuthService.login mengembalikan Map, bukan bool
       Map<String, dynamic> result = await AuthService.login(username, password);
+      // --- AKHIR PERBAIKAN ---
 
       if (!mounted) return; // Cek jika widget masih ada
 
@@ -34,7 +35,9 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = false; // Selesai loading
       });
 
+      // --- PERBAIKAN DI SINI ---
       if (result['success']) {
+        // --- AKHIR PERBAIKAN ---
         // Navigasi ke Halaman Utama
         Navigator.pushReplacement(
           context,
@@ -44,7 +47,9 @@ class _LoginPageState extends State<LoginPage> {
         // Tampilkan pesan error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            // --- PERBAIKAN DI SINI ---
             content: Text(result['message'] ?? 'Username atau password salah'),
+            // --- AKHIR PERBAIKAN ---
             backgroundColor: Colors.red,
           ),
         );
