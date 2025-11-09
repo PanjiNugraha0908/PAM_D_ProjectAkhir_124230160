@@ -1,3 +1,5 @@
+// lib/pages/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:mobileprojek/pages/register_page.dart';
 import '../services/auth_service.dart';
@@ -13,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscurePassword = true; // TAMBAHAN INI
+  bool _obscurePassword = true;
 
   void _login() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
@@ -80,12 +82,19 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
                 ),
                 SizedBox(height: 40),
+
+                // --- PERUBAHAN USERNAME ---
                 TextFormField(
                   controller: _usernameController,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.w500, // Sedikit beda textstyle
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Username',
                     icon: Icons.person_outline,
+                    iconColor: Color(0xFFA0AEC0), // Icon abu-abu
+                    fillColor: Color(0xFF2D3748), // Fill standar
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -96,16 +105,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: 16),
 
-                // PASSWORD DENGAN EYE SLASH
+                // --- PERUBAHAN PASSWORD ---
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: _obscurePassword, // PERBAIKAN
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  obscureText: _obscurePassword,
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.normal, // TextStyle standar
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
+                    iconColor: Color(0xFF66B3FF), // Icon biru (berbeda)
+                    fillColor: Color(0xFF2D3748).withOpacity(0.7), // Fill beda
                     suffixIcon: IconButton(
-                      // TAMBAHAN INI
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility_off
@@ -126,6 +139,8 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
+
+                // --- AKHIR PERUBAHAN ---
                 SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -192,18 +207,21 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // --- FUNGSI HELPER DIPERBARUI ---
   InputDecoration _buildInputDecoration({
     required String label,
     required IconData icon,
-    Widget? suffixIcon, // TAMBAHAN INI
+    Widget? suffixIcon,
+    Color? iconColor,
+    Color? fillColor,
   }) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
-      prefixIcon: Icon(icon, color: Color(0xFFA0AEC0)),
-      suffixIcon: suffixIcon, // TAMBAHAN INI
+      prefixIcon: Icon(icon, color: iconColor ?? Color(0xFFA0AEC0)),
+      suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Color(0xFF2D3748),
+      fillColor: fillColor ?? Color(0xFF2D3748),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -214,6 +232,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+  // --- AKHIR PERUBAHAN ---
 
   @override
   void dispose() {

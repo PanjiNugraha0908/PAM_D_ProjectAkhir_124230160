@@ -1,3 +1,5 @@
+// lib/pages/register_page.dart
+
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 
@@ -101,13 +103,18 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 SizedBox(height: 40),
 
-                // Username
+                // --- PERUBAHAN USERNAME ---
                 TextFormField(
                   controller: _usernameController,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.w500, // Beda TextStyle
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Username',
                     icon: Icons.person_outline,
+                    iconColor: Color(0xFFA0AEC0), // Abu-abu
+                    fillColor: Color(0xFF2D3748), // Standar
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -121,13 +128,18 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 SizedBox(height: 16),
 
-                // Email
+                // --- PERUBAHAN EMAIL ---
                 TextFormField(
                   controller: _emailController,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.normal, // TextStyle Beda
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Email',
                     icon: Icons.email_outlined,
+                    iconColor: Color(0xFFA0AEC0), // Abu-abu
+                    fillColor: Color(0xFF2D3748).withOpacity(0.7), // Fill Beda
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -142,14 +154,19 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 SizedBox(height: 16),
 
-                // Password
+                // --- PERUBAHAN PASSWORD ---
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.w500, // Beda TextStyle
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
+                    iconColor: Color(0xFF66B3FF), // Biru
+                    fillColor: Color(0xFF2D3748), // Standar
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -176,14 +193,19 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 SizedBox(height: 16),
 
-                // Konfirmasi Password
+                // --- PERUBAHAN KONFIRMASI PASSWORD ---
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  style: TextStyle(
+                    color: Color(0xFFE2E8F0),
+                    fontWeight: FontWeight.normal, // TextStyle Beda
+                  ),
                   decoration: _buildInputDecoration(
                     label: 'Konfirmasi Password',
                     icon: Icons.lock_outline,
+                    iconColor: Color(0xFF66B3FF), // Biru
+                    fillColor: Color(0xFF2D3748).withOpacity(0.7), // Fill Beda
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
@@ -210,6 +232,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 SizedBox(height: 32),
 
+                // --- AKHIR PERUBAHAN ---
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -270,18 +293,21 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // --- FUNGSI HELPER DIPERBARUI ---
   InputDecoration _buildInputDecoration({
     required String label,
     required IconData icon,
     Widget? suffixIcon,
+    Color? iconColor,
+    Color? fillColor,
   }) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
-      prefixIcon: Icon(icon, color: Color(0xFFA0AEC0)),
+      prefixIcon: Icon(icon, color: iconColor ?? Color(0xFFA0AEC0)),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Color(0xFF2D3748),
+      fillColor: fillColor ?? Color(0xFF2D3748),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -300,6 +326,7 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+  // --- AKHIR PERUBAHAN ---
 
   @override
   void dispose() {

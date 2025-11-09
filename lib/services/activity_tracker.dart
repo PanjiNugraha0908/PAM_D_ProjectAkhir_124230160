@@ -1,3 +1,5 @@
+// lib/services/activity_tracker.dart
+
 import 'package:flutter/material.dart'; // Diperlukan untuk WidgetsBindingObserver
 import 'package:hive/hive.dart';
 import 'notification_service.dart';
@@ -41,10 +43,9 @@ class ActivityTracker {
   // Key untuk simpan setting notif
   static const String _notificationEnabledKey = 'notification_enabled';
 
-  // --- PERMINTAAN BARU: 5 MENIT ---
-  static final Duration _inactivityDuration = const Duration(minutes: 5);
-  // Durasi asli (bisa kamu kembalikan nanti)
-  // static final Duration _inactivityDuration = const Duration(hours: 24);
+  // --- PERUBAHAN DI SINI: Diubah menjadi 1 hari ---
+  static final Duration _inactivityDuration = const Duration(days: 1);
+  // --- AKHIR PERUBAHAN ---
 
   // ID Notifikasi unik untuk inaktivitas (harus sama dengan di notification_service.dart)
   static const int _inactivityNotificationId = 1000;
@@ -164,7 +165,9 @@ class ActivityTracker {
         );
       } else {
         // Jika tidak ada user (misal: di halaman login), jangan kirim notif
-        print("ActivityTracker: User belum login, notifikasi tidak dijadwalkan.");
+        print(
+          "ActivityTracker: User belum login, notifikasi tidak dijadwalkan.",
+        );
       }
     } else {
       print("ActivityTracker: Notifikasi nonaktif, penjadwalan dibatalkan.");

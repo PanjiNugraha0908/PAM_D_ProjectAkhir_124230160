@@ -240,14 +240,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         Icons.info_outline,
                         color: Color(0xFF4299E1),
                       ), // primaryButtonColor
-                      SizedBox(width: 8),
-                      Text(
-                        'Tentang Notifikasi',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFE2E8F0), // textColor
-                        ),
-                      ),
                     ],
                   ),
                 ],
