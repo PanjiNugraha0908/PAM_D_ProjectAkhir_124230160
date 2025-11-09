@@ -8,6 +8,7 @@ environment:
   sdk: ^3.9.0
 
 # --- DEPENDENSI UTAMA APLIKASI ---
+# --- DEPENDENSI UTAMA APLIKASI ---
 dependencies:
   # Ketergantungan Inti Flutter
   flutter:
@@ -27,7 +28,7 @@ dependencies:
   permission_handler: ^11.0.1 # Meminta izin (lokasi, notifikasi)
   flutter_map: ^8.2.2 # Menampilkan peta
   latlong2: ^0.9.1 # Helper untuk koordinat peta
-  google_maps_flutter: ^2.7.0 # <-- TAMBAHKAN BARIS INI
+  # google_maps_flutter: ^2.7.0  <-- PASTIKAN INI SUDAH DIHAPUS
 
   # Notifikasi & Waktu
   flutter_local_notifications: ^17.2.1 # Menampilkan notifikasi lokal
@@ -37,7 +38,6 @@ dependencies:
   crypto: ^3.0.3 # Untuk hashing password (SHA-256)
   image_picker: ^1.0.4 # Mengambil gambar dari galeri (foto profil)
   path_provider: ^2.1.1 # Mendapatkan path direktori aplikasi
-
 # --- DEPENDENSI PENGEMBANGAN (DEV) ---
 dev_dependencies:
   flutter_test:

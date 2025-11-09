@@ -250,14 +250,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Notifikasi pengingat akan DIJADWALKAN setelah 5 menit kamu menutup aplikasi (jika sedang login). Pesan: "Hai [Username], masih banyak negara menarik untuk kamu jelajahi! ✈️🌍"',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFFA0AEC0),
-                    ), // hintColor
-                  ),
                 ],
               ),
             ),

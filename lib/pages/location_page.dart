@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-// --- IMPORT YANG SAYA LUPAKAN ---
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-// --- AKHIR IMPORT ---
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latLng;
 import '../services/location_service.dart';
-import 'dart:async';
 import 'profile_page.dart';
 import 'history_page.dart';
 import 'login_page.dart';
@@ -16,32 +14,25 @@ class LocationPage extends StatefulWidget {
 }
 
 class _LocationPageState extends State<LocationPage> {
-  Completer<GoogleMapController> _controller = Completer();
-  LatLng? _currentPosition;
+  final MapController _mapController = MapController();
+  latLng.LatLng? _currentPosition;
   String _errorMessage = '';
-  String _mapStyle = '';
 
   @override
   void initState() {
     super.initState();
-    _loadMapStyle();
     _getCurrentLocation();
-  }
-
-  Future<void> _loadMapStyle() async {
-    _mapStyle = mapStyle;
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      // --- PERBAIKAN DI SINI ---
       final Map<String, dynamic> locationData =
           await LocationService.getCurrentLocation();
 
       if (locationData['success']) {
         if (mounted) {
           setState(() {
-            _currentPosition = LatLng(
+            _currentPosition = latLng.LatLng(
               locationData['latitude'],
               locationData['longitude'],
             );
@@ -52,11 +43,11 @@ class _LocationPageState extends State<LocationPage> {
       } else {
         if (mounted) {
           setState(() {
-            _errorMessage = locationData['error'] ?? 'Gagal mendapatkan lokasi';
+            _errorMessage =
+                locationData['error'] ?? 'Gagal mendapatkan lokasi';
           });
         }
       }
-      // --- AKHIR PERBAIKAN ---
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -66,16 +57,12 @@ class _LocationPageState extends State<LocationPage> {
     }
   }
 
-  Future<void> _animateToPosition(LatLng position) async {
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: position, zoom: 15.0),
-      ),
-    );
+  void _animateToPosition(latLng.LatLng position) {
+    // Di v8, move() juga menerima zoom
+    _mapController.move(position, 15.0);
   }
 
-  // --- Navigasi ---
+  // --- Navigasi (Tetap Sama) ---
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -165,6 +152,7 @@ class _LocationPageState extends State<LocationPage> {
   Widget _buildBody() {
     if (_errorMessage.isNotEmpty) {
       return Center(
+        // ... (Widget Error State, tidak berubah) ...
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -195,6 +183,7 @@ class _LocationPageState extends State<LocationPage> {
 
     if (_currentPosition == null) {
       return Center(
+        // ... (Widget Loading State, tidak berubah) ...
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -209,188 +198,36 @@ class _LocationPageState extends State<LocationPage> {
       );
     }
 
-    return GoogleMap(
-      mapType: MapType.normal,
-      initialCameraPosition: CameraPosition(
-        target: _currentPosition!,
-        zoom: 15.0,
+    // --- PERBAIKAN DI SINI ---
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _currentPosition!, // Ganti 'center' -> 'initialCenter'
+        initialZoom: 15.0, // Ganti 'zoom' -> 'initialZoom'
       ),
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-        controller.setMapStyle(_mapStyle);
-      },
-      markers: {
-        Marker(
-          markerId: MarkerId('currentLocation'),
-          position: _currentPosition!,
-          infoWindow: InfoWindow(title: 'Lokasi Anda Saat Ini'),
+      children: [ // FlutterMap menggunakan 'children', bukan 'child'
+        TileLayer(
+          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          subdomains: ['a', 'b', 'c'],
+          userAgentPackageName: 'com.example.mobileprojek',
         ),
-      },
+        MarkerLayer(
+          markers: [
+            Marker(
+              width: 80.0,
+              height: 80.0,
+              point: _currentPosition!,
+              // Ganti 'builder' -> 'child'
+              child: Icon( 
+                Icons.location_pin,
+                color: Colors.red,
+                size: 40,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
+    // --- AKHIR PERBAIKAN ---
   }
 }
-
-/// JSON String untuk style Google Maps mode gelap.
-const String mapStyle = '''
-[
-  {
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#242f3e"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#746855"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#242f3e"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#263c3f"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#6b9a76"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#38414e"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#212a37"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#9ca5b3"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#746855"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#1f2835"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#f3d19c"
-      }
-    ]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#2f3948"
-      }
-    ]
-  },
-  {
-    "featureType": "transit.station",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#17263c"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#515c6d"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#17263c"
-      }
-    ]
-  }
-]
-''';

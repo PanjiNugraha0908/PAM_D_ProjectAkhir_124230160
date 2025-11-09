@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-// --- IMPORT YANG SAYA LUPAKAN ---
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-// --- AKHIR IMPORT ---
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latLng;
 import '../models/country.dart';
 
-/// Halaman yang menampilkan lokasi sebuah [Country] di [GoogleMap].
 class CountryMapPage extends StatefulWidget {
   final Country country;
 
@@ -15,232 +13,74 @@ class CountryMapPage extends StatefulWidget {
 }
 
 class _CountryMapPageState extends State<CountryMapPage> {
-  late GoogleMapController _mapController;
-  late LatLng _countryPosition;
-  final Set<Marker> _markers = {};
+  final MapController _mapController = MapController();
+  late latLng.LatLng _countryPosition;
+  final List<Marker> _markers = [];
 
   @override
   void initState() {
     super.initState();
-    _countryPosition = LatLng(
+    _countryPosition = latLng.LatLng(
       widget.country.latitude,
       widget.country.longitude,
     );
 
+    // --- PERBAIKAN DI SINI ---
     _markers.add(
       Marker(
-        markerId: MarkerId(widget.country.name),
-        position: _countryPosition,
-        infoWindow: InfoWindow(
-          title: widget.country.name,
-          snippet: widget.country.capital,
+        width: 80.0,
+        height: 80.0,
+        point: _countryPosition,
+        // Ganti 'builder' -> 'child'
+        child: Tooltip(
+          // Tambahkan Tooltip sebagai pengganti InfoWindow
+          message:
+              '${widget.country.name}\nIbu Kota: ${widget.country.capital}',
+          child: Icon(Icons.location_pin, color: Colors.red.shade700, size: 40),
         ),
       ),
     );
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-    _mapController.setMapStyle(mapStyle); // Set style Peta ke mode gelap
+    // --- AKHIR PERBAIKAN ---
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1A202C), // backgroundColor
+      backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
         title: Text(
           'Lokasi ${widget.country.name}',
-          style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+          style: TextStyle(color: Color(0xFFE2E8F0)),
         ),
-        backgroundColor: Color(0xFF2D3748), // surfaceColor
-        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
+        backgroundColor: Color(0xFF2D3748),
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
         elevation: 0,
       ),
-      body: GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: CameraPosition(
-          target: _countryPosition,
-          zoom: 4.0,
+      // --- PERBAIKAN DI SINI ---
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _countryPosition, // Ganti 'center' -> 'initialCenter'
+          initialZoom: 4.0, // Ganti 'zoom' -> 'initialZoom'
         ),
-        markers: _markers,
-        mapType: MapType.normal,
+        children: [
+          TileLayer(
+            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: ['a', 'b', 'c'],
+            userAgentPackageName: 'com.example.mobileprojek',
+          ),
+          MarkerLayer(markers: _markers),
+        ],
       ),
+      // --- AKHIR PERBAIKAN ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _mapController.animateCamera(
-            CameraUpdate.newLatLngZoom(_countryPosition, 4.0),
-          );
+          _mapController.move(_countryPosition, 4.0);
         },
-        backgroundColor: Color(0xFF4299E1), // primaryButtonColor
-        child: Icon(Icons.center_focus_strong, color: Color(0xFFE2E8F0)), // textColor
+        backgroundColor: Color(0xFF4299E1),
+        child: Icon(Icons.center_focus_strong, color: Color(0xFFE2E8F0)),
         tooltip: 'Kembali ke tengah',
       ),
     );
   }
 }
-
-/// JSON String untuk style Google Maps mode gelap.
-const String mapStyle = '''
-[
-  {
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#242f3e"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#746855"
-      }
-    ]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#242f3e"
-      }
-    ]
-  },
-  {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#263c3f"
-      }
-    ]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#6b9a76"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#38414e"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#212a37"
-      }
-    ]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#9ca5b3"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#746855"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry.stroke",
-    "stylers": [
-      {
-        "color": "#1f2835"
-      }
-    ]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#f3d19c"
-      }
-    ]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#2f3948"
-      }
-    ]
-  },
-  {
-    "featureType": "transit.station",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#d59563"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [
-      {
-        "color": "#17263c"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [
-      {
-        "color": "#515c6d"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.stroke",
-    "stylers": [
-      {
-        "color": "#17263c"
-      }
-    ]
-  }
-]
-''';
