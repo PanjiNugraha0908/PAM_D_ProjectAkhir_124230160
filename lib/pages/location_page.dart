@@ -17,6 +17,10 @@ class _LocationPageState extends State<LocationPage> {
   final MapController _mapController = MapController();
   latLng.LatLng? _currentPosition;
   String _errorMessage = '';
+  bool _isLoading = true;
+  String _address = '';
+  String _country = '';
+  double _accuracy = 0.0;
 
   @override
   void initState() {
@@ -25,44 +29,56 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
     try {
       final Map<String, dynamic> locationData =
           await LocationService.getCurrentLocation();
 
-      if (locationData['success']) {
-        if (mounted) {
+      if (mounted) {
+        if (locationData['success']) {
           setState(() {
             _currentPosition = latLng.LatLng(
               locationData['latitude'],
               locationData['longitude'],
             );
+            _address = locationData['address'] ?? 'Alamat tidak tersedia';
+            _country = locationData['country'] ?? 'Unknown';
+            _accuracy = locationData['accuracy'] ?? 0.0;
             _errorMessage = '';
+            _isLoading = false;
           });
-          _animateToPosition(_currentPosition!);
-        }
-      } else {
-        if (mounted) {
+
+          // Animasi ke posisi dengan smooth transition
+          Future.delayed(Duration(milliseconds: 100), () {
+            if (mounted && _currentPosition != null) {
+              _mapController.move(_currentPosition!, 15.0);
+            }
+          });
+        } else {
           setState(() {
-            _errorMessage =
-                locationData['error'] ?? 'Gagal mendapatkan lokasi';
+            _errorMessage = locationData['error'] ?? 'Gagal mendapatkan lokasi';
+            _isLoading = false;
           });
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = 'Terjadi kesalahan: ${e.toString()}';
+          _isLoading = false;
         });
       }
     }
   }
 
   void _animateToPosition(latLng.LatLng position) {
-    // Di v8, move() juga menerima zoom
     _mapController.move(position, 15.0);
   }
 
-  // --- Navigasi (Tetap Sama) ---
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -121,11 +137,39 @@ class _LocationPageState extends State<LocationPage> {
         elevation: 0,
       ),
       body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _getCurrentLocation,
-        backgroundColor: Color(0xFF4299E1),
-        child: Icon(Icons.my_location, color: Color(0xFFE2E8F0)),
-        tooltip: 'Dapatkan Lokasi Saat Ini',
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (_currentPosition != null)
+            FloatingActionButton(
+              heroTag: 'center',
+              onPressed: () {
+                if (_currentPosition != null) {
+                  _animateToPosition(_currentPosition!);
+                }
+              },
+              backgroundColor: Color(0xFF2D3748),
+              child: Icon(Icons.center_focus_strong, color: Color(0xFFE2E8F0)),
+              tooltip: 'Kembali ke Pusat',
+            ),
+          SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: 'refresh',
+            onPressed: _getCurrentLocation,
+            backgroundColor: Color(0xFF4299E1),
+            child: _isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Color(0xFFE2E8F0),
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Icon(Icons.my_location, color: Color(0xFFE2E8F0)),
+            tooltip: 'Perbarui Lokasi',
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Color(0xFF2D3748),
@@ -152,7 +196,6 @@ class _LocationPageState extends State<LocationPage> {
   Widget _buildBody() {
     if (_errorMessage.isNotEmpty) {
       return Center(
-        // ... (Widget Error State, tidak berubah) ...
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -175,15 +218,28 @@ class _LocationPageState extends State<LocationPage> {
                 style: TextStyle(color: Color(0xFFA0AEC0)),
                 textAlign: TextAlign.center,
               ),
+              SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _getCurrentLocation,
+                icon: Icon(Icons.refresh),
+                label: Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF4299E1),
+                  foregroundColor: Color(0xFFE2E8F0),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       );
     }
 
-    if (_currentPosition == null) {
+    if (_isLoading || _currentPosition == null) {
       return Center(
-        // ... (Widget Loading State, tidak berubah) ...
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -193,41 +249,183 @@ class _LocationPageState extends State<LocationPage> {
               'Mencari lokasi Anda...',
               style: TextStyle(color: Color(0xFFA0AEC0)),
             ),
+            SizedBox(height: 8),
+            Text(
+              'Pastikan GPS aktif',
+              style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12),
+            ),
           ],
         ),
       );
     }
 
-    // --- PERBAIKAN DI SINI ---
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: _currentPosition!, // Ganti 'center' -> 'initialCenter'
-        initialZoom: 15.0, // Ganti 'zoom' -> 'initialZoom'
-      ),
-      children: [ // FlutterMap menggunakan 'children', bukan 'child'
-        TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          subdomains: ['a', 'b', 'c'],
-          userAgentPackageName: 'com.example.mobileprojek',
+    return Column(
+      children: [
+        // Info Card
+        Container(
+          margin: EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Color(0xFF2D3748),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_on, color: Color(0xFF66B3FF), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _country,
+                      style: TextStyle(
+                        color: Color(0xFFE2E8F0),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                _address,
+                style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 14),
+              ),
+              SizedBox(height: 12),
+              Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildInfoChip(
+                    icon: Icons.my_location,
+                    label: 'Akurasi',
+                    value: '${_accuracy.toStringAsFixed(0)}m',
+                  ),
+                  _buildInfoChip(
+                    icon: Icons.explore,
+                    label: 'Koordinat',
+                    value:
+                        '${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}',
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              width: 80.0,
-              height: 80.0,
-              point: _currentPosition!,
-              // Ganti 'builder' -> 'child'
-              child: Icon( 
-                Icons.location_pin,
-                color: Colors.red,
-                size: 40,
+
+        // Map
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _currentPosition!,
+                initialZoom: 15.0,
+                minZoom: 5.0,
+                maxZoom: 18.0,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  subdomains: ['a', 'b', 'c'],
+                  userAgentPackageName: 'com.example.mobileprojek',
+                ),
+                CircleLayer(
+                  circles: [
+                    CircleMarker(
+                      point: _currentPosition!,
+                      radius: _accuracy > 100 ? 100 : _accuracy,
+                      color: Color(0xFF4299E1).withOpacity(0.2),
+                      borderColor: Color(0xFF4299E1).withOpacity(0.5),
+                      borderStrokeWidth: 2,
+                    ),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      width: 80.0,
+                      height: 80.0,
+                      point: _currentPosition!,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Color(0xFF2D3748),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Anda di sini',
+                              style: TextStyle(
+                                color: Color(0xFFE2E8F0),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.location_pin,
+                            color: Colors.red,
+                            size: 40,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Color(0xFF66B3FF), size: 16),
+        SizedBox(width: 4),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 10),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                color: Color(0xFFE2E8F0),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
       ],
     );
-    // --- AKHIR PERBAIKAN ---
   }
 }

@@ -17,20 +17,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  // --- TAMBAHKAN INI ---
   late TextEditingController _noHpController;
-  // --- AKHIR TAMBAHAN ---
+  late TextEditingController _saranKesanController;
   String? _imagePath;
 
   @override
   void initState() {
     super.initState();
-    // --- PERBAIKAN DISINI ---
     _nameController = TextEditingController(text: widget.user.fullName);
     _emailController = TextEditingController(text: widget.user.email);
-    _noHpController = TextEditingController(text: widget.user.noHp); // BARU
+    _noHpController = TextEditingController(text: widget.user.noHp);
+    _saranKesanController = TextEditingController(text: widget.user.saranKesan);
     _imagePath = widget.user.profilePicturePath;
-    // --- AKHIR PERBAIKAN ---
   }
 
   Future<void> _pickImage() async {
@@ -46,18 +44,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // --- PERBAIKAN OBJEK USER ---
       User updatedUser = User(
         username: widget.user.username,
-        passwordHash: widget.user.passwordHash, // Ambil dari user lama
-        createdAt: widget.user.createdAt, // Ambil dari user lama
-        lastLogin: DateTime.now(), // Update waktu login
-        fullName: _nameController.text, // Ganti
-        email: _emailController.text,
-        noHp: _noHpController.text, // BARU
-        profilePicturePath: _imagePath, // Ganti
+        passwordHash: widget.user.passwordHash,
+        createdAt: widget.user.createdAt,
+        lastLogin: DateTime.now(),
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        noHp: _noHpController.text.trim(),
+        profilePicturePath: _imagePath,
+        saranKesan: _saranKesanController.text.trim(),
       );
-      // --- AKHIR PERBAIKAN ---
 
       await DatabaseService.updateUser(updatedUser);
 
@@ -125,6 +122,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
               ),
               SizedBox(height: 32),
+
               _buildTextFormField(
                 controller: _nameController,
                 label: 'Nama Lengkap',
@@ -137,6 +135,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 },
               ),
               SizedBox(height: 16),
+
               _buildTextFormField(
                 controller: _emailController,
                 label: 'Email',
@@ -153,7 +152,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 },
               ),
               SizedBox(height: 16),
-              // --- TAMBAHKAN FIELD INI ---
+
               _buildTextFormField(
                 controller: _noHpController,
                 label: 'Nomor HP',
@@ -166,8 +165,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
-              // --- AKHIR TAMBAHAN ---
+              SizedBox(height: 16),
+
+              _buildTextFormField(
+                controller: _saranKesanController,
+                label: 'Saran dan Kesan',
+                icon: Icons.comment_outlined,
+                maxLines: 4,
+                validator: (value) {
+                  // Opsional, tidak wajib diisi
+                  return null;
+                },
+              ),
               SizedBox(height: 32),
+
               ElevatedButton(
                 onPressed: _saveProfile,
                 style: ElevatedButton.styleFrom(
@@ -198,12 +209,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required String label,
     required IconData icon,
     TextInputType? keyboardType,
+    int maxLines = 1,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       style: TextStyle(color: Color(0xFFE2E8F0)),
       keyboardType: keyboardType,
+      maxLines: maxLines,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
@@ -229,5 +242,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _noHpController.dispose();
+    _saranKesanController.dispose();
+    super.dispose();
   }
 }

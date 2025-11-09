@@ -12,44 +12,35 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false; // Tambahkan state loading
+  bool _isLoading = false;
+  bool _obscurePassword = true; // TAMBAHAN INI
 
-  /// Menggunakan AuthService untuk login
   void _login() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() {
-        _isLoading = true; // Mulai loading
+        _isLoading = true;
       });
 
       String username = _usernameController.text;
       String password = _passwordController.text;
 
-      // --- PERBAIKAN DI SINI ---
-      // AuthService.login mengembalikan Map, bukan bool
       Map<String, dynamic> result = await AuthService.login(username, password);
-      // --- AKHIR PERBAIKAN ---
 
-      if (!mounted) return; // Cek jika widget masih ada
+      if (!mounted) return;
 
       setState(() {
-        _isLoading = false; // Selesai loading
+        _isLoading = false;
       });
 
-      // --- PERBAIKAN DI SINI ---
       if (result['success']) {
-        // --- AKHIR PERBAIKAN ---
-        // Navigasi ke Halaman Utama
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(username: username)),
         );
       } else {
-        // Tampilkan pesan error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            // --- PERBAIKAN DI SINI ---
             content: Text(result['message'] ?? 'Username atau password salah'),
-            // --- AKHIR PERBAIKAN ---
             backgroundColor: Colors.red,
           ),
         );
@@ -104,13 +95,29 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 SizedBox(height: 16),
+
+                // PASSWORD DENGAN EYE SLASH
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword, // PERBAIKAN
                   style: TextStyle(color: Color(0xFFE2E8F0)),
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      // TAMBAHAN INI
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Color(0xFFA0AEC0),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -123,9 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : _login, // Nonaktifkan saat loading
+                    onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF4299E1),
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -190,11 +195,13 @@ class _LoginPageState extends State<LoginPage> {
   InputDecoration _buildInputDecoration({
     required String label,
     required IconData icon,
+    Widget? suffixIcon, // TAMBAHAN INI
   }) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
       prefixIcon: Icon(icon, color: Color(0xFFA0AEC0)),
+      suffixIcon: suffixIcon, // TAMBAHAN INI
       filled: true,
       fillColor: Color(0xFF2D3748),
       border: OutlineInputBorder(
@@ -206,5 +213,12 @@ class _LoginPageState extends State<LoginPage> {
         borderSide: BorderSide(color: Color(0xFF66B3FF)),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

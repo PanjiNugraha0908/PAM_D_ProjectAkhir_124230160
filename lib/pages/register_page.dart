@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-// Hapus import User karena tidak lagi dibuat di sini
-// import '../models/user.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -12,49 +10,44 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController(); // Ini akan jadi 'fullName'
+  final _confirmPasswordController = TextEditingController();
   final _emailController = TextEditingController();
-  final _noHpController = TextEditingController(); // Field baru dari modelmu
 
-  // Tambahkan state loading
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   void _register() async {
-    // <-- Tambahkan async
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() {
-        _isLoading = true; // Mulai loading
+        _isLoading = true;
       });
 
-      // Ambil password mentah
-      String rawPassword = _passwordController.text;
-
       try {
-        // Panggil service dengan parameter yang benar
         final result = await AuthService.register(
-          _usernameController.text,
-          rawPassword,
-          email: _emailController.text,
-          noHp: _noHpController.text,
-          fullName: _nameController.text, // Kirim sebagai named parameter
+          _usernameController.text.trim(),
+          _passwordController.text,
+          email: _emailController.text.trim(),
         );
 
         if (!mounted) return;
 
         setState(() {
-          _isLoading = false; // Selesai loading
+          _isLoading = false;
         });
 
         if (result['success']) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Registrasi berhasil! Silakan login.'),
+              content: Text(
+                'Registrasi berhasil! Silakan login dan lengkapi profil Anda.',
+              ),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
           );
           Navigator.pop(context);
         } else {
-          // Tampilkan pesan error dari service
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result['message'] ?? 'Registrasi gagal'),
@@ -65,7 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
       } catch (e) {
         if (mounted) {
           setState(() {
-            _isLoading = false; // Selesai loading jika ada error
+            _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
@@ -107,21 +100,28 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
                 ),
                 SizedBox(height: 40),
+
+                // Username
                 TextFormField(
-                  controller: _nameController, // 'fullName'
+                  controller: _usernameController,
                   style: TextStyle(color: Color(0xFFE2E8F0)),
                   decoration: _buildInputDecoration(
-                    label: 'Nama Lengkap',
-                    icon: Icons.badge_outlined,
+                    label: 'Username',
+                    icon: Icons.person_outline,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Nama tidak boleh kosong';
+                      return 'Username tidak boleh kosong';
+                    }
+                    if (value.length < 3) {
+                      return 'Username minimal 3 karakter';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 16),
+
+                // Email
                 TextFormField(
                   controller: _emailController,
                   style: TextStyle(color: Color(0xFFE2E8F0)),
@@ -141,48 +141,28 @@ class _RegisterPageState extends State<RegisterPage> {
                   },
                 ),
                 SizedBox(height: 16),
-                TextFormField(
-                  controller: _noHpController, // Field baru
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
-                  decoration: _buildInputDecoration(
-                    label: 'Nomor HP',
-                    icon: Icons.phone_outlined,
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Nomor HP tidak boleh kosong';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: _usernameController,
-                  style: TextStyle(color: Color(0xFFE2E8F0)),
-                  decoration: _buildInputDecoration(
-                    label: 'Username',
-                    icon: Icons.person_outline,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Username tidak boleh kosong';
-                    }
-                    if (value.length < 3) {
-                      // <-- Ubah ke 3 agar konsisten
-                      return 'Username minimal 3 karakter';
-                    }
-                    return null;
-                  },
-                ),
-                SizedBox(height: 16),
+
+                // Password
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   style: TextStyle(color: Color(0xFFE2E8F0)),
                   decoration: _buildInputDecoration(
                     label: 'Password',
                     icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Color(0xFFA0AEC0),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -194,13 +174,46 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
+                SizedBox(height: 16),
+
+                // Konfirmasi Password
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  style: TextStyle(color: Color(0xFFE2E8F0)),
+                  decoration: _buildInputDecoration(
+                    label: 'Konfirmasi Password',
+                    icon: Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Color(0xFFA0AEC0),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Konfirmasi password tidak boleh kosong';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Password tidak cocok';
+                    }
+                    return null;
+                  },
+                ),
                 SizedBox(height: 32),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : _register, // Tambahkan cek loading
+                    onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF4299E1),
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -208,7 +221,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    // Tambahkan indikator loading
                     child: _isLoading
                         ? SizedBox(
                             height: 20,
@@ -261,11 +273,13 @@ class _RegisterPageState extends State<RegisterPage> {
   InputDecoration _buildInputDecoration({
     required String label,
     required IconData icon,
+    Widget? suffixIcon,
   }) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
       prefixIcon: Icon(icon, color: Color(0xFFA0AEC0)),
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: Color(0xFF2D3748),
       border: OutlineInputBorder(
@@ -285,5 +299,14 @@ class _RegisterPageState extends State<RegisterPage> {
         borderSide: BorderSide(color: Colors.red.shade400, width: 2),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _emailController.dispose();
+    super.dispose();
   }
 }

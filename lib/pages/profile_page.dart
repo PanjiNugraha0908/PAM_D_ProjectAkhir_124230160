@@ -6,7 +6,6 @@ import '../services/database_service.dart';
 import 'edit_profile_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
-import 'login_page.dart';
 import 'home_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -32,8 +31,6 @@ class _ProfilePageState extends State<ProfilePage> {
           _user = user;
         });
       }
-    } else {
-      _logout();
     }
   }
 
@@ -50,18 +47,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // --- Navigasi ---
-  Future<void> _logout() async {
-    await AuthService.logout();
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-        (route) => false,
-      );
-    }
-  }
-
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
     if (username != null) {
@@ -69,8 +54,6 @@ class _ProfilePageState extends State<ProfilePage> {
         context,
         MaterialPageRoute(builder: (context) => HomePage(username: username)),
       );
-    } else {
-      _logout();
     }
   }
 
@@ -131,20 +114,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Color(0xFF2D3748),
-                    // --- PERBAIKAN DISINI ---
                     backgroundImage: _user!.profilePicturePath != null
                         ? FileImage(File(_user!.profilePicturePath!))
                         : null,
                     child: _user!.profilePicturePath == null
-                        // --- AKHIR PERBAIKAN ---
                         ? Icon(Icons.person, size: 60, color: Color(0xFFA0AEC0))
                         : null,
                   ),
                   SizedBox(height: 16),
                   Text(
-                    // --- PERBAIKAN DISINI ---
                     _user!.fullName,
-                    // --- AKHIR PERBAIKAN ---
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -156,6 +135,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
                   ),
                   SizedBox(height: 32),
+
+                  // Informasi Profil
                   Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -170,14 +151,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           value: _user!.email,
                         ),
                         Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
-                        // --- TAMBAHKAN INI ---
                         _buildInfoRow(
                           icon: Icons.phone_outlined,
                           label: 'No. HP',
                           value: _user!.noHp,
                         ),
                         Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
-                        // --- AKHIR TAMBAHAN ---
                         _buildInfoRow(
                           icon: Icons.history,
                           label: 'Negara Dilihat',
@@ -189,28 +168,49 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: Icon(Icons.logout, color: Colors.white),
-                      label: Text(
-                        'Logout',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+
+                  // Saran dan Kesan
+                  if (_user!.saranKesan.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2D3748),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      onPressed: _logout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade600,
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.comment_outlined,
+                                color: Color(0xFF66B3FF),
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Saran dan Kesan',
+                                style: TextStyle(
+                                  color: Color(0xFF66B3FF),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            _user!.saranKesan,
+                            style: TextStyle(
+                              color: Color(0xFFE2E8F0),
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
