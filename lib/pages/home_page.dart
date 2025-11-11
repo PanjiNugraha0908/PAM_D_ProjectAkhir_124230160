@@ -1,14 +1,8 @@
-// lib/pages/home_page.dart
-// ============================================================================
-// FILE: lib/pages/home_page.dart (VERSI BARU - Gambar Benua Vertikal)
-// ============================================================================
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Untuk Clipboard
+import 'package:flutter/services.dart'; 
 import '../controllers/home_controller.dart';
-import '../models/country.dart'; // Import ini TETAP DIPERLUKAN
+import '../models/country.dart'; 
 
-/// Halaman utama aplikasi dengan daftar nama negara yang bisa di-copy
 class HomePage extends StatefulWidget {
   final String username;
 
@@ -19,37 +13,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with HomeController {
-  // --- Data untuk card benua ---
-  // MENGGUNAKAN PATH GAMBAR ALIH-ALIH IKON
+
   final List<Map<String, dynamic>> _continentsData = [
-    {
-      'name': 'Asia',
-      'imagePath': 'assets/Asia.jpg', // Ganti dengan path gambar Anda
-    },
-    {
-      'name': 'Afrika',
-      'imagePath': 'assets/Afrika.jpg', // Ganti dengan path gambar Anda
-    },
-    {
-      'name': 'Eropa',
-      'imagePath': 'assets/Europe.jpg', // Ganti dengan path gambar Anda
-    },
-    {
-      'name': 'Amerika Utara',
-      'imagePath': 'assets/AmerikaUtara.jpg', // Ganti dengan path gambar Anda
-    },
-    {
-      'name': 'Amerika Selatan',
-      'imagePath': 'assets/AmerikaSelatan.jpg', // Ganti dengan path gambar Anda
-    },
-    {
-      'name': 'Australia/Oseania',
-      'imagePath':
-          'assets/Australia&Oceania.jpg', // Ganti dengan path gambar Anda
-    },
+    {'name': 'Asia'},
+    {'name': 'Afrika'},
+    {'name': 'Eropa'},
+    {'name': 'Amerika Utara'},
+    {'name': 'Amerika Selatan'},
+    {'name': 'Australia/Oseania'},
   ];
 
-  // --- Daftar NAMA NEGARA (untuk di-copy) ---
   final Map<String, List<String>> _countriesByName = {
     'Asia': [
       'Afghanistan',
@@ -505,7 +478,7 @@ class _HomePageState extends State<HomePage> with HomeController {
                       ? IconButton(
                           icon: Icon(
                             Icons.clear,
-                            color: Color(0xFA0AEC0),
+                            color: Color(0xFFA0AEC0),
                             size: 20,
                           ),
                           onPressed: resetFilter,
@@ -597,22 +570,17 @@ class _HomePageState extends State<HomePage> with HomeController {
                     )
                   // --- STATE 3: HALAMAN AWAL (Kosong, tampilkan card benua) ---
                   else ...[
-                    // Judul
+                    // Judul "Copy Nama Negara..." SUDAH DIHAPUS
+                    // SliverToBoxAdapter( ... ) <-- BLOK INI HILANG
+
+                    // Card Benua Geser VERTIKAL (Teks Saja)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        child: Text(
-                          'Copy Nama Negara Berdasarkan Benua',
-                          style: TextStyle(
-                            color: Color(0xFFE2E8F0),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        padding: const EdgeInsets.only(
+                          top: 8.0,
+                        ), // Beri sedikit jarak
                       ),
                     ),
-
-                    // Card Benua Geser VERTIKAL (Seperti Iklan)
                     SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final continent = _continentsData[index];
@@ -623,8 +591,7 @@ class _HomePageState extends State<HomePage> with HomeController {
                           ),
                           child: _buildContinentCard(
                             name: continent['name'],
-                            imagePath: continent['imagePath'],
-                            color: continent['color'],
+                            // Hapus imagePath dan color
                             onTap: () =>
                                 _showCountryCopyDialog(continent['name']),
                           ),
@@ -643,55 +610,27 @@ class _HomePageState extends State<HomePage> with HomeController {
 
   // === WIDGET HELPER ===
 
-  /// Membuat Card "Iklan" untuk Benua (Menggunakan Gambar)
+  /// PERUBAHAN: Membuat Card Benua (Hanya Teks)
   Widget _buildContinentCard({
     required String name,
-    required String imagePath, // Menerima path gambar
-    required Color color,
+    // Hapus 'imagePath' dan 'color'
     required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 100, // Tinggi card
+        // Hapus 'height' agar ukurannya pas dengan konten
         decoration: BoxDecoration(
-          color: color,
+          color: Color(0xFF2D3748), // Warna kartu standar
           borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.7), color],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
         ),
         child: Padding(
-          padding: EdgeInsets.all(12),
+          // Sesuaikan padding karena tidak ada gambar
+          padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Row(
-            // Menggunakan Row untuk gambar dan teks
             children: [
-              Image.asset(
-                imagePath, // Menampilkan gambar
-                width: 60,
-                height: 60,
-                color: Colors.white.withOpacity(
-                  0.8,
-                ), // Opsional: Beri warna overlay pada gambar
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.image_not_supported,
-                    color: Colors.white.withOpacity(0.8),
-                    size: 40,
-                  );
-                },
-              ),
-              SizedBox(width: 16),
+              // BLOK Image.asset() SUDAH DIHAPUS
               Expanded(
                 child: Text(
                   name,

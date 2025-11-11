@@ -57,12 +57,6 @@ flutter:
   # Pastikan file ini ada di folder 'assets' di root proyek Anda
   assets:
     - assets/Logoprojek.png
-    - assets/Afrika.jpg
-    - assets/AmerikaSelatan.jpg
-    - assets/AmerikaUtara.jpg
-    - assets/Asia.jpg
-    - assets/Australia&Oceania.jpg
-    - assets/Europe.jpg
 
   # Font Kustom (Contoh)
   # Untuk menambahkan font, hapus tanda '#' di bawah dan sesuaikan
