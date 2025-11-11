@@ -24,38 +24,28 @@ class _HomePageState extends State<HomePage> with HomeController {
   final List<Map<String, dynamic>> _continentsData = [
     {
       'name': 'Asia',
-      'imagePath': 'assets/Asia.png', // Ganti dengan path gambar Anda
-      'color': Colors.blueAccent[400],
+      'imagePath': 'assets/Asia.jpg', // Ganti dengan path gambar Anda
     },
     {
       'name': 'Afrika',
-      'imagePath':
-          'assets/Afrika.png', // Ganti dengan path gambar Anda
-      'color': Colors.orangeAccent[400],
+      'imagePath': 'assets/Afrika.jpg', // Ganti dengan path gambar Anda
     },
     {
       'name': 'Eropa',
-      'imagePath':
-          'assets/Europe.png', // Ganti dengan path gambar Anda
-      'color': Colors.purpleAccent[400],
+      'imagePath': 'assets/Europe.jpg', // Ganti dengan path gambar Anda
     },
     {
       'name': 'Amerika Utara',
-      'imagePath':
-          'assets/AmerikaUtara.png', // Ganti dengan path gambar Anda
-      'color': Colors.greenAccent[400],
+      'imagePath': 'assets/AmerikaUtara.jpg', // Ganti dengan path gambar Anda
     },
     {
       'name': 'Amerika Selatan',
-      'imagePath':
-          'assets/AmerikaSelatan.png', // Ganti dengan path gambar Anda
-      'color': Colors.redAccent[400],
+      'imagePath': 'assets/AmerikaSelatan.jpg', // Ganti dengan path gambar Anda
     },
     {
       'name': 'Australia/Oseania',
       'imagePath':
-          'assets/Australia&Oceania.png', // Ganti dengan path gambar Anda
-      'color': Colors.tealAccent[400],
+          'assets/Australia&Oceania.jpg', // Ganti dengan path gambar Anda
     },
   ];
 
