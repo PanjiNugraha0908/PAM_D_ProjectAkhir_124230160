@@ -1,3 +1,4 @@
+// lib/controllers/country_detail_controller.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
@@ -8,6 +9,12 @@ import '../services/timezone_service.dart';
 import '../pages/country_map_page.dart';
 import '../pages/country_detail_page.dart';
 // --- AKHIR IMPORT ---
+
+// --- TAMBAHAN IMPORT UNTUK FITUR FAVORIT ---
+import '../models/history_item.dart';
+import '../services/auth_service.dart';
+import '../services/database_service.dart';
+// --- AKHIR TAMBAHAN ---
 
 /// Controller (Logic) untuk [CountryDetailPage].
 mixin CountryDetailController on State<CountryDetailPage> {
@@ -26,6 +33,11 @@ mixin CountryDetailController on State<CountryDetailPage> {
   String countryTime = '';
   String convertedTime = '';
 
+  // --- TAMBAHAN STATE FAVORIT ---
+  bool isFavorite = false;
+  HistoryItem? historyEntry; // Untuk menyimpan referensi ke item di database
+  // --- AKHIR TAMBAHAN ---
+
   // --- Lifecycle Methods ---
   void onInit() {
     if (widget.country.currencies.isNotEmpty) {
@@ -35,11 +47,73 @@ mixin CountryDetailController on State<CountryDetailPage> {
     selectedTimezone = 'WIB';
     updateTimes();
     timer = Timer.periodic(Duration(seconds: 1), (_) => updateTimes());
+    _loadFavoriteStatus(); // Panggil fungsi baru
   }
 
   void onDispose() {
     timer?.cancel();
     amountController.dispose();
+  }
+
+  // --- FUNGSI BARU UNTUK FAVORIT ---
+  Future<void> _loadFavoriteStatus() async {
+    String? username = AuthService.getCurrentUsername();
+    if (username == null) return;
+
+    // Saat halaman detail dibuka, home_controller SUDAH menambahkan
+    // item history. Kita hanya perlu menemukannya.
+    final history = DatabaseService.getHistoryForUser(username);
+    try {
+      historyEntry = history.firstWhere(
+        (h) => h.countryName == widget.country.name,
+      );
+      if (mounted) {
+        setState(() {
+          isFavorite = historyEntry!.isFavorite;
+        });
+      }
+    } catch (e) {
+      // Seharusnya tidak terjadi, tapi sebagai pengaman
+      print('Error: History item tidak ditemukan untuk ${widget.country.name}');
+      historyEntry = null;
+      if (mounted) setState(() => isFavorite = false);
+    }
+  }
+
+  // --- FUNGSI BARU UNTUK FAVORIT ---
+  Future<void> toggleFavorite() async {
+    if (historyEntry == null) {
+      // Jika history-nya tidak ada (kasus aneh), panggil _loadFavoriteStatus lagi
+      await _loadFavoriteStatus();
+      if (historyEntry == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan favorit, coba lagi.')),
+        );
+        return;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        isFavorite = !isFavorite;
+      });
+    }
+
+    // Update nilai di database
+    historyEntry!.isFavorite = isFavorite;
+    await historyEntry!.save(); // HiveObject bisa langsung di-save
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFavorite
+              ? '${widget.country.name} ditambahkan ke favorit'
+              : '${widget.country.name} dihapus dari favorit',
+        ),
+        backgroundColor: Color(0xFF4299E1),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   // --- Logika Halaman ---
@@ -114,7 +188,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
   }
 
   // --- Helper Getters (Formatter) ---
-
+  // ... (Sisa fungsi helper tidak berubah) ...
   String formatCurrency(double amount, String? currencyCode) {
     final formatter = NumberFormat("#,##0.00", "id_ID");
     String symbol = getCurrencySymbol(currencyCode);

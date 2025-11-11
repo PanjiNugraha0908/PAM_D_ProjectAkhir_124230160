@@ -23,13 +23,14 @@ class HistoryItemAdapter extends TypeAdapter<HistoryItem> {
       capital: fields[3] as String,
       region: fields[4] as String,
       viewedAt: fields[5] as DateTime,
+      isFavorite: fields[6] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, HistoryItem obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class HistoryItemAdapter extends TypeAdapter<HistoryItem> {
       ..writeByte(4)
       ..write(obj.region)
       ..writeByte(5)
-      ..write(obj.viewedAt);
+      ..write(obj.viewedAt)
+      ..writeByte(6)
+      ..write(obj.isFavorite);
   }
 
   @override

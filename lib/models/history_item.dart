@@ -1,3 +1,4 @@
+// lib/models/history_item.dart
 import 'package:hive/hive.dart';
 
 part 'history_item.g.dart';
@@ -27,6 +28,10 @@ class HistoryItem extends HiveObject {
   @HiveField(5)
   DateTime viewedAt;
 
+  // --- TAMBAHAN BARU ---
+  @HiveField(6)
+  bool isFavorite;
+
   HistoryItem({
     required this.username,
     required this.countryName,
@@ -34,5 +39,6 @@ class HistoryItem extends HiveObject {
     required this.capital,
     required this.region,
     required this.viewedAt,
+    this.isFavorite = false, // Default value
   });
 }

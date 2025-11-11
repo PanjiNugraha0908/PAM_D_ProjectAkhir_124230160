@@ -1,3 +1,4 @@
+// lib/pages/country_detail_page.dart
 import 'package:flutter/material.dart';
 // import 'dart:async'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
 // import 'package:intl/intl.dart'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
@@ -46,6 +47,18 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             pinned: true,
             backgroundColor: Color(0xFF2D3748), // surfaceColor
             iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
+            // --- TAMBAHAN BARU: Tombol Favorit ---
+            actions: [
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.redAccent[200] : Color(0xFFE2E8F0),
+                ),
+                onPressed: toggleFavorite, // Panggil fungsi controller
+                tooltip: 'Tambah ke Favorit',
+              ),
+            ],
+            // --- AKHIR TAMBAHAN ---
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.country.name,
@@ -75,6 +88,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                     title: 'Informasi Umum',
                     icon: Icons.info_outline,
                     children: [
+                      // ... (Widget _buildDetailRow tidak berubah) ...
                       _buildDetailRow(
                         'Nama Resmi',
                         widget.country.officialName,
@@ -160,6 +174,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
   }
 
   // --- Helper Widgets (Bagian dari "Style" / Tampilan) ---
+  // ... (Semua helper widget _build... TIDAK BERUBAH) ...
 
   Widget _buildSectionCard({
     required String title,

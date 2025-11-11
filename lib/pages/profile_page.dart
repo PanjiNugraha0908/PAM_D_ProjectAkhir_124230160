@@ -1,3 +1,4 @@
+// lib/pages/profile_page.dart
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/user.dart';
@@ -7,6 +8,9 @@ import 'edit_profile_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'home_page.dart';
+// --- TAMBAHAN IMPORT ---
+import '../models/history_item.dart';
+// --- AKHIR TAMBAHAN ---
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -123,7 +127,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    _user!.fullName,
+                    _user!.fullName.isEmpty
+                        ? '(Nama Belum Diatur)'
+                        : _user!.fullName,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -154,7 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         _buildInfoRow(
                           icon: Icons.phone_outlined,
                           label: 'No. HP',
-                          value: _user!.noHp,
+                          value: _user!.noHp.isEmpty ? '-' : _user!.noHp,
                         ),
                         Divider(color: Color(0xFFA0AEC0).withOpacity(0.3)),
                         _buildInfoRow(
@@ -169,9 +175,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SizedBox(height: 24),
 
-                  // --- PERUBAHAN DI SINI ---
                   // Saran dan Kesan (Statis)
                   Container(
+                    // ... (Widget Saran dan Kesan tidak berubah) ...
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -212,7 +218,122 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-                  // --- AKHIR PERUBAHAN ---
+
+                  // --- TAMBAHAN BARU: GALERI FAVORIT ---
+                  SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF2D3748),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.favorite,
+                              color: Color(0xFF66B3FF),
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Negara Favorit',
+                              style: TextStyle(
+                                color: Color(0xFF66B3FF),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        // Gunakan Builder agar query dieksekusi saat build
+                        Builder(
+                          builder: (context) {
+                            // Ambil data favorit dari HistoryItem
+                            final List<HistoryItem> favorites =
+                                DatabaseService.getHistoryForUser(
+                                  _user!.username,
+                                ).where((item) => item.isFavorite).toList();
+
+                            if (favorites.isEmpty) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16.0,
+                                  ),
+                                  child: Text(
+                                    'Belum ada negara favorit.\nTekan ikon hati di halaman detail negara.',
+                                    style: TextStyle(
+                                      color: Color(0xFFA0AEC0),
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount:
+                                        3, // Tampilkan 3 negara per baris
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                    childAspectRatio:
+                                        3 / 2.8, // Sesuaikan rasio
+                                  ),
+                              itemCount: favorites.length,
+                              itemBuilder: (context, index) {
+                                final item = favorites[index];
+                                return Column(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: item.flagUrl.isNotEmpty
+                                          ? Image.network(
+                                              item.flagUrl,
+                                              height: 50,
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              height: 50,
+                                              width: double.infinity,
+                                              color: Color(0xFF1A202C),
+                                              child: Icon(
+                                                Icons.flag,
+                                                color: Color(0xFFA0AEC0),
+                                              ),
+                                            ),
+                                    ),
+                                    SizedBox(height: 6),
+                                    Text(
+                                      item.countryName,
+                                      style: TextStyle(
+                                        color: Color(0xFFE2E8F0),
+                                        fontSize: 12,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  // --- AKHIR TAMBAHAN ---
                 ],
               ),
             ),

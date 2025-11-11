@@ -1,10 +1,12 @@
+// lib/pages/home_page.dart
 // ============================================================================
-// FILE: lib/pages/home_page.dart (FIXED OVERFLOW - Background Ikut Scroll)
+// FILE: lib/pages/home_page.dart (VERSI BARU - Gambar Benua Vertikal)
 // ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Untuk Clipboard
 import '../controllers/home_controller.dart';
+import '../models/country.dart'; // Import ini TETAP DIPERLUKAN
 
 /// Halaman utama aplikasi dengan daftar nama negara yang bisa di-copy
 class HomePage extends StatefulWidget {
@@ -17,97 +19,260 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with HomeController {
-  // Daftar nama negara (A-Z) - Total 195 negara
-  final List<String> _allCountryNames = [
-    // A
-    'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola',
-    'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria',
-    'Azerbaijan',
-    // B
-    'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus',
-    'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia',
-    'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria',
-    'Burkina Faso', 'Burundi',
-    // C
-    'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Central African Republic',
-    'Chad', 'Chile', 'China', 'Colombia', 'Comoros',
-    'Congo', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus',
-    'Czechia',
-    // D
-    'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic',
-    // E
-    'Ecuador', 'Egypt', 'El Salvador', 'Equatorial Guinea', 'Eritrea',
-    'Estonia', 'Eswatini', 'Ethiopia',
-    // F
-    'Fiji', 'Finland', 'France',
-    // G
-    'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana',
-    'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau',
-    'Guyana',
-    // H
-    'Haiti', 'Honduras', 'Hungary',
-    // I
-    'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq',
-    'Ireland', 'Israel', 'Italy',
-    // J
-    'Jamaica', 'Japan', 'Jordan',
-    // K
-    'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait',
-    'Kyrgyzstan',
-    // L
-    'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia',
-    'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg',
-    // M
-    'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali',
-    'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico',
-    'Micronesia', 'Moldova', 'Monaco', 'Mongolia', 'Montenegro',
-    'Morocco', 'Mozambique', 'Myanmar',
-    // N
-    'Namibia', 'Nauru', 'Nepal', 'Netherlands', 'New Zealand',
-    'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia',
-    'Norway',
-    // O
-    'Oman',
-    // P
-    'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea',
-    'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal',
-    // Q
-    'Qatar',
-    // R
-    'Romania', 'Russia', 'Rwanda',
-    // S
-    'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Vincent and the Grenadines',
-    'Samoa', 'San Marino', 'Sao Tome and Principe', 'Saudi Arabia', 'Senegal',
-    'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore', 'Slovakia',
-    'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea',
-    'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname',
-    'Sweden', 'Switzerland', 'Syria',
-    // T
-    'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo',
-    'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan',
-    'Tuvalu',
-    // U
-    'Uganda',
-    'Ukraine',
-    'United Arab Emirates',
-    'United Kingdom',
-    'United States',
-    'Uruguay', 'Uzbekistan',
-    // V
-    'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
-    // Y
-    'Yemen',
-    // Z
-    'Zambia', 'Zimbabwe',
+  // --- Data untuk card benua ---
+  // MENGGUNAKAN PATH GAMBAR ALIH-ALIH IKON
+  final List<Map<String, dynamic>> _continentsData = [
+    {
+      'name': 'Asia',
+      'imagePath': 'assets/Asia.png', // Ganti dengan path gambar Anda
+      'color': Colors.blueAccent[400],
+    },
+    {
+      'name': 'Afrika',
+      'imagePath':
+          'assets/Afrika.png', // Ganti dengan path gambar Anda
+      'color': Colors.orangeAccent[400],
+    },
+    {
+      'name': 'Eropa',
+      'imagePath':
+          'assets/Europe.png', // Ganti dengan path gambar Anda
+      'color': Colors.purpleAccent[400],
+    },
+    {
+      'name': 'Amerika Utara',
+      'imagePath':
+          'assets/AmerikaUtara.png', // Ganti dengan path gambar Anda
+      'color': Colors.greenAccent[400],
+    },
+    {
+      'name': 'Amerika Selatan',
+      'imagePath':
+          'assets/AmerikaSelatan.png', // Ganti dengan path gambar Anda
+      'color': Colors.redAccent[400],
+    },
+    {
+      'name': 'Australia/Oseania',
+      'imagePath':
+          'assets/Australia&Oceania.png', // Ganti dengan path gambar Anda
+      'color': Colors.tealAccent[400],
+    },
   ];
 
-  List<String> _filteredCountryNames = [];
-  bool _showCountryList = false;
+  // --- Daftar NAMA NEGARA (untuk di-copy) ---
+  final Map<String, List<String>> _countriesByName = {
+    'Asia': [
+      'Afghanistan',
+      'Bahrain',
+      'Bangladesh',
+      'Bhutan',
+      'Brunei',
+      'Cambodia',
+      'China',
+      'Cyprus',
+      'Georgia',
+      'India',
+      'Indonesia',
+      'Iran',
+      'Iraq',
+      'Israel',
+      'Japan',
+      'Jordan',
+      'Kazakhstan',
+      'Kuwait',
+      'Kyrgyzstan',
+      'Laos',
+      'Lebanon',
+      'Malaysia',
+      'Maldives',
+      'Mongolia',
+      'Myanmar',
+      'Nepal',
+      'North Korea',
+      'Oman',
+      'Pakistan',
+      'Palestine',
+      'Philippines',
+      'Qatar',
+      'Saudi Arabia',
+      'Singapore',
+      'South Korea',
+      'Sri Lanka',
+      'Syria',
+      'Tajikistan',
+      'Thailand',
+      'Timor-Leste',
+      'Turkey',
+      'Turkmenistan',
+      'United Arab Emirates',
+      'Uzbekistan',
+      'Vietnam',
+      'Yemen',
+    ],
+    'Afrika': [
+      'Algeria',
+      'Angola',
+      'Benin',
+      'Botswana',
+      'Burkina Faso',
+      'Burundi',
+      'Cabo Verde',
+      'Cameroon',
+      'Central African Republic',
+      'Chad',
+      'Comoros',
+      'Congo',
+      'Djibouti',
+      'Egypt',
+      'Equatorial Guinea',
+      'Eritrea',
+      'Eswatini',
+      'Ethiopia',
+      'Gabon',
+      'Gambia',
+      'Ghana',
+      'Guinea',
+      'Guinea-Bissau',
+      'Kenya',
+      'Lesotho',
+      'Liberia',
+      'Libya',
+      'Madagascar',
+      'Malawi',
+      'Mali',
+      'Mauritania',
+      'Mauritius',
+      'Morocco',
+      'Mozambique',
+      'Namibia',
+      'Niger',
+      'Nigeria',
+      'Rwanda',
+      'Sao Tome and Principe',
+      'Senegal',
+      'Seychelles',
+      'Sierra Leone',
+      'Somalia',
+      'South Africa',
+      'South Sudan',
+      'Sudan',
+      'Tanzania',
+      'Togo',
+      'Tunisia',
+      'Uganda',
+      'Zambia',
+      'Zimbabwe',
+    ],
+    'Eropa': [
+      'Albania',
+      'Andorra',
+      'Armenia',
+      'Austria',
+      'Azerbaijan',
+      'Belarus',
+      'Belgium',
+      'Bosnia and Herzegovina',
+      'Bulgaria',
+      'Croatia',
+      'Czechia',
+      'Denmark',
+      'Estonia',
+      'Finland',
+      'France',
+      'Germany',
+      'Greece',
+      'Hungary',
+      'Iceland',
+      'Ireland',
+      'Italy',
+      'Kosovo',
+      'Latvia',
+      'Liechtenstein',
+      'Lithuania',
+      'Luxembourg',
+      'Malta',
+      'Moldova',
+      'Monaco',
+      'Montenegro',
+      'Netherlands',
+      'North Macedonia',
+      'Norway',
+      'Poland',
+      'Portugal',
+      'Romania',
+      'Russia',
+      'San Marino',
+      'Serbia',
+      'Slovakia',
+      'Slovenia',
+      'Spain',
+      'Sweden',
+      'Switzerland',
+      'Ukraine',
+      'United Kingdom',
+      'Vatican City',
+    ],
+    'Amerika Utara': [
+      'Antigua and Barbuda',
+      'Bahamas',
+      'Barbados',
+      'Belize',
+      'Canada',
+      'Costa Rica',
+      'Cuba',
+      'Dominica',
+      'Dominican Republic',
+      'El Salvador',
+      'Grenada',
+      'Guatemala',
+      'Haiti',
+      'Honduras',
+      'Jamaica',
+      'Mexico',
+      'Nicaragua',
+      'Panama',
+      'Saint Kitts and Nevis',
+      'Saint Lucia',
+      'Saint Vincent and the Grenadines',
+      'Trinidad and Tobago',
+      'United States',
+    ],
+    'Amerika Selatan': [
+      'Argentina',
+      'Bolivia',
+      'Brazil',
+      'Chile',
+      'Colombia',
+      'Ecuador',
+      'Guyana',
+      'Paraguay',
+      'Peru',
+      'Suriname',
+      'Uruguay',
+      'Venezuela',
+    ],
+    'Australia/Oseania': [
+      'Australia',
+      'Fiji',
+      'Kiribati',
+      'Marshall Islands',
+      'Micronesia',
+      'Nauru',
+      'New Zealand',
+      'Palau',
+      'Papua New Guinea',
+      'Samoa',
+      'Solomon Islands',
+      'Tonga',
+      'Tuvalu',
+      'Vanuatu',
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
-    _filteredCountryNames = List.from(_allCountryNames);
+    // Inisialisasi controller (dari HomeController)
     onInit();
   }
 
@@ -117,26 +282,20 @@ class _HomePageState extends State<HomePage> with HomeController {
     super.dispose();
   }
 
-  void _toggleCountryList() {
+  // --- OVERRIDE: Ubah fungsi tombol clear di search bar ---
+  @override
+  void resetFilter() {
     setState(() {
-      _showCountryList = !_showCountryList;
+      searchController.clear();
+      filteredCountries.clear();
+      isLoading = false;
     });
   }
 
-  void _filterCountryNames(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredCountryNames = List.from(_allCountryNames);
-      } else {
-        _filteredCountryNames = _allCountryNames
-            .where((name) => name.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
-  }
-
-  void _copyToClipboard(String text) {
+  // --- FUNGSI BARU: Untuk menyalin teks ---
+  void _copyToClipboard(String text, BuildContext dialogContext) {
     Clipboard.setData(ClipboardData(text: text));
+    Navigator.of(dialogContext).pop(); // Tutup dialog
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('✅ "$text" disalin! Paste di Search Bar ⬆️'),
@@ -148,12 +307,124 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
+  // --- FUNGSI BARU: Untuk menampilkan Pop-up Copy ---
+  void _showCountryCopyDialog(String continentName) {
+    final List<String> namesList = _countriesByName[continentName] ?? [];
+
+    ValueNotifier<List<String>> filteredListNotifier = ValueNotifier(namesList);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Color(0xFF2D3748),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text(
+            'Copy Nama Negara ($continentName)',
+            style: TextStyle(color: Color(0xFF66B3FF), fontSize: 18),
+          ),
+          content: Container(
+            width: 300, // Lebar dialog
+            height: 400, // Tinggi dialog
+            child: Column(
+              children: [
+                TextField(
+                  onChanged: (query) {
+                    if (query.isEmpty) {
+                      filteredListNotifier.value = namesList;
+                    } else {
+                      filteredListNotifier.value = namesList
+                          .where(
+                            (name) => name.toLowerCase().contains(
+                              query.toLowerCase(),
+                            ),
+                          )
+                          .toList();
+                    }
+                  },
+                  style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Filter...',
+                    hintStyle: TextStyle(
+                      color: Color(0xFFA0AEC0).withOpacity(0.7),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.filter_list,
+                      color: Color(0xFF66B3FF),
+                      size: 18,
+                    ),
+                    filled: true,
+                    fillColor: Color(0xFF1A202C),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Expanded(
+                  child: ValueListenableBuilder<List<String>>(
+                    valueListenable: filteredListNotifier,
+                    builder: (context, filteredList, child) {
+                      if (filteredList.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Tidak ditemukan',
+                            style: TextStyle(color: Color(0xFFA0AEC0)),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: filteredList.length,
+                        itemBuilder: (context, index) {
+                          final countryName = filteredList[index];
+                          return InkWell(
+                            onTap: () =>
+                                _copyToClipboard(countryName, dialogContext),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
+                              margin: EdgeInsets.only(bottom: 4),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF1A202C),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                countryName,
+                                style: TextStyle(color: Color(0xFFE2E8F0)),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text('TUTUP', style: TextStyle(color: Color(0xFFA0AEC0))),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Color(0xFF1A202C),
       bottomNavigationBar: BottomNavigationBar(
+        // ... (BottomNavBar tidak berubah) ...
         backgroundColor: Color(0xFF2D3748),
         type: BottomNavigationBarType.fixed,
         unselectedItemColor: Color(0xFFA0AEC0),
@@ -262,10 +533,7 @@ class _HomePageState extends State<HomePage> with HomeController {
                     borderSide: BorderSide(color: Color(0xFF4299E1), width: 2),
                   ),
                 ),
-                onSubmitted:
-                    (allCountries.isEmpty && searchController.text.isNotEmpty)
-                    ? (value) => searchCountriesByName(value)
-                    : null,
+                onSubmitted: (value) => searchCountriesByName(value),
               ),
             ),
 
@@ -273,265 +541,7 @@ class _HomePageState extends State<HomePage> with HomeController {
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  // Button Toggle Daftar Negara
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: ElevatedButton.icon(
-                        onPressed: _toggleCountryList,
-                        icon: Icon(
-                          _showCountryList
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                          color: Color(0xFFE2E8F0),
-                          size: 20,
-                        ),
-                        label: Text(
-                          _showCountryList
-                              ? 'Sembunyikan Daftar'
-                              : 'Daftar Negara',
-                          style: TextStyle(
-                            color: Color(0xFFE2E8F0),
-                            fontSize: 13,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF4299E1),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Daftar Negara (Collapsible)
-                  if (_showCountryList)
-                    SliverToBoxAdapter(
-                      child: Container(
-                        margin: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF2D3748),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: Color(0xFF66B3FF),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    'Ketuk nama untuk copy, paste di Search Bar ⬆️',
-                                    style: TextStyle(
-                                      color: Color(0xFFA0AEC0),
-                                      fontSize: 11,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            TextField(
-                              onChanged: _filterCountryNames,
-                              style: TextStyle(
-                                color: Color(0xFFE2E8F0),
-                                fontSize: 13,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Filter...',
-                                hintStyle: TextStyle(
-                                  color: Color(0xFFA0AEC0).withOpacity(0.7),
-                                  fontSize: 13,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.filter_list,
-                                  color: Color(0xFF66B3FF),
-                                  size: 18,
-                                ),
-                                filled: true,
-                                fillColor: Color(0xFF1A202C),
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              height: 180, // Dikurangi lagi dari 200 ke 180
-                              child: ListView.builder(
-                                itemCount: _filteredCountryNames.length,
-                                itemBuilder: (context, index) {
-                                  final countryName =
-                                      _filteredCountryNames[index];
-                                  return InkWell(
-                                    onTap: () => _copyToClipboard(countryName),
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 8,
-                                        horizontal: 10,
-                                      ),
-                                      margin: EdgeInsets.only(bottom: 4),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFF1A202C),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.flag,
-                                            color: Color(0xFF66B3FF),
-                                            size: 16,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              countryName,
-                                              style: TextStyle(
-                                                color: Color(0xFFE2E8F0),
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.copy,
-                                            color: Color(0xFFA0AEC0),
-                                            size: 16,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              '${_filteredCountryNames.length} negara',
-                              style: TextStyle(
-                                color: Color(0xFFA0AEC0),
-                                fontSize: 10,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // Filter Abjad
-                  if (!isLoading && allCountries.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: Container(
-                        height: 42,
-                        margin: EdgeInsets.only(bottom: 6),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: 26,
-                          itemBuilder: (context, index) {
-                            final letter = String.fromCharCode(65 + index);
-                            final hasCountries = allCountries.any(
-                              (c) => c.name.toUpperCase().startsWith(letter),
-                            );
-
-                            return Padding(
-                              padding: EdgeInsets.only(right: 6),
-                              child: FilterChip(
-                                label: Text(
-                                  letter,
-                                  style: TextStyle(
-                                    color: hasCountries
-                                        ? Color(0xFFE2E8F0)
-                                        : Color(0xFFA0AEC0).withOpacity(0.3),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                onSelected: hasCountries
-                                    ? (_) => filterByAlphabet(letter)
-                                    : null,
-                                backgroundColor: Color(
-                                  0xFF2D3748,
-                                ).withOpacity(0.5),
-                                selectedColor: Color(0xFF4299E1),
-                                disabledColor: Color(
-                                  0xFF2D3748,
-                                ).withOpacity(0.1),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-
-                  // Info Jumlah Hasil
-                  if (!isLoading && filteredCountries.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              allCountries.isNotEmpty
-                                  ? '${filteredCountries.length} dari ${allCountries.length} negara'
-                                  : '${filteredCountries.length} hasil',
-                              style: TextStyle(
-                                color: Color(0xFFA0AEC0),
-                                fontSize: 11,
-                              ),
-                            ),
-                            if (filteredCountries.length !=
-                                    allCountries.length &&
-                                allCountries.isNotEmpty)
-                              TextButton(
-                                onPressed: resetFilter,
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  minimumSize: Size(0, 0),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(
-                                  'Reset',
-                                  style: TextStyle(
-                                    color: Color(0xFF66B3FF),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // === LOADING STATE ===
+                  // --- LOADING STATE ---
                   if (isLoading)
                     SliverFillRemaining(
                       child: Center(
@@ -544,7 +554,7 @@ class _HomePageState extends State<HomePage> with HomeController {
                             ),
                             SizedBox(height: 16),
                             Text(
-                              allCountries.isEmpty ? 'Memuat...' : 'Mencari...',
+                              'Mencari...',
                               style: TextStyle(
                                 color: Color(0xFFE2E8F0),
                                 fontSize: 14,
@@ -554,217 +564,301 @@ class _HomePageState extends State<HomePage> with HomeController {
                         ),
                       ),
                     )
-                  // === EMPTY STATE (BACKGROUND LOGO IKUT SCROLL) ===
-                  else if (filteredCountries.isEmpty)
+                  // --- STATE 1: HASIL PENCARIAN (Ada hasil) ---
+                  else if (filteredCountries.isNotEmpty) ...[
+                    _buildResultHeader(
+                      '${filteredCountries.length} hasil ditemukan',
+                    ),
+                    _buildCountrySliverList(), // Tampilkan list negara
+                  ]
+                  // --- STATE 2: TIDAK ADA HASIL (Setelah mencari) ---
+                  else if (searchController.text.isNotEmpty &&
+                      filteredCountries.isEmpty)
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Logo dan Teks (Ikut di-scroll, tidak fixed)
-                          Container(
-                            padding: EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF2D3748).withOpacity(0.3),
-                            ),
-                            child: Image.asset(
-                              'assets/Logoprojek.png',
-                              height: 80,
-                              width: 80,
-                              color: Color(0xFF66B3FF).withOpacity(0.6),
-                            ),
+                          Icon(
+                            Icons.search_off,
+                            color: Color(0xFFA0AEC0),
+                            size: 60,
                           ),
-                          SizedBox(height: 24),
+                          SizedBox(height: 16),
                           Text(
-                            'Jelajahi Dunia',
+                            'Tidak ada hasil',
                             style: TextStyle(
                               color: Color(0xFFE2E8F0),
-                              fontSize: 22,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           SizedBox(height: 8),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 40),
-                            child: Text(
-                              allCountries.isEmpty
-                                  ? 'Gunakan daftar negara atau ketik di search'
-                                  : 'Tidak ada hasil untuk "${searchController.text}"',
-                              style: TextStyle(
-                                color: Color(0xFFA0AEC0),
-                                fontSize: 13,
-                              ),
-                              textAlign: TextAlign.center,
+                          Text(
+                            'Tidak ada negara ditemukan untuk "${searchController.text}"',
+                            style: TextStyle(
+                              color: Color(0xFFA0AEC0),
+                              fontSize: 13,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          SizedBox(height: 20),
                         ],
                       ),
                     )
-                  // === LIST NEGARA ===
-                  else
+                  // --- STATE 3: HALAMAN AWAL (Kosong, tampilkan card benua) ---
+                  else ...[
+                    // Judul
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        child: Text(
+                          'Copy Nama Negara Berdasarkan Benua',
+                          style: TextStyle(
+                            color: Color(0xFFE2E8F0),
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Card Benua Geser VERTIKAL (Seperti Iklan)
                     SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        final country = filteredCountries[index];
-                        bool showHeader = false;
-
-                        if (allCountries.isNotEmpty && index == 0) {
-                          showHeader = true;
-                        } else if (allCountries.isNotEmpty && index > 0) {
-                          final currentLetter = country.name[0].toUpperCase();
-                          final prevLetter = filteredCountries[index - 1]
-                              .name[0]
-                              .toUpperCase();
-                          showHeader = currentLetter != prevLetter;
-                        }
-
+                        final continent = _continentsData[index];
                         return Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showHeader)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    top: 12,
-                                    bottom: 6,
-                                    left: 4,
-                                  ),
-                                  child: Text(
-                                    country.name[0].toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF66B3FF),
-                                    ),
-                                  ),
-                                ),
-                              Card(
-                                color: Color(0xFF2D3748),
-                                margin: EdgeInsets.only(bottom: 6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: InkWell(
-                                  onTap: () => showCountryDetail(country),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(10),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                          child: Image.network(
-                                            country.flagUrl,
-                                            width: 50,
-                                            height: 35,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return Container(
-                                                    width: 50,
-                                                    height: 35,
-                                                    color: Color(
-                                                      0xFF2D3748,
-                                                    ).withOpacity(0.8),
-                                                    child: Icon(
-                                                      Icons.flag,
-                                                      color: Color(0xFFA0AEC0),
-                                                      size: 20,
-                                                    ),
-                                                  );
-                                                },
-                                            loadingBuilder:
-                                                (
-                                                  context,
-                                                  child,
-                                                  loadingProgress,
-                                                ) {
-                                                  if (loadingProgress == null)
-                                                    return child;
-                                                  return Container(
-                                                    width: 50,
-                                                    height: 35,
-                                                    color: Color(
-                                                      0xFF2D3748,
-                                                    ).withOpacity(0.8),
-                                                    child: Center(
-                                                      child: SizedBox(
-                                                        width: 16,
-                                                        height: 16,
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              strokeWidth: 2,
-                                                              color: Color(
-                                                                0xFFA0AEC0,
-                                                              ),
-                                                            ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                          ),
-                                        ),
-                                        SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                country.name,
-                                                style: TextStyle(
-                                                  color: Color(0xFFE2E8F0),
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              SizedBox(height: 3),
-                                              Text(
-                                                '🏛️ ${country.capital}',
-                                                style: TextStyle(
-                                                  color: Color(0xFFA0AEC0),
-                                                  fontSize: 11,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Text(
-                                                '🌏 ${country.region}',
-                                                style: TextStyle(
-                                                  color: Color(0xFFA0AEC0),
-                                                  fontSize: 11,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_forward_ios,
-                                          color: Color(0xFFA0AEC0),
-                                          size: 14,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          child: _buildContinentCard(
+                            name: continent['name'],
+                            imagePath: continent['imagePath'],
+                            color: continent['color'],
+                            onTap: () =>
+                                _showCountryCopyDialog(continent['name']),
                           ),
                         );
-                      }, childCount: filteredCountries.length),
+                      }, childCount: _continentsData.length),
                     ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // === WIDGET HELPER ===
+
+  /// Membuat Card "Iklan" untuk Benua (Menggunakan Gambar)
+  Widget _buildContinentCard({
+    required String name,
+    required String imagePath, // Menerima path gambar
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 100, // Tinggi card
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.7), color],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(12),
+          child: Row(
+            // Menggunakan Row untuk gambar dan teks
+            children: [
+              Image.asset(
+                imagePath, // Menampilkan gambar
+                width: 60,
+                height: 60,
+                color: Colors.white.withOpacity(
+                  0.8,
+                ), // Opsional: Beri warna overlay pada gambar
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.image_not_supported,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 40,
+                  );
+                },
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.white.withOpacity(0.8),
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Membuat Header untuk List Hasil (Search atau Browse)
+  Widget _buildResultHeader(String title) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: Color(0xFFA0AEC0),
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Membungkus SliverList agar tidak duplikat kode
+  Widget _buildCountrySliverList() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final country = filteredCountries[index];
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Card Negara (tidak berubah)
+              Card(
+                color: Color(0xFF2D3748),
+                margin: EdgeInsets.only(bottom: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: InkWell(
+                  onTap: () => showCountryDetail(country),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            country.flagUrl,
+                            width: 50,
+                            height: 35,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 50,
+                                height: 35,
+                                color: Color(0xFF2D3748).withOpacity(0.8),
+                                child: Icon(
+                                  Icons.flag,
+                                  color: Color(0xFFA0AEC0),
+                                  size: 20,
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: 50,
+                                height: 35,
+                                color: Color(0xFF2D3748).withOpacity(0.8),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFFA0AEC0),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                country.name,
+                                style: TextStyle(
+                                  color: Color(0xFFE2E8F0),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                '🏛️ ${country.capital}',
+                                style: TextStyle(
+                                  color: Color(0xFFA0AEC0),
+                                  fontSize: 11,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                '🌏 ${country.region}',
+                                style: TextStyle(
+                                  color: Color(0xFFA0AEC0),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: Color(0xFFA0AEC0),
+                          size: 14,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }, childCount: filteredCountries.length),
     );
   }
 }

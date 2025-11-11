@@ -1,3 +1,4 @@
+// lib/pages/history_page.dart
 import 'package:flutter/material.dart';
 import '../models/history_item.dart';
 import '../services/database_service.dart';
@@ -79,6 +80,54 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  // --- TAMBAHAN BARU: Fungsi hapus satu item ---
+  Future<void> _deleteHistoryItem(HistoryItem item, int index) async {
+    // 1. Buat salinan data untuk fitur 'Undo'
+    final HistoryItem backup = HistoryItem(
+      username: item.username,
+      countryName: item.countryName,
+      flagUrl: item.flagUrl,
+      capital: item.capital,
+      region: item.region,
+      viewedAt: item.viewedAt,
+      isFavorite: item.isFavorite,
+    );
+
+    // 2. Hapus dari state list agar UI update
+    setState(() {
+      _history.removeAt(index);
+    });
+
+    // 3. Hapus dari database Hive (karena ini HiveObject, kita bisa panggil delete())
+    await item.delete();
+
+    // 4. Tampilkan SnackBar dengan opsi Undo
+    ScaffoldMessenger.of(
+      context,
+    ).removeCurrentSnackBar(); // Hapus snackbar lama
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${item.countryName} dihapus dari history'),
+        backgroundColor: Color(0xFF4299E1),
+        duration: Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'BATAL',
+          textColor: Colors.white,
+          onPressed: () {
+            // Jika 'Batal' ditekan:
+            // 1. Tambahkan kembali ke database
+            DatabaseService.addHistory(backup);
+            // 2. Tambahkan kembali ke state list di posisi semula
+            setState(() {
+              _history.insert(index, backup);
+            });
+          },
+        ),
+      ),
+    );
+  }
+  // --- AKHIR TAMBAHAN ---
+
   // --- Navigasi ---
   void _openHome() {
     String? username = AuthService.getCurrentUsername();
@@ -151,6 +200,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: _history.isEmpty
           ? Center(
+              // ... (Tampilan 'Belum ada history' tidak berubah) ...
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -178,69 +228,103 @@ class _HistoryPageState extends State<HistoryPage> {
                 ],
               ),
             )
+          // --- PERUBAHAN: Ganti ListView.builder ---
           : ListView.builder(
               padding: EdgeInsets.all(16),
               itemCount: _history.length,
               itemBuilder: (context, index) {
                 final item = _history[index];
-                return Column(
-                  children: [
-                    ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item.flagUrl,
-                          width: 60,
-                          height: 40,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      title: Text(
-                        item.countryName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFE2E8F0), // textColor
-                        ),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 4),
-                          Text(
-                            'Ibu Kota: ${item.capital}',
-                            style: TextStyle(
-                              color: Color(0xFFA0AEC0),
-                            ), // hintColor
+
+                // Bungkus dengan Dismissible
+                return Dismissible(
+                  key: Key(item.key.toString()), // Wajib menggunakan Key unik
+                  direction:
+                      DismissDirection.endToStart, // Geser dari kanan ke kiri
+                  onDismissed: (direction) {
+                    // Panggil fungsi hapus saat digeser
+                    _deleteHistoryItem(item, index);
+                  },
+                  // Tampilan latar belakang saat digeser
+                  background: Container(
+                    color: Colors.red.shade800,
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'HAPUS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            'Region: ${item.region}',
-                            style: TextStyle(
-                              color: Color(0xFFA0AEC0),
-                            ), // hintColor
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.delete_forever, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                  // Ini adalah widget anak Anda yang asli
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item.flagUrl,
+                            width: 60,
+                            height: 40,
+                            fit: BoxFit.cover,
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            _formatDate(item.viewedAt),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(
-                                0xFFA0AEC0,
-                              ).withOpacity(0.7), // hintColor
-                              fontStyle: FontStyle.italic,
+                        ),
+                        title: Text(
+                          item.countryName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE2E8F0), // textColor
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 4),
+                            Text(
+                              'Ibu Kota: ${item.capital}',
+                              style: TextStyle(
+                                color: Color(0xFFA0AEC0),
+                              ), // hintColor
                             ),
-                          ),
-                        ],
+                            Text(
+                              'Region: ${item.region}',
+                              style: TextStyle(
+                                color: Color(0xFFA0AEC0),
+                              ), // hintColor
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              _formatDate(item.viewedAt),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(
+                                  0xFFA0AEC0,
+                                ).withOpacity(0.7), // hintColor
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                        isThreeLine: true,
                       ),
-                      isThreeLine: true,
-                    ),
-                    Divider(
-                      color: Color(0xFF2D3748), // surfaceColor
-                      height: 16,
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                  ],
+                      Divider(
+                        color: Color(0xFF2D3748), // surfaceColor
+                        height: 16,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+                    ],
+                  ),
                 );
+                // --- AKHIR PERUBAHAN ---
               },
             ),
       bottomNavigationBar: BottomNavigationBar(
