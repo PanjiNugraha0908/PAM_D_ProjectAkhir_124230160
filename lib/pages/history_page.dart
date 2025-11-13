@@ -10,6 +10,9 @@ import 'home_page.dart';
 
 /// Halaman untuk menampilkan riwayat pencarian negara
 class HistoryPage extends StatefulWidget {
+  // Hapus semua parameter dari constructor
+  HistoryPage({Key? key}) : super(key: key);
+
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
@@ -80,9 +83,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  // --- TAMBAHAN BARU: Fungsi hapus satu item ---
   Future<void> _deleteHistoryItem(HistoryItem item, int index) async {
-    // 1. Buat salinan data untuk fitur 'Undo'
     final HistoryItem backup = HistoryItem(
       username: item.username,
       countryName: item.countryName,
@@ -93,18 +94,15 @@ class _HistoryPageState extends State<HistoryPage> {
       isFavorite: item.isFavorite,
     );
 
-    // 2. Hapus dari state list agar UI update
     setState(() {
       _history.removeAt(index);
     });
 
-    // 3. Hapus dari database Hive (karena ini HiveObject, kita bisa panggil delete())
     await item.delete();
 
-    // 4. Tampilkan SnackBar dengan opsi Undo
     ScaffoldMessenger.of(
       context,
-    ).removeCurrentSnackBar(); // Hapus snackbar lama
+    ).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${item.countryName} dihapus dari history'),
@@ -114,10 +112,7 @@ class _HistoryPageState extends State<HistoryPage> {
           label: 'BATAL',
           textColor: Colors.white,
           onPressed: () {
-            // Jika 'Batal' ditekan:
-            // 1. Tambahkan kembali ke database
             DatabaseService.addHistory(backup);
-            // 2. Tambahkan kembali ke state list di posisi semula
             setState(() {
               _history.insert(index, backup);
             });
@@ -126,23 +121,15 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
   }
-  // --- AKHIR TAMBAHAN ---
 
   // --- Navigasi ---
   void _openHome() {
-    String? username = AuthService.getCurrentUsername();
-    if (username != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(username: username)),
-      );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-        (route) => false,
-      );
-    }
+    // --- PERBAIKAN: Hapus parameter 'username' ---
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage()),
+    );
+    // --- AKHIR PERBAIKAN ---
   }
 
   void _openProfile() {
@@ -200,7 +187,6 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: _history.isEmpty
           ? Center(
-              // ... (Tampilan 'Belum ada history' tidak berubah) ...
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -228,23 +214,18 @@ class _HistoryPageState extends State<HistoryPage> {
                 ],
               ),
             )
-          // --- PERUBAHAN: Ganti ListView.builder ---
           : ListView.builder(
               padding: EdgeInsets.all(16),
               itemCount: _history.length,
               itemBuilder: (context, index) {
                 final item = _history[index];
 
-                // Bungkus dengan Dismissible
                 return Dismissible(
-                  key: Key(item.key.toString()), // Wajib menggunakan Key unik
-                  direction:
-                      DismissDirection.endToStart, // Geser dari kanan ke kiri
+                  key: Key(item.key.toString()),
+                  direction: DismissDirection.endToStart,
                   onDismissed: (direction) {
-                    // Panggil fungsi hapus saat digeser
                     _deleteHistoryItem(item, index);
                   },
-                  // Tampilan latar belakang saat digeser
                   background: Container(
                     color: Colors.red.shade800,
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -264,7 +245,6 @@ class _HistoryPageState extends State<HistoryPage> {
                       ],
                     ),
                   ),
-                  // Ini adalah widget anak Anda yang asli
                   child: Column(
                     children: [
                       ListTile(
@@ -324,7 +304,6 @@ class _HistoryPageState extends State<HistoryPage> {
                     ],
                   ),
                 );
-                // --- AKHIR PERUBAHAN ---
               },
             ),
       bottomNavigationBar: BottomNavigationBar(
@@ -350,6 +329,8 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   String _formatDate(DateTime date) {
+    // Anda harus import 'package:intl/intl.dart'; untuk ini
+    // Tapi karena file pubspec tidak ada intl, kita pakai logic manual
     final now = DateTime.now();
     final diff = now.difference(date);
     if (diff.inDays == 0) {

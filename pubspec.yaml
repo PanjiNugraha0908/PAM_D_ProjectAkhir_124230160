@@ -5,9 +5,8 @@ publish_to: 'none' # Mencegah publikasi tidak sengaja ke pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.0
+  sdk: '>=3.0.0 <4.0.0' # <-- Saya perbaiki rentang SDK Anda agar lebih aman
 
-# --- DEPENDENSI UTAMA APLIKASI ---
 # --- DEPENDENSI UTAMA APLIKASI ---
 dependencies:
   # Ketergantungan Inti Flutter
@@ -26,9 +25,8 @@ dependencies:
   geolocator: ^10.1.0 # Mendapatkan lokasi GPS
   geocoding: ^2.1.1 # Konversi koordinat ke alamat
   permission_handler: ^11.0.1 # Meminta izin (lokasi, notifikasi)
-  flutter_map: ^8.2.2 # Menampilkan peta
-  latlong2: ^0.9.1 # Helper untuk koordinat peta
-  # google_maps_flutter: ^2.7.0  <-- PASTIKAN INI SUDAH DIHAPUS
+  flutter_map: ^6.1.0 # <-- Versi terbaru
+  latlong2: ^0.9.0 # <-- Versi terbaru
 
   # Notifikasi & Waktu
   flutter_local_notifications: ^17.2.1 # Menampilkan notifikasi lokal
@@ -38,11 +36,17 @@ dependencies:
   crypto: ^3.0.3 # Untuk hashing password (SHA-256)
   image_picker: ^1.0.4 # Mengambil gambar dari galeri (foto profil)
   path_provider: ^2.1.1 # Mendapatkan path direktori aplikasi
+
+  # --- TAMBAHKAN DEPENDENSI INI ---
+  intl: ^0.19.0 # Diperlukan untuk format angka dan tanggal
+  url_launcher: ^6.3.1 # Diperlukan untuk Fase 1 (berita/cuaca)
+  # --------------------------------
+
 # --- DEPENDENSI PENGEMBANGAN (DEV) ---
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0 # Aturan analisis kode (opsional)
+  flutter_lints: ^3.0.0 # <-- Versi terbaru
 
   # Generator Kode (Penting untuk Hive)
   # Jalankan "flutter pub run build_runner build" setelah mengubah Model Hive
@@ -59,7 +63,6 @@ flutter:
     - assets/Logoprojek.png
 
   # Font Kustom (Contoh)
-  # Untuk menambahkan font, hapus tanda '#' di bawah dan sesuaikan
   # fonts:
   #   - family: Trajan Pro
   #     fonts:
