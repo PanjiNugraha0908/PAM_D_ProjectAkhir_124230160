@@ -1,19 +1,19 @@
 // lib/controllers/home_controller.dart
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'dart:convert'; // <-- PERBAIKAN TYPO DI SINI
 import 'package:http/http.dart' as http;
 import '../models/country.dart';
 import '../models/history_item.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 
-// --- PERBAIKAN: Ubah 'class' menjadi 'mixin' ---
-mixin HomeControllerMixin {
-  // ---------------------------------------------
+// --- KEMBALIKAN MENJADI CLASS (BUKAN MIXIN) ---
+class HomeController {
   final searchController = TextEditingController();
-  List<Country> allCountries = []; // Ini akan KOSONG saat awal
-  List<Country> filteredCountries = []; // Ini yang ditampilkan
-  String? selectedRegion;
+
+  // Ini HANYA akan berisi hasil pencarian API
+  List<Country> filteredCountries = [];
+
   bool isLoading = false;
   String errorMessage = '';
 
@@ -25,17 +25,16 @@ mixin HomeControllerMixin {
   late Function(Country) onCountryTap;
   late Function() setStateCallback;
 
+  // Variabel untuk menyimpan username
+  late String _username;
+
   void onInit(Function() onStateChanged, Function(Country) onNavToDetail) {
     setStateCallback = onStateChanged;
     onCountryTap = onNavToDetail;
-    searchController.addListener(_onSearchChanged);
-
-    // Jangan fetch all. Cukup load data user.
-    initHistoryAndFavorites();
+    // Kita tidak perlu listener karena search dipicu oleh onSubmitted
   }
 
   void onDispose() {
-    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
   }
 
@@ -44,12 +43,13 @@ mixin HomeControllerMixin {
     setStateCallback();
   }
 
-  // --- FUNGSI BARU UNTUK LOAD DATA USER ---
-  void initHistoryAndFavorites() {
-    String? username = AuthService.getCurrentUsername();
-    if (username == null) return;
+  // --- FUNGSI ASLI ANDA UNTUK MENYIMPAN USERNAME ---
+  void initHistoryAndFavorites(String username) {
+    _username = username; // Simpan username
+    String? currentUsername = AuthService.getCurrentUsername();
+    if (currentUsername == null) return;
 
-    userHistory = DatabaseService.getHistoryForUser(username);
+    userHistory = DatabaseService.getHistoryForUser(currentUsername);
     favoriteCountryNames = userHistory
         .where((h) => h.isFavorite)
         .map((h) => h.countryName)
@@ -57,12 +57,11 @@ mixin HomeControllerMixin {
   }
 
   void refreshHistoryAndFavorites() {
-    setState(() {
-      initHistoryAndFavorites();
-    });
+    initHistoryAndFavorites(_username);
+    setState(() {}); // Update UI
   }
 
-  // --- FUNGSI BARU UNTUK SEARCH API ---
+  // --- INI FUNGSI PENTING ANDA: MENCARI VIA API ---
   Future<void> searchCountries() async {
     final query = searchController.text.trim();
     if (query.isEmpty) {
@@ -83,21 +82,19 @@ mixin HomeControllerMixin {
       );
 
       if (data.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(data.body);
+        final List<dynamic> jsonData =
+            json.decode(data.body); // Error json diperbaiki
         setState(() {
-          // 'allCountries' sekarang hanya berisi hasil search
-          allCountries = jsonData.map((e) => Country.fromJson(e)).toList();
-          // 'filteredCountries' juga berisi hasil search
-          filteredCountries = List.from(allCountries);
+          // 'filteredCountries' sekarang berisi hasil pencarian
+          filteredCountries = jsonData.map((e) => Country.fromJson(e)).toList();
           isLoading = false;
         });
       } else if (data.statusCode == 404) {
         // Tidak ditemukan
         setState(() {
-          allCountries = [];
-          filteredCountries = [];
+          filteredCountries = []; // Kosongkan list
           isLoading = false;
-          // errorMessage tidak perlu di-set, _buildEmptyState akan tampil
+          // Kita akan tampilkan _buildEmptyState di UI
         });
       } else {
         // Error server
@@ -115,29 +112,12 @@ mixin HomeControllerMixin {
     }
   }
 
-  void _onSearchChanged() {
-    // Jika user menghapus teks, kita bersihkan list
-    if (searchController.text.isEmpty && !isLoading) {
-      setState(() {
-        filteredCountries = [];
-        allCountries = [];
-        errorMessage = '';
-      });
-    }
-  }
-
   void clearSearch() {
     searchController.clear();
     setState(() {
+      // Kosongkan hasil pencarian agar list statis tampil lagi
       filteredCountries = [];
-      allCountries = [];
       errorMessage = '';
     });
-  }
-
-  // --- FUNGSI LAMA YANG TIDAK BERFUNGSI LAGI ---
-  void filterByRegion(String? region) {
-    // Tidak bisa filter by region karena kita tidak punya data 'all'
-    // Biarkan kosong
   }
 }

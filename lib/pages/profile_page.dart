@@ -50,12 +50,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _openHome() {
-    // --- PERBAIKAN: Hapus parameter 'username' ---
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()),
-    );
-    // --- AKHIR PERBAIKAN ---
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(username: username)),
+      );
+    }
   }
 
   void _openHistory() {
@@ -90,10 +91,13 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
+        // --- PERBAIKAN TOMBOL BACK ---
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
-          onPressed: _openHome,
+          onPressed:
+              _openHome, // Biarkan ini, karena logic Anda pakai pushReplacement
         ),
+        // --- AKHIR PERBAIKAN ---
         title: Text('Profil Saya', style: TextStyle(color: Color(0xFFE2E8F0))),
         backgroundColor: Color(0xFF1A202C),
         iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
@@ -138,8 +142,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
                   ),
                   SizedBox(height: 32),
-
-                  // Informasi Profil
                   Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -171,8 +173,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SizedBox(height: 24),
-
-                  // Saran dan Kesan (Statis)
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
@@ -214,8 +214,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-
-                  // Galeri Favorit
                   SizedBox(height: 24),
                   Container(
                     width: double.infinity,

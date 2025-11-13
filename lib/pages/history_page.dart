@@ -8,11 +8,8 @@ import 'location_page.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 
-/// Halaman untuk menampilkan riwayat pencarian negara
 class HistoryPage extends StatefulWidget {
-  // Hapus semua parameter dari constructor
-  HistoryPage({Key? key}) : super(key: key);
-
+  // Constructor asli Anda (tanpa parameter)
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
@@ -39,15 +36,15 @@ class _HistoryPageState extends State<HistoryPage> {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF2D3748), // surfaceColor
+        backgroundColor: Color(0xFF2D3748),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           'Hapus History',
           style: TextStyle(color: Color(0xFFE2E8F0)),
-        ), // textColor
+        ),
         content: Text(
           'Apakah Anda yakin ingin menghapus semua history?',
-          style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+          style: TextStyle(color: Color(0xFFA0AEC0)),
         ),
         actions: [
           TextButton(
@@ -55,13 +52,13 @@ class _HistoryPageState extends State<HistoryPage> {
             child: Text(
               'Batal',
               style: TextStyle(color: Color(0xFFA0AEC0)),
-            ), // hintColor
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               'Hapus',
-              style: TextStyle(color: Color(0xFF66B3FF)), // accentColor
+              style: TextStyle(color: Color(0xFF66B3FF)),
             ),
           ),
         ],
@@ -76,7 +73,7 @@ class _HistoryPageState extends State<HistoryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('History berhasil dihapus'),
-            backgroundColor: Color(0xFF4299E1), // primaryButtonColor
+            backgroundColor: Color(0xFF4299E1),
           ),
         );
       }
@@ -124,12 +121,19 @@ class _HistoryPageState extends State<HistoryPage> {
 
   // --- Navigasi ---
   void _openHome() {
-    // --- PERBAIKAN: Hapus parameter 'username' ---
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()),
-    );
-    // --- AKHIR PERBAIKAN ---
+    String? username = AuthService.getCurrentUsername();
+    if (username != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(username: username)),
+      );
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (route) => false,
+      );
+    }
   }
 
   void _openProfile() {
@@ -160,25 +164,28 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1A202C), // backgroundColor
+      backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
+        // --- PERBAIKAN TOMBOL BACK ---
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)), // textColor
-          onPressed: _openHome,
+          icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
+          onPressed:
+              _openHome, // Biarkan ini, karena logic Anda pakai pushReplacement
         ),
+        // --- AKHIR PERBAIKAN ---
         title: Text(
           'History Pencarian',
           style: TextStyle(color: Color(0xFFE2E8F0)),
-        ), // textColor
-        backgroundColor: Color(0xFF1A202C), // backgroundColor
-        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
+        ),
+        backgroundColor: Color(0xFF1A202C),
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
         elevation: 0,
         actions: [
           if (_history.isNotEmpty)
             IconButton(
               icon: Icon(
                 Icons.delete_sweep,
-                color: Color(0xFF66B3FF), // accentColor
+                color: Color(0xFF66B3FF),
               ),
               onPressed: _clearHistory,
               tooltip: 'Hapus Semua History',
@@ -194,21 +201,21 @@ class _HistoryPageState extends State<HistoryPage> {
                     Icons.history,
                     size: 64,
                     color: Color(0xFFA0AEC0),
-                  ), // hintColor
+                  ),
                   SizedBox(height: 16),
                   Text(
                     'Belum ada history',
                     style: TextStyle(
                       fontSize: 18,
                       color: Color(0xFFA0AEC0),
-                    ), // hintColor
+                    ),
                   ),
                   SizedBox(height: 8),
                   Text(
                     'Cari negara untuk menambah history',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFFA0AEC0).withOpacity(0.7), // hintColor
+                      color: Color(0xFFA0AEC0).withOpacity(0.7),
                     ),
                   ),
                 ],
@@ -261,7 +268,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           item.countryName,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFE2E8F0), // textColor
+                            color: Color(0xFFE2E8F0),
                           ),
                         ),
                         subtitle: Column(
@@ -272,13 +279,13 @@ class _HistoryPageState extends State<HistoryPage> {
                               'Ibu Kota: ${item.capital}',
                               style: TextStyle(
                                 color: Color(0xFFA0AEC0),
-                              ), // hintColor
+                              ),
                             ),
                             Text(
                               'Region: ${item.region}',
                               style: TextStyle(
                                 color: Color(0xFFA0AEC0),
-                              ), // hintColor
+                              ),
                             ),
                             SizedBox(height: 4),
                             Text(
@@ -287,7 +294,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 fontSize: 12,
                                 color: Color(
                                   0xFFA0AEC0,
-                                ).withOpacity(0.7), // hintColor
+                                ).withOpacity(0.7),
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
@@ -296,7 +303,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         isThreeLine: true,
                       ),
                       Divider(
-                        color: Color(0xFF2D3748), // surfaceColor
+                        color: Color(0xFF2D3748),
                         height: 16,
                         indent: 16,
                         endIndent: 16,
@@ -307,10 +314,10 @@ class _HistoryPageState extends State<HistoryPage> {
               },
             ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF2D3748), // surfaceColor
+        backgroundColor: Color(0xFF2D3748),
         type: BottomNavigationBarType.fixed,
-        unselectedItemColor: Color(0xFFA0AEC0), // hintColor
-        selectedItemColor: Color(0xFF66B3FF), // accentColor
+        unselectedItemColor: Color(0xFFA0AEC0),
+        selectedItemColor: Color(0xFF66B3FF),
         currentIndex: 2,
         showUnselectedLabels: true,
         selectedFontSize: 12,
@@ -329,8 +336,6 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   String _formatDate(DateTime date) {
-    // Anda harus import 'package:intl/intl.dart'; untuk ini
-    // Tapi karena file pubspec tidak ada intl, kita pakai logic manual
     final now = DateTime.now();
     final diff = now.difference(date);
     if (diff.inDays == 0) {

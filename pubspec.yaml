@@ -1,11 +1,11 @@
 name: mobileprojek
-description: "Proyek Flutter aplikasi Info Negara." # Deskripsi bisa Anda ubah
-publish_to: 'none' # Mencegah publikasi tidak sengaja ke pub.dev
+description: "Proyek Flutter aplikasi Info Negara."
+publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # <-- Saya perbaiki rentang SDK Anda agar lebih aman
+  sdk: '>=3.0.0 <4.0.0' # Saya perbaiki rentang SDK Anda
 
 # --- DEPENDENSI UTAMA APLIKASI ---
 dependencies:
@@ -15,57 +15,46 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # Jaringan & API
-  http: ^1.1.0 # Untuk memanggil API (RestCountries, Currency, Nominatim)
+  http: ^1.1.0 
 
   # Penyimpanan Lokal (Database)
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
   # Layanan Lokasi & Peta
-  geolocator: ^10.1.0 # Mendapatkan lokasi GPS
-  geocoding: ^2.1.1 # Konversi koordinat ke alamat
-  permission_handler: ^11.0.1 # Meminta izin (lokasi, notifikasi)
-  flutter_map: ^6.1.0 # <-- Versi terbaru
-  latlong2: ^0.9.0 # <-- Versi terbaru
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  permission_handler: ^11.0.1
+  flutter_map: ^6.1.0 # Versi terbaru
+  latlong2: ^0.9.0 # Versi terbaru
 
   # Notifikasi & Waktu
-  flutter_local_notifications: ^17.2.1 # Menampilkan notifikasi lokal
-  timezone: ^0.9.0 # Untuk data zona waktu
+  flutter_local_notifications: ^17.2.1
+  timezone: ^0.9.0
 
   # Utilitas
-  crypto: ^3.0.3 # Untuk hashing password (SHA-256)
-  image_picker: ^1.0.4 # Mengambil gambar dari galeri (foto profil)
-  path_provider: ^2.1.1 # Mendapatkan path direktori aplikasi
+  crypto: ^3.0.3
+  image_picker: ^1.0.4
+  path_provider: ^2.1.1
 
-  # --- TAMBAHKAN DEPENDENSI INI ---
-  intl: ^0.19.0 # Diperlukan untuk format angka dan tanggal
-  url_launcher: ^6.3.1 # Diperlukan untuk Fase 1 (berita/cuaca)
+  # --- TAMBAHAN UNTUK FITUR BARU ---
+  intl: ^0.19.0 # Untuk format angka
+  dropdown_search: ^5.0.6 # Untuk dropdown pencarian
+  url_launcher: ^6.3.1 # Untuk link (dari fitur sebelumnya)
   # --------------------------------
 
 # --- DEPENDENSI PENGEMBANGAN (DEV) ---
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0 # <-- Versi terbaru
+  flutter_lints: ^3.0.0 # Versi terbaru
 
   # Generator Kode (Penting untuk Hive)
-  # Jalankan "flutter pub run build_runner build" setelah mengubah Model Hive
   build_runner: ^2.4.6
   hive_generator: ^2.0.0
 
 # --- KONFIGURASI SPESIFIK FLUTTER ---
 flutter:
   uses-material-design: true
-
-  # Aset (Gambar, dll.)
-  # Pastikan file ini ada di folder 'assets' di root proyek Anda
   assets:
     - assets/Logoprojek.png
-
-  # Font Kustom (Contoh)
-  # fonts:
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
