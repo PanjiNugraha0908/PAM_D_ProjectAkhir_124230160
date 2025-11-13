@@ -8,8 +8,8 @@ import 'location_page.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 
+/// Halaman untuk menampilkan riwayat pencarian negara
 class HistoryPage extends StatefulWidget {
-  // Constructor asli Anda (tanpa parameter)
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
@@ -36,15 +36,15 @@ class _HistoryPageState extends State<HistoryPage> {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF2D3748),
+        backgroundColor: Color(0xFF2D3748), // surfaceColor
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           'Hapus History',
           style: TextStyle(color: Color(0xFFE2E8F0)),
-        ),
+        ), // textColor
         content: Text(
           'Apakah Anda yakin ingin menghapus semua history?',
-          style: TextStyle(color: Color(0xFFA0AEC0)),
+          style: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
         ),
         actions: [
           TextButton(
@@ -52,13 +52,13 @@ class _HistoryPageState extends State<HistoryPage> {
             child: Text(
               'Batal',
               style: TextStyle(color: Color(0xFFA0AEC0)),
-            ),
+            ), // hintColor
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               'Hapus',
-              style: TextStyle(color: Color(0xFF66B3FF)),
+              style: TextStyle(color: Color(0xFF66B3FF)), // accentColor
             ),
           ),
         ],
@@ -73,14 +73,16 @@ class _HistoryPageState extends State<HistoryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('History berhasil dihapus'),
-            backgroundColor: Color(0xFF4299E1),
+            backgroundColor: Color(0xFF4299E1), // primaryButtonColor
           ),
         );
       }
     }
   }
 
+  // --- TAMBAHAN BARU: Fungsi hapus satu item ---
   Future<void> _deleteHistoryItem(HistoryItem item, int index) async {
+    // 1. Buat salinan data untuk fitur 'Undo'
     final HistoryItem backup = HistoryItem(
       username: item.username,
       countryName: item.countryName,
@@ -91,15 +93,18 @@ class _HistoryPageState extends State<HistoryPage> {
       isFavorite: item.isFavorite,
     );
 
+    // 2. Hapus dari state list agar UI update
     setState(() {
       _history.removeAt(index);
     });
 
+    // 3. Hapus dari database Hive (karena ini HiveObject, kita bisa panggil delete())
     await item.delete();
 
+    // 4. Tampilkan SnackBar dengan opsi Undo
     ScaffoldMessenger.of(
       context,
-    ).removeCurrentSnackBar();
+    ).removeCurrentSnackBar(); // Hapus snackbar lama
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${item.countryName} dihapus dari history'),
@@ -109,7 +114,10 @@ class _HistoryPageState extends State<HistoryPage> {
           label: 'BATAL',
           textColor: Colors.white,
           onPressed: () {
+            // Jika 'Batal' ditekan:
+            // 1. Tambahkan kembali ke database
             DatabaseService.addHistory(backup);
+            // 2. Tambahkan kembali ke state list di posisi semula
             setState(() {
               _history.insert(index, backup);
             });
@@ -118,6 +126,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
     );
   }
+  // --- AKHIR TAMBAHAN ---
 
   // --- Navigasi ---
   void _openHome() {
@@ -164,28 +173,25 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1A202C),
+      backgroundColor: Color(0xFF1A202C), // backgroundColor
       appBar: AppBar(
-        // --- PERBAIKAN TOMBOL BACK ---
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
-          onPressed:
-              _openHome, // Biarkan ini, karena logic Anda pakai pushReplacement
+          icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)), // textColor
+          onPressed: _openHome,
         ),
-        // --- AKHIR PERBAIKAN ---
         title: Text(
           'History Pencarian',
           style: TextStyle(color: Color(0xFFE2E8F0)),
-        ),
-        backgroundColor: Color(0xFF1A202C),
-        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
+        ), // textColor
+        backgroundColor: Color(0xFF1A202C), // backgroundColor
+        iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
         elevation: 0,
         actions: [
           if (_history.isNotEmpty)
             IconButton(
               icon: Icon(
                 Icons.delete_sweep,
-                color: Color(0xFF66B3FF),
+                color: Color(0xFF66B3FF), // accentColor
               ),
               onPressed: _clearHistory,
               tooltip: 'Hapus Semua History',
@@ -194,6 +200,7 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: _history.isEmpty
           ? Center(
+              // ... (Tampilan 'Belum ada history' tidak berubah) ...
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -201,38 +208,43 @@ class _HistoryPageState extends State<HistoryPage> {
                     Icons.history,
                     size: 64,
                     color: Color(0xFFA0AEC0),
-                  ),
+                  ), // hintColor
                   SizedBox(height: 16),
                   Text(
                     'Belum ada history',
                     style: TextStyle(
                       fontSize: 18,
                       color: Color(0xFFA0AEC0),
-                    ),
+                    ), // hintColor
                   ),
                   SizedBox(height: 8),
                   Text(
                     'Cari negara untuk menambah history',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFFA0AEC0).withOpacity(0.7),
+                      color: Color(0xFFA0AEC0).withOpacity(0.7), // hintColor
                     ),
                   ),
                 ],
               ),
             )
+          // --- PERUBAHAN: Ganti ListView.builder ---
           : ListView.builder(
               padding: EdgeInsets.all(16),
               itemCount: _history.length,
               itemBuilder: (context, index) {
                 final item = _history[index];
 
+                // Bungkus dengan Dismissible
                 return Dismissible(
-                  key: Key(item.key.toString()),
-                  direction: DismissDirection.endToStart,
+                  key: Key(item.key.toString()), // Wajib menggunakan Key unik
+                  direction:
+                      DismissDirection.endToStart, // Geser dari kanan ke kiri
                   onDismissed: (direction) {
+                    // Panggil fungsi hapus saat digeser
                     _deleteHistoryItem(item, index);
                   },
+                  // Tampilan latar belakang saat digeser
                   background: Container(
                     color: Colors.red.shade800,
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -252,6 +264,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       ],
                     ),
                   ),
+                  // Ini adalah widget anak Anda yang asli
                   child: Column(
                     children: [
                       ListTile(
@@ -268,7 +281,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           item.countryName,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFE2E8F0),
+                            color: Color(0xFFE2E8F0), // textColor
                           ),
                         ),
                         subtitle: Column(
@@ -279,13 +292,13 @@ class _HistoryPageState extends State<HistoryPage> {
                               'Ibu Kota: ${item.capital}',
                               style: TextStyle(
                                 color: Color(0xFFA0AEC0),
-                              ),
+                              ), // hintColor
                             ),
                             Text(
                               'Region: ${item.region}',
                               style: TextStyle(
                                 color: Color(0xFFA0AEC0),
-                              ),
+                              ), // hintColor
                             ),
                             SizedBox(height: 4),
                             Text(
@@ -294,7 +307,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 fontSize: 12,
                                 color: Color(
                                   0xFFA0AEC0,
-                                ).withOpacity(0.7),
+                                ).withOpacity(0.7), // hintColor
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
@@ -303,7 +316,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         isThreeLine: true,
                       ),
                       Divider(
-                        color: Color(0xFF2D3748),
+                        color: Color(0xFF2D3748), // surfaceColor
                         height: 16,
                         indent: 16,
                         endIndent: 16,
@@ -311,13 +324,14 @@ class _HistoryPageState extends State<HistoryPage> {
                     ],
                   ),
                 );
+                // --- AKHIR PERUBAHAN ---
               },
             ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF2D3748),
+        backgroundColor: Color(0xFF2D3748), // surfaceColor
         type: BottomNavigationBarType.fixed,
-        unselectedItemColor: Color(0xFFA0AEC0),
-        selectedItemColor: Color(0xFF66B3FF),
+        unselectedItemColor: Color(0xFFA0AEC0), // hintColor
+        selectedItemColor: Color(0xFF66B3FF), // accentColor
         currentIndex: 2,
         showUnselectedLabels: true,
         selectedFontSize: 12,

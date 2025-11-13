@@ -71,10 +71,8 @@ class NotificationService {
   /// Mengembalikan `true` jika izin diberikan atau tidak diperlukan (Android < 13).
   static Future<bool> requestPermission() async {
     try {
-      final platform = _plugin
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
+      final platform = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
       if (platform != null) {
         // Meminta izin notifikasi (baru di Android 13)
         final granted = await platform.requestNotificationsPermission();

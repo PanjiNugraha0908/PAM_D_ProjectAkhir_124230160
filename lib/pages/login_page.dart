@@ -1,4 +1,5 @@
 // lib/pages/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:mobileprojek/pages/register_page.dart';
 import '../services/auth_service.dart';
@@ -34,12 +35,10 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (result['success']) {
-        // --- PERBAIKAN ERROR: Tambahkan lagi parameter 'username' ---
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(username: username)),
         );
-        // --- AKHIR PERBAIKAN ---
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

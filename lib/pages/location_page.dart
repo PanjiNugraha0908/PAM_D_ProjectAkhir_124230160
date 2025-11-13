@@ -52,9 +52,12 @@ class _LocationPageState extends State<LocationPage> {
             _isLoading = false;
           });
 
-          // --- PERBAIKAN: HAPUS Future.delayed dari sini ---
-          // Animasi akan dipindahkan ke onMapReady di _buildBody
-          // --- AKHIR PERBAIKAN ---
+          // Animasi ke posisi dengan smooth transition
+          Future.delayed(Duration(milliseconds: 100), () {
+            if (mounted && _currentPosition != null) {
+              _mapController.move(_currentPosition!, 15.0);
+            }
+          });
         } else {
           setState(() {
             _errorMessage = locationData['error'] ?? 'Gagal mendapatkan lokasi';
@@ -124,16 +127,10 @@ class _LocationPageState extends State<LocationPage> {
     return Scaffold(
       backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
-        // --- PERBAIKAN TOMBOL BACK ---
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
-          // Ganti _openHome menjadi Navigator.pop(context)
-          onPressed: () {
-            // Ini akan kembali ke HomePage TANPA membuat tumpukan baru
-            _openHome(); // Biarkan ini, karena logic Anda pakai pushReplacement
-          },
+          onPressed: _openHome,
         ),
-        // --- AKHIR PERBAIKAN ---
         title: Text('Lokasi Saya', style: TextStyle(color: Color(0xFFE2E8F0))),
         backgroundColor: Color(0xFF1A202C),
         iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
@@ -333,14 +330,6 @@ class _LocationPageState extends State<LocationPage> {
                 initialZoom: 15.0,
                 minZoom: 5.0,
                 maxZoom: 18.0,
-                // --- PERBAIKAN CRASH: Gunakan onMapReady ---
-                onMapReady: () {
-                  // Ini cara aman untuk animasi setelah peta siap
-                  if (mounted && _currentPosition != null) {
-                    _mapController.move(_currentPosition!, 15.0);
-                  }
-                },
-                // --- AKHIR PERBAIKAN ---
               ),
               children: [
                 TileLayer(

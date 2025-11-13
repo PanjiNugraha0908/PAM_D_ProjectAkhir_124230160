@@ -8,7 +8,9 @@ import 'edit_profile_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'home_page.dart';
+// --- TAMBAHAN IMPORT ---
 import '../models/history_item.dart';
+// --- AKHIR TAMBAHAN ---
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -91,13 +93,10 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Color(0xFF1A202C),
       appBar: AppBar(
-        // --- PERBAIKAN TOMBOL BACK ---
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
-          onPressed:
-              _openHome, // Biarkan ini, karena logic Anda pakai pushReplacement
+          onPressed: _openHome,
         ),
-        // --- AKHIR PERBAIKAN ---
         title: Text('Profil Saya', style: TextStyle(color: Color(0xFFE2E8F0))),
         backgroundColor: Color(0xFF1A202C),
         iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
@@ -142,6 +141,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: TextStyle(fontSize: 16, color: Color(0xFFA0AEC0)),
                   ),
                   SizedBox(height: 32),
+
+                  // Informasi Profil
                   Container(
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -173,7 +174,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SizedBox(height: 24),
+
+                  // Saran dan Kesan (Statis)
                   Container(
+                    // ... (Widget Saran dan Kesan tidak berubah) ...
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -214,6 +218,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
+                  // --- TAMBAHAN BARU: GALERI FAVORIT ---
                   SizedBox(height: 24),
                   Container(
                     width: double.infinity,
@@ -244,12 +250,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                         SizedBox(height: 12),
+                        // Gunakan Builder agar query dieksekusi saat build
                         Builder(
                           builder: (context) {
+                            // Ambil data favorit dari HistoryItem
                             final List<HistoryItem> favorites =
                                 DatabaseService.getHistoryForUser(
-                              _user!.username,
-                            ).where((item) => item.isFavorite).toList();
+                                  _user!.username,
+                                ).where((item) => item.isFavorite).toList();
 
                             if (favorites.isEmpty) {
                               return Center(
@@ -274,11 +282,13 @@ class _ProfilePageState extends State<ProfilePage> {
                               physics: NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                                childAspectRatio: 3 / 2.8,
-                              ),
+                                    crossAxisCount:
+                                        3, // Tampilkan 3 negara per baris
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                    childAspectRatio:
+                                        3 / 2.8, // Sesuaikan rasio
+                                  ),
                               itemCount: favorites.length,
                               itemBuilder: (context, index) {
                                 final item = favorites[index];
@@ -323,6 +333,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+                  // --- AKHIR TAMBAHAN ---
                 ],
               ),
             ),

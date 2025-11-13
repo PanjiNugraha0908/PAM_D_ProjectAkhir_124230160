@@ -1,5 +1,3 @@
-// lib/models/country.dart
-
 /// Model data yang merepresentasikan satu negara.
 ///
 /// Model ini berisi semua informasi detail yang relevan
@@ -94,4 +92,3 @@ class Country {
     );
   }
 }
-// <-- KURUNG KURAWAL '}' EKSTRA SUDAH SAYA HAPUS DARI SINI
