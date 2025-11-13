@@ -4,6 +4,7 @@ import 'package:intl/intl.dart'; // <-- Pastikan 'intl' ada di pubspec.yaml
 import '../models/country.dart';
 import '../pages/compare_page.dart';
 import '../services/country_service.dart'; // Service baru kita
+import '../services/enhanced_country_service.dart';
 
 /// Controller (Logic) untuk [ComparePage].
 mixin CompareController on State<ComparePage> {
@@ -43,8 +44,13 @@ mixin CompareController on State<ComparePage> {
 
     try {
       final country = await CountryService.searchCountryByName(query);
+
+      // TAMBAHAN BARU: Enrich dengan metrik
+      final enrichedCountry =
+          await EnhancedCountryService.enrichCountryData(country);
+
       setState(() {
-        selectedCountries[index] = country;
+        selectedCountries[index] = enrichedCountry; // Gunakan enriched data
         isLoading[index] = false;
       });
     } catch (e) {

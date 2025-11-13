@@ -442,15 +442,31 @@ class _HomePageState extends State<HomePage> with HomeController {
                       ),
                     ],
                   ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.logout,
-                      color: Color(0xFFA0AEC0),
-                      size: 22,
-                    ),
-                    onPressed: logout,
-                    padding: EdgeInsets.all(8),
-                    constraints: BoxConstraints(),
+                  Row(
+                    children: [
+                      // TAMBAHAN BARU: Tombol Compare
+                      IconButton(
+                        icon: Icon(
+                          Icons.compare_arrows,
+                          color: Color(0xFF66B3FF),
+                          size: 22,
+                        ),
+                        onPressed: openComparePage,
+                        padding: EdgeInsets.all(8),
+                        constraints: BoxConstraints(),
+                        tooltip: 'Bandingkan Negara',
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.logout,
+                          color: Color(0xFFA0AEC0),
+                          size: 22,
+                        ),
+                        onPressed: logout,
+                        padding: EdgeInsets.all(8),
+                        constraints: BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ],
               ),

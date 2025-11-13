@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../models/country.dart';
 import '../models/history_item.dart';
 import '../pages/country_detail_page.dart';
+import '../pages/compare_page.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
 import '../pages/login_page.dart';
@@ -12,20 +13,14 @@ import '../pages/location_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/settings_page.dart';
 import '../services/notification_service.dart';
-import '../pages/home_page.dart'; // Import halaman untuk State
+import '../pages/home_page.dart';
 
-/// Controller (Logic) untuk [HomePage].
-///
-/// Menggunakan [Mixin] untuk "menempelkan" semua fungsi dan state ini
-/// ke dalam `_HomePageState` tanpa harus membuat file `build` menjadi gemuk.
 mixin HomeController on State<HomePage> {
-  // --- State dan Controller ---
   final searchController = TextEditingController();
-  List<Country> allCountries = []; // Daftar master semua negara
-  List<Country> filteredCountries = []; // Daftar yang ditampilkan
+  List<Country> allCountries = [];
+  List<Country> filteredCountries = [];
   bool isLoading = false;
 
-  // --- Lifecycle Methods (dipanggil dari State) ---
   void onInit() {
     loadAllCountries();
     searchController.addListener(filterCountries);
@@ -36,7 +31,6 @@ mixin HomeController on State<HomePage> {
     searchController.dispose();
   }
 
-  // --- Logika Pengambilan Data (API) ---
   Future<void> loadAllCountries() async {
     if (!mounted) return;
     setState(() {
@@ -45,21 +39,19 @@ mixin HomeController on State<HomePage> {
 
     try {
       print('🌍 Mengambil data semua negara dari API...');
-      final response = await http
-          .get(
-            Uri.parse('https://restcountries.com/v3.1/all'),
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
-              'Accept-Encoding': 'gzip, deflate, br',
-            },
-          )
-          .timeout(
-            Duration(seconds: 20),
-            onTimeout: () {
-              throw Exception('Koneksi timeout. Periksa internet Anda.');
-            },
-          );
+      final response = await http.get(
+        Uri.parse('https://restcountries.com/v3.1/all'),
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
+          'Accept-Encoding': 'gzip, deflate, br',
+        },
+      ).timeout(
+        Duration(seconds: 20),
+        onTimeout: () {
+          throw Exception('Koneksi timeout. Periksa internet Anda.');
+        },
+      );
 
       print('📡 Response status: ${response.statusCode}');
 
@@ -114,22 +106,19 @@ mixin HomeController on State<HomePage> {
     }
 
     try {
-      final response = await http
-          .get(
-            Uri.parse('https://restcountries.com/v3.1/name/$query'),
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
-            },
-          )
-          .timeout(Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse('https://restcountries.com/v3.1/name/$query'),
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'ExploreUnity/1.0 (Flutter App)',
+        },
+      ).timeout(Duration(seconds: 10));
 
       if (mounted) {
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
-          final List<Country> countries = data
-              .map((json) => Country.fromJson(json))
-              .toList();
+          final List<Country> countries =
+              data.map((json) => Country.fromJson(json)).toList();
           setState(() {
             filteredCountries = countries;
             isLoading = false;
@@ -153,7 +142,6 @@ mixin HomeController on State<HomePage> {
     }
   }
 
-  // --- Logika Filter dan UI ---
   void filterCountries() {
     if (mounted) {
       setState(() {
@@ -198,16 +186,13 @@ mixin HomeController on State<HomePage> {
   void showCountryDetail(Country country) async {
     String username = widget.username;
 
-    // Hitung negara unik
     List<HistoryItem> historySebelum = DatabaseService.getHistoryForUser(
       username,
     );
-    var negaraUnikSebelum = historySebelum
-        .map((item) => item.countryName)
-        .toSet();
+    var negaraUnikSebelum =
+        historySebelum.map((item) => item.countryName).toSet();
     final int totalUnikSebelum = negaraUnikSebelum.length;
 
-    // Tambah riwayat
     await DatabaseService.addHistory(
       HistoryItem(
         username: username,
@@ -222,12 +207,10 @@ mixin HomeController on State<HomePage> {
     List<HistoryItem> historySesudah = DatabaseService.getHistoryForUser(
       username,
     );
-    var negaraUnikSesudah = historySesudah
-        .map((item) => item.countryName)
-        .toSet();
+    var negaraUnikSesudah =
+        historySesudah.map((item) => item.countryName).toSet();
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
-    // Logika Notifikasi
     if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
       if (totalUnikSebelum % 3 != 0) {
         NotificationService.showNotification(
@@ -248,7 +231,6 @@ mixin HomeController on State<HomePage> {
     }
   }
 
-  // --- Navigasi ---
   Future<void> logout() async {
     await AuthService.logout();
     if (mounted) {
@@ -284,6 +266,13 @@ mixin HomeController on State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SettingsPage()),
+    );
+  }
+
+  void openComparePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ComparePage()),
     );
   }
 

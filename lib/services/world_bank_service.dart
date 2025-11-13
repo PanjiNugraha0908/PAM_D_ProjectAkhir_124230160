@@ -22,7 +22,7 @@ class Country {
   double? happinessScore; // Happiness Score (0-10)
   int? happinessRank; // Peringkat Kebahagiaan
   String? incomeLevel; // Level pendapatan (High, Upper middle, etc)
-
+  
   Country({
     required this.name,
     required this.officialName,
@@ -56,7 +56,8 @@ class Country {
 
     String callingCode = '';
     if (json['idd'] != null) {
-      callingCode = (json['idd']['root'] ?? '') +
+      callingCode =
+          (json['idd']['root'] ?? '') +
           (json['idd']['suffixes'] != null && json['idd']['suffixes'].isNotEmpty
               ? json['idd']['suffixes'][0]
               : '');

@@ -16,6 +16,10 @@ import '../services/auth_service.dart';
 import '../services/database_service.dart';
 // --- AKHIR TAMBAHAN ---
 
+// TAMBAHKAN di bagian import:
+import '../services/enhanced_country_service.dart'; // <--- TAMBAHAN
+import '../models/country.dart'; // Pastikan model Country sudah diimpor jika diperlukan
+
 /// Controller (Logic) untuk [CountryDetailPage].
 mixin CountryDetailController on State<CountryDetailPage> {
   // --- State Konverter Mata Uang ---
@@ -38,6 +42,10 @@ mixin CountryDetailController on State<CountryDetailPage> {
   HistoryItem? historyEntry; // Untuk menyimpan referensi ke item di database
   // --- AKHIR TAMBAHAN ---
 
+  // TAMBAHKAN state baru di dalam mixin:
+  bool isLoadingMetrics = false; // <--- TAMBAHAN
+  Country? enrichedCountry; // <--- TAMBAHAN
+
   // --- Lifecycle Methods ---
   void onInit() {
     if (widget.country.currencies.isNotEmpty) {
@@ -47,12 +55,42 @@ mixin CountryDetailController on State<CountryDetailPage> {
     selectedTimezone = 'WIB';
     updateTimes();
     timer = Timer.periodic(Duration(seconds: 1), (_) => updateTimes());
-    _loadFavoriteStatus(); // Panggil fungsi baru
+    _loadFavoriteStatus();
+    loadEnhancedMetrics(); // <--- TAMBAHKAN INI
   }
 
   void onDispose() {
     timer?.cancel();
     amountController.dispose();
+  }
+
+  // TAMBAHKAN fungsi baru di dalam mixin:
+  Future<void> loadEnhancedMetrics() async {
+    // <--- TAMBAHAN FUNGSI
+    if (mounted) {
+      setState(() {
+        isLoadingMetrics = true;
+      });
+    }
+    try {
+      final enhanced = await EnhancedCountryService.enrichCountryData(
+        widget.country,
+      );
+
+      if (mounted) {
+        setState(() {
+          enrichedCountry = enhanced;
+          isLoadingMetrics = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading enhanced metrics: $e');
+      if (mounted) {
+        setState(() {
+          isLoadingMetrics = false;
+        });
+      }
+    }
   }
 
   // --- FUNGSI BARU UNTUK FAVORIT ---

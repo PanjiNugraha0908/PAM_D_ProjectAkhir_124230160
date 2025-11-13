@@ -41,6 +41,8 @@ dependencies:
   intl: ^0.19.0 # Untuk format angka
   dropdown_search: ^5.0.6 # Untuk dropdown pencarian
   url_launcher: ^6.3.1 # Untuk link (dari fitur sebelumnya)
+
+  fl_chart: ^0.66.0  # Untuk grafik batang
   # --------------------------------
 
 # --- DEPENDENSI PENGEMBANGAN (DEV) ---

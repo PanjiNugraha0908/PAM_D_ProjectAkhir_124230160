@@ -1,16 +1,11 @@
 // lib/pages/country_detail_page.dart
 import 'package:flutter/material.dart';
-// import 'dart:async'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
-// import 'package:intl/intl.dart'; // <-- HAPUS BARIS INI (Tidak terpakai di file ini)
+import 'package:intl/intl.dart';
 import '../models/country.dart';
 import '../controllers/country_detail_controller.dart'; // Import controller
 import '../services/timezone_service.dart'; // Import timezone service
 
 /// Halaman yang menampilkan informasi detail lengkap dari sebuah [Country] (Tampilan/View).
-///
-/// File ini hanya berisi metode `build` dan helper `_build...` untuk UI.
-/// Semua logika, state, dan pemformatan data di-handle oleh
-/// [CountryDetailController] yang di-mixin ke `_CountryDetailPageState`.
 class CountryDetailPage extends StatefulWidget {
   final Country country;
 
@@ -33,6 +28,36 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     onDispose(); // Panggil onDispose dari controller
     super.dispose();
   }
+
+  // --------------------------------------------------------------------------
+  // --- HELPER METHODS BARU UNTUK METRIK EKONOMI ---
+  // --------------------------------------------------------------------------
+
+  String _formatLargeNumber(double number) {
+    if (number >= 1e12) {
+      return '${(number / 1e12).toStringAsFixed(2)} Triliun';
+    } else if (number >= 1e9) {
+      return '${(number / 1e9).toStringAsFixed(2)} Miliar';
+    } else if (number >= 1e6) {
+      return '${(number / 1e6).toStringAsFixed(2)} Juta';
+    }
+    return _formatNumber(number);
+  }
+
+  String _getHDICategory(double hdi) {
+    if (hdi >= 0.8) return 'Sangat Tinggi';
+    if (hdi >= 0.7) return 'Tinggi';
+    if (hdi >= 0.55) return 'Menengah';
+    return 'Rendah';
+  }
+
+  String _formatNumber(double number) {
+    return NumberFormat('#,##0.00', 'id_ID').format(number);
+  }
+
+  // --------------------------------------------------------------------------
+  // --- AKHIR HELPER METHODS BARU ---
+  // --------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +113,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                     title: 'Informasi Umum',
                     icon: Icons.info_outline,
                     children: [
-                      // ... (Widget _buildDetailRow tidak berubah) ...
                       _buildDetailRow(
                         'Nama Resmi',
                         widget.country.officialName,
@@ -99,9 +123,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                       _buildDetailRow(
                         'Populasi',
                         widget.country.population.toString().replaceAllMapped(
-                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                          (Match m) => '${m[1]}.',
-                        ),
+                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                              (Match m) => '${m[1]}.',
+                            ),
                       ),
                       _buildDetailRow(
                         'Luas',
@@ -163,6 +187,111 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                       _buildTimezone(), // Panggil helper UI
                     ],
                   ),
+
+                  // --- SECTION BARU: Metrik Ekonomi & Pembangunan (Diperbaiki) ---
+                  SizedBox(height: 24),
+                  _buildSectionCard(
+                    title: 'Metrik Ekonomi & Pembangunan',
+                    icon: Icons.trending_up,
+                    children: [
+                      if (isLoadingMetrics)
+                        Center(
+                            child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Column(
+                            children: [
+                              CircularProgressIndicator(
+                                color: Color(0xFF4299E1),
+                                strokeWidth: 2,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Memuat data dari World Bank...',
+                                style: TextStyle(
+                                  color: Color(0xFFA0AEC0),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ))
+                      else if (enrichedCountry != null) ...[
+                        // GDP Total
+                        if (enrichedCountry!.gdpTotal != null)
+                          _buildDetailRow(
+                            'GDP Total',
+                            '\$${_formatLargeNumber(enrichedCountry!.gdpTotal!)}',
+                          ),
+
+                        // GDP per Capita
+                        if (enrichedCountry!.gdpPerCapita != null)
+                          _buildDetailRow(
+                            'GDP per Kapita',
+                            '\$${_formatNumber(enrichedCountry!.gdpPerCapita!)}',
+                          ),
+
+                        // Income Level
+                        if (enrichedCountry!.incomeLevel != null)
+                          _buildDetailRow(
+                            'Level Pendapatan',
+                            enrichedCountry!.incomeLevel!,
+                          ),
+
+                        // HDI
+                        if (enrichedCountry!.hdi != null)
+                          _buildDetailRow(
+                            'Indeks Pembangunan Manusia (IPM)',
+                            // SINTAKS DI BAWAH SUDAH DIPERBAIKI DARI VERSI SEBELUMNYA
+                            '${(enrichedCountry!.hdi! * 100).toStringAsFixed(1)}% (${_getHDICategory(enrichedCountry!.hdi!)})',
+                          ),
+
+                        // Happiness Score
+                        if (enrichedCountry!.happinessScore != null)
+                          _buildDetailRow(
+                            'Skor Kebahagiaan',
+                            '${enrichedCountry!.happinessScore!.toStringAsFixed(2)}/10 (Peringkat #${enrichedCountry!.happinessRank})',
+                          ),
+
+                        // Jika tidak ada data
+                        if (enrichedCountry!.gdpTotal == null &&
+                            enrichedCountry!.gdpPerCapita == null &&
+                            enrichedCountry!.hdi == null &&
+                            enrichedCountry!.happinessScore == null)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              'Data tidak tersedia untuk negara ini',
+                              style: TextStyle(
+                                color: Color(0xFFA0AEC0),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+
+                        // Info source
+                        SizedBox(height: 12),
+                        Text(
+                          'Sumber: World Bank API & World Happiness Report 2023',
+                          style: TextStyle(
+                            color: Color(0xFFA0AEC0),
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ] else
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            'Gagal memuat data metrik',
+                            style: TextStyle(
+                              color: Colors.red.shade300,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+
                   SizedBox(height: 16),
                 ],
               ),
@@ -173,8 +302,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     );
   }
 
-  // --- Helper Widgets (Bagian dari "Style" / Tampilan) ---
-  // ... (Semua helper widget _build... TIDAK BERUBAH) ...
+  // --- Helper Widgets (TIDAK BERUBAH) ---
 
   Widget _buildSectionCard({
     required String title,
