@@ -35,10 +35,12 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       if (result['success']) {
+        // --- PERBAIKAN: Hapus parameter 'username' ---
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(username: username)),
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
+        // --- AKHIR PERBAIKAN ---
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

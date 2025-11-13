@@ -80,19 +80,12 @@ class _LocationPageState extends State<LocationPage> {
   }
 
   void _openHome() {
-    String? username = AuthService.getCurrentUsername();
-    if (username != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(username: username)),
-      );
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-        (route) => false,
-      );
-    }
+    // --- PERBAIKAN: Hapus parameter 'username' ---
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage()),
+    );
+    // --- AKHIR PERBAIKAN ---
   }
 
   void _openProfile() {
