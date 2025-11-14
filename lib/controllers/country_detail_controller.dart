@@ -12,7 +12,6 @@ import '../services/database_service.dart';
 import '../services/enhanced_country_service.dart';
 import '../models/country.dart';
 import '../services/weather_service.dart';
-import '../services/news_service.dart';
 
 mixin CountryDetailController on State<CountryDetailPage> {
   String? selectedFromCurrency;
@@ -38,10 +37,6 @@ mixin CountryDetailController on State<CountryDetailPage> {
   Map<String, dynamic>? weatherData;
   String weatherError = '';
 
-  bool isLoadingNews = false;
-  List<Map<String, dynamic>> newsArticles = [];
-  String newsError = '';
-
   void onInit() {
     if (widget.country.currencies.isNotEmpty) {
       selectedFromCurrency = widget.country.currencies.keys.first;
@@ -53,7 +48,6 @@ mixin CountryDetailController on State<CountryDetailPage> {
     _loadFavoriteStatus();
     loadEnhancedMetrics();
     loadWeatherData();
-    loadNewsData();
   }
 
   void onDispose() {
@@ -70,8 +64,9 @@ mixin CountryDetailController on State<CountryDetailPage> {
     }
 
     try {
-      final result = await WeatherService.getCurrentWeather(widget.country.capital);
-      
+      final result =
+          await WeatherService.getCurrentWeather(widget.country.capital);
+
       if (mounted) {
         setState(() {
           if (result['success']) {
@@ -95,75 +90,16 @@ mixin CountryDetailController on State<CountryDetailPage> {
     }
   }
 
-  Future<void> loadNewsData() async {
-    if (mounted) {
-      setState(() {
-        isLoadingNews = true;
-        newsError = '';
-      });
-    }
-
-    try {
-      String countryCode = _getNewsCountryCode(widget.country.name);
-      Map<String, dynamic> result;
-      
-      if (countryCode.isNotEmpty) {
-        result = await NewsService.getTopHeadlines(countryCode);
-      } else {
-        result = await NewsService.searchNews(widget.country.name);
-      }
-      
-      if (mounted) {
-        setState(() {
-          if (result['success']) {
-            newsArticles = List<Map<String, dynamic>>.from(result['articles']);
-            newsError = '';
-          } else {
-            newsArticles = [];
-            newsError = result['error'] ?? 'Tidak ada berita tersedia';
-          }
-          isLoadingNews = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          newsArticles = [];
-          newsError = 'Terjadi kesalahan';
-          isLoadingNews = false;
-        });
-      }
-    }
-  }
-
-  String _getNewsCountryCode(String countryName) {
-    const Map<String, String> codes = {
-      'Argentina': 'ar', 'Australia': 'au', 'Austria': 'at', 'Belgium': 'be',
-      'Brazil': 'br', 'Bulgaria': 'bg', 'Canada': 'ca', 'China': 'cn',
-      'Colombia': 'co', 'Cuba': 'cu', 'Czechia': 'cz', 'Egypt': 'eg',
-      'France': 'fr', 'Germany': 'de', 'Greece': 'gr', 'Hong Kong': 'hk',
-      'Hungary': 'hu', 'India': 'in', 'Indonesia': 'id', 'Ireland': 'ie',
-      'Israel': 'il', 'Italy': 'it', 'Japan': 'jp', 'Latvia': 'lv',
-      'Lithuania': 'lt', 'Malaysia': 'my', 'Mexico': 'mx', 'Morocco': 'ma',
-      'Netherlands': 'nl', 'New Zealand': 'nz', 'Nigeria': 'ng', 'Norway': 'no',
-      'Philippines': 'ph', 'Poland': 'pl', 'Portugal': 'pt', 'Romania': 'ro',
-      'Russia': 'ru', 'Saudi Arabia': 'sa', 'Serbia': 'rs', 'Singapore': 'sg',
-      'Slovakia': 'sk', 'Slovenia': 'si', 'South Africa': 'za', 'South Korea': 'kr',
-      'Sweden': 'se', 'Switzerland': 'ch', 'Taiwan': 'tw', 'Thailand': 'th',
-      'Turkey': 'tr', 'Ukraine': 'ua', 'United Arab Emirates': 'ae',
-      'United Kingdom': 'gb', 'United States': 'us', 'Venezuela': 've',
-    };
-    return codes[countryName] ?? '';
-  }
-
   Future<void> loadEnhancedMetrics() async {
     if (mounted) setState(() => isLoadingMetrics = true);
     try {
-      final enhanced = await EnhancedCountryService.enrichCountryData(widget.country);
-      if (mounted) setState(() {
-        enrichedCountry = enhanced;
-        isLoadingMetrics = false;
-      });
+      final enhanced =
+          await EnhancedCountryService.enrichCountryData(widget.country);
+      if (mounted)
+        setState(() {
+          enrichedCountry = enhanced;
+          isLoadingMetrics = false;
+        });
     } catch (e) {
       if (mounted) setState(() => isLoadingMetrics = false);
     }
@@ -175,7 +111,8 @@ mixin CountryDetailController on State<CountryDetailPage> {
 
     final history = DatabaseService.getHistoryForUser(username);
     try {
-      historyEntry = history.firstWhere((h) => h.countryName == widget.country.name);
+      historyEntry =
+          history.firstWhere((h) => h.countryName == widget.country.name);
       if (mounted) setState(() => isFavorite = historyEntry!.isFavorite);
     } catch (e) {
       historyEntry = null;
@@ -214,7 +151,8 @@ mixin CountryDetailController on State<CountryDetailPage> {
   void updateTimes() {
     if (widget.country.timezones.isEmpty || !mounted) return;
     setState(() {
-      countryTime = TimezoneService.getCurrentTimeForCountry(widget.country.timezones[0]);
+      countryTime =
+          TimezoneService.getCurrentTimeForCountry(widget.country.timezones[0]);
       if (selectedTimezone != null) {
         convertedTime = TimezoneService.getTimeForSelectedTimezone(
           widget.country.timezones[0],
@@ -258,7 +196,8 @@ mixin CountryDetailController on State<CountryDetailPage> {
     if (widget.country.latitude == 0.0 && widget.country.longitude == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Koordinat lokasi untuk ${widget.country.name} tidak tersedia.'),
+          content: Text(
+              'Koordinat lokasi untuk ${widget.country.name} tidak tersedia.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -267,7 +206,8 @@ mixin CountryDetailController on State<CountryDetailPage> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CountryMapPage(country: widget.country)),
+      MaterialPageRoute(
+          builder: (context) => CountryMapPage(country: widget.country)),
     );
   }
 
@@ -304,15 +244,27 @@ mixin CountryDetailController on State<CountryDetailPage> {
     try {
       if (widget.country.currencies.containsKey(code)) {
         final v = widget.country.currencies[code];
-        if (v is Map && v['symbol'] != null && v['symbol'].toString().isNotEmpty) {
+        if (v is Map &&
+            v['symbol'] != null &&
+            v['symbol'].toString().isNotEmpty) {
           return v['symbol'].toString();
         }
       }
     } catch (e) {}
     const fallbacks = {
-      'USD': '\$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'IDR': 'Rp',
-      'AUD': 'A\$', 'CAD': 'C\$', 'SGD': 'S\$', 'MYR': 'RM', 'THB': '฿',
-      'CNY': '¥', 'KRW': '₩', 'INR': '₹',
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'JPY': '¥',
+      'IDR': 'Rp',
+      'AUD': 'A\$',
+      'CAD': 'C\$',
+      'SGD': 'S\$',
+      'MYR': 'RM',
+      'THB': '฿',
+      'CNY': '¥',
+      'KRW': '₩',
+      'INR': '₹',
     };
     return fallbacks[code] ?? code;
   }
@@ -325,22 +277,4 @@ mixin CountryDetailController on State<CountryDetailPage> {
   }
 
   List<String> getAvailableCurrencies() => ['IDR', 'USD', 'EUR'];
-
-  String _formatLargeNumber(double number) {
-    if (number >= 1e12) return '${(number / 1e12).toStringAsFixed(2)} Triliun';
-    if (number >= 1e9) return '${(number / 1e9).toStringAsFixed(2)} Miliar';
-    if (number >= 1e6) return '${(number / 1e6).toStringAsFixed(2)} Juta';
-    return _formatNumber(number);
-  }
-
-  String _getHDICategory(double hdi) {
-    if (hdi >= 0.8) return 'Sangat Tinggi';
-    if (hdi >= 0.7) return 'Tinggi';
-    if (hdi >= 0.55) return 'Menengah';
-    return 'Rendah';
-  }
-
-  String _formatNumber(double number) {
-    return NumberFormat('#,##0.00', 'id_ID').format(number);
-  }
 }

@@ -5,7 +5,6 @@ import '../models/country.dart';
 import '../controllers/country_detail_controller.dart';
 import '../services/timezone_service.dart';
 import '../services/weather_service.dart';
-import '../services/news_service.dart';
 
 class CountryDetailPage extends StatefulWidget {
   final Country country;
@@ -90,8 +89,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildWeatherSection(),
-                  SizedBox(height: 24),
-                  _buildNewsSection(),
                   SizedBox(height: 24),
                   _buildSectionCard(
                     title: 'Informasi Umum',
@@ -372,176 +369,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 fontSize: 14,
                 fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  Widget _buildNewsSection() {
-    return _buildSectionCard(
-      title: 'Berita Terkini',
-      icon: Icons.newspaper,
-      children: [
-        if (isLoadingNews)
-          Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Column(
-                children: [
-                  CircularProgressIndicator(
-                      color: Color(0xFF4299E1), strokeWidth: 2),
-                  SizedBox(height: 12),
-                  Text('Memuat berita...',
-                      style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12)),
-                ],
-              ),
-            ),
-          )
-        else if (newsError.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline,
-                    color: Colors.orange.shade300, size: 20),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(newsError,
-                      style: TextStyle(
-                          color: Color(0xFFA0AEC0),
-                          fontStyle: FontStyle.italic)),
-                ),
-              ],
-            ),
-          )
-        else if (newsArticles.isEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text('Tidak ada berita tersedia untuk negara ini',
-                style: TextStyle(
-                    color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic)),
-          )
-        else
-          Column(
-            children: [
-              ...newsArticles.asMap().entries.map((entry) {
-                final index = entry.key;
-                final article = entry.value;
-                return _buildNewsCard(article, index);
-              }).toList(),
-              SizedBox(height: 8),
-              Text('Sumber: NewsAPI.org',
-                  style: TextStyle(
-                      color: Color(0xFFA0AEC0),
-                      fontSize: 10,
-                      fontStyle: FontStyle.italic)),
-            ],
-          ),
-      ],
-    );
-  }
-
-  Widget _buildNewsCard(Map<String, dynamic> article, int index) {
-    return InkWell(
-      onTap: () async {
-        final url = article['url'];
-        if (url != null && url.isNotEmpty) {
-          try {
-            final uri = Uri.parse(url);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Tidak dapat membuka link')),
-              );
-            }
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${e.toString()}')),
-            );
-          }
-        }
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: 12),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Color(0xFF1A202C).withOpacity(0.5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Color(0xFF2D3748)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: Color(0xFF4299E1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Center(
-                child: Text('${index + 1}',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14)),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    article['title'] ?? 'No Title',
-                    style: TextStyle(
-                        color: Color(0xFFE2E8F0),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (article['description'] != null &&
-                      article['description'].isNotEmpty) ...[
-                    SizedBox(height: 4),
-                    Text(
-                      article['description'],
-                      style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.source, color: Color(0xFF66B3FF), size: 12),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          article['source'] ?? 'Unknown',
-                          style:
-                              TextStyle(color: Color(0xFF66B3FF), fontSize: 11),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text('•',
-                          style: TextStyle(
-                              color: Color(0xFFA0AEC0), fontSize: 11)),
-                      SizedBox(width: 4),
-                      Text(
-                        NewsService.formatPublishedDate(
-                            article['publishedAt'] ?? ''),
-                        style:
-                            TextStyle(color: Color(0xFFA0AEC0), fontSize: 11),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.open_in_new, color: Color(0xFF66B3FF), size: 18),
-          ],
-        ),
-      ),
     );
   }
 
