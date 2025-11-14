@@ -1,135 +1,167 @@
-class Country {
-  final String name;
-  final String officialName;
-  final String flagUrl;
-  final String capital;
-  final String region;
-  final String subregion;
-  final int population;
-  final double area;
-  final List<String> languages;
-  final Map<String, dynamic> currencies;
-  final List<String> timezones;
-  final String callingCode;
-  final List<String> tld;
-  final double latitude;
-  final double longitude;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-  // TAMBAHAN BARU: Metrik Ekonomi & Pembangunan
-  double? gdpTotal; // GDP Total (dalam USD)
-  double? gdpPerCapita; // GDP per Kapita (dalam USD)
-  double? hdi; // Human Development Index (0-1)
-  double? happinessScore; // Happiness Score (0-10)
-  int? happinessRank; // Peringkat Kebahagiaan
-  String? incomeLevel; // Level pendapatan (High, Upper middle, etc)
-  
-  Country({
-    required this.name,
-    required this.officialName,
-    required this.flagUrl,
-    required this.capital,
-    required this.region,
-    required this.subregion,
-    required this.population,
-    required this.area,
-    required this.languages,
-    required this.currencies,
-    required this.timezones,
-    required this.callingCode,
-    required this.tld,
-    required this.latitude,
-    required this.longitude,
-    // Metrik opsional
-    this.gdpTotal,
-    this.gdpPerCapita,
-    this.hdi,
-    this.happinessScore,
-    this.happinessRank,
-    this.incomeLevel,
-  });
+/// Service untuk mengambil data ekonomi dari World Bank API
+class WorldBankService {
+  static const String _baseUrl = 'https://api.worldbank.org/v2';
 
-  factory Country.fromJson(Map<String, dynamic> json) {
-    List<String> languageList = [];
-    if (json['languages'] != null) {
-      languageList = (json['languages'] as Map).values.toList().cast<String>();
+  /// Mendapatkan GDP dan GDP per capita dari World Bank
+  /// countryCode: ISO 3166-1 alpha-2 code (misal: "ID" untuk Indonesia)
+  static Future<Map<String, dynamic>> getEconomicData(
+    String countryCode,
+  ) async {
+    try {
+      // World Bank API menggunakan ISO Alpha-2 code (2 huruf)
+      final String code = countryCode.toUpperCase();
+
+      // Ambil GDP Total (NY.GDP.MKTP.CD)
+      final gdpResponse = await http
+          .get(
+            Uri.parse(
+              '$_baseUrl/country/$code/indicator/NY.GDP.MKTP.CD?format=json&date=2022:2023&per_page=1',
+            ),
+          )
+          .timeout(Duration(seconds: 10));
+
+      // Ambil GDP per Capita (NY.GDP.PCAP.CD)
+      final gdpPerCapitaResponse = await http
+          .get(
+            Uri.parse(
+              '$_baseUrl/country/$code/indicator/NY.GDP.PCAP.CD?format=json&date=2022:2023&per_page=1',
+            ),
+          )
+          .timeout(Duration(seconds: 10));
+
+      // Ambil Income Level
+      final countryInfoResponse = await http
+          .get(
+            Uri.parse('$_baseUrl/country/$code?format=json'),
+          )
+          .timeout(Duration(seconds: 10));
+
+      double? gdpTotal;
+      double? gdpPerCapita;
+      String? incomeLevel;
+
+      // Parse GDP Total
+      if (gdpResponse.statusCode == 200) {
+        final data = json.decode(gdpResponse.body);
+        if (data is List && data.length > 1 && data[1] is List) {
+          final gdpData = data[1];
+          if (gdpData.isNotEmpty && gdpData[0]['value'] != null) {
+            gdpTotal = (gdpData[0]['value'] as num).toDouble();
+          }
+        }
+      }
+
+      // Parse GDP per Capita
+      if (gdpPerCapitaResponse.statusCode == 200) {
+        final data = json.decode(gdpPerCapitaResponse.body);
+        if (data is List && data.length > 1 && data[1] is List) {
+          final gdpData = data[1];
+          if (gdpData.isNotEmpty && gdpData[0]['value'] != null) {
+            gdpPerCapita = (gdpData[0]['value'] as num).toDouble();
+          }
+        }
+      }
+
+      // Parse Income Level
+      if (countryInfoResponse.statusCode == 200) {
+        final data = json.decode(countryInfoResponse.body);
+        if (data is List && data.length > 1 && data[1] is List) {
+          final countryData = data[1];
+          if (countryData.isNotEmpty && countryData[0]['incomeLevel'] != null) {
+            incomeLevel = countryData[0]['incomeLevel']['value'];
+          }
+        }
+      }
+
+      return {
+        'success': true,
+        'gdpTotal': gdpTotal,
+        'gdpPerCapita': gdpPerCapita,
+        'incomeLevel': incomeLevel,
+      };
+    } catch (e) {
+      print('Error fetching World Bank data: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
     }
-
-    String callingCode = '';
-    if (json['idd'] != null) {
-      callingCode =
-          (json['idd']['root'] ?? '') +
-          (json['idd']['suffixes'] != null && json['idd']['suffixes'].isNotEmpty
-              ? json['idd']['suffixes'][0]
-              : '');
-    }
-
-    final List<dynamic>? latlng = json['latlng'] as List<dynamic>?;
-    final double lat = latlng != null && latlng.length >= 1
-        ? (json['latlng'][0] as num).toDouble()
-        : 0.0;
-    final double lng = latlng != null && latlng.length >= 2
-        ? (json['latlng'][1] as num).toDouble()
-        : 0.0;
-
-    return Country(
-      name: json['name']['common'] ?? '',
-      officialName: json['name']['official'] ?? '',
-      flagUrl: json['flags']['png'] ?? '',
-      capital: json['capital'] != null && json['capital'].isNotEmpty
-          ? json['capital'][0]
-          : 'N/A',
-      region: json['region'] ?? '',
-      subregion: json['subregion'] ?? 'N/A',
-      population: json['population'] ?? 0,
-      area: (json['area'] ?? 0).toDouble(),
-      languages: languageList,
-      currencies: json['currencies'] ?? {},
-      timezones: List<String>.from(json['timezones'] ?? []),
-      callingCode: callingCode,
-      tld: List<String>.from(json['tld'] ?? []),
-      latitude: lat,
-      longitude: lng,
-      // Metrik tambahan (akan diisi dari API terpisah)
-      gdpTotal: null,
-      gdpPerCapita: null,
-      hdi: null,
-      happinessScore: null,
-      happinessRank: null,
-      incomeLevel: null,
-    );
   }
 
-  // Method untuk copy dengan metrik baru
-  Country copyWith({
-    double? gdpTotal,
-    double? gdpPerCapita,
-    double? hdi,
-    double? happinessScore,
-    int? happinessRank,
-    String? incomeLevel,
-  }) {
-    return Country(
-      name: this.name,
-      officialName: this.officialName,
-      flagUrl: this.flagUrl,
-      capital: this.capital,
-      region: this.region,
-      subregion: this.subregion,
-      population: this.population,
-      area: this.area,
-      languages: this.languages,
-      currencies: this.currencies,
-      timezones: this.timezones,
-      callingCode: this.callingCode,
-      tld: this.tld,
-      latitude: this.latitude,
-      longitude: this.longitude,
-      gdpTotal: gdpTotal ?? this.gdpTotal,
-      gdpPerCapita: gdpPerCapita ?? this.gdpPerCapita,
-      hdi: hdi ?? this.hdi,
-      happinessScore: happinessScore ?? this.happinessScore,
-      happinessRank: happinessRank ?? this.happinessRank,
-      incomeLevel: incomeLevel ?? this.incomeLevel,
-    );
+  /// Mendapatkan Human Development Index dari UNDP (simulasi dengan World Bank)
+  /// Note: World Bank tidak memiliki HDI langsung, ini adalah simplified version
+  static Future<Map<String, dynamic>> getHDI(String countryCode) async {
+    try {
+      final String code = countryCode.toUpperCase();
+
+      // Life Expectancy (SP.DYN.LE00.IN)
+      final lifeExpectancyResponse = await http
+          .get(
+            Uri.parse(
+              '$_baseUrl/country/$code/indicator/SP.DYN.LE00.IN?format=json&date=2022:2023&per_page=1',
+            ),
+          )
+          .timeout(Duration(seconds: 10));
+
+      // Literacy Rate (SE.ADT.LITR.ZS) sebagai proxy untuk education
+      final literacyResponse = await http
+          .get(
+            Uri.parse(
+              '$_baseUrl/country/$code/indicator/SE.ADT.LITR.ZS?format=json&date=2020:2023&per_page=1',
+            ),
+          )
+          .timeout(Duration(seconds: 10));
+
+      double? lifeExpectancy;
+      double? literacyRate;
+
+      // Parse Life Expectancy
+      if (lifeExpectancyResponse.statusCode == 200) {
+        final data = json.decode(lifeExpectancyResponse.body);
+        if (data is List && data.length > 1 && data[1] is List) {
+          final leData = data[1];
+          if (leData.isNotEmpty && leData[0]['value'] != null) {
+            lifeExpectancy = (leData[0]['value'] as num).toDouble();
+          }
+        }
+      }
+
+      // Parse Literacy Rate
+      if (literacyResponse.statusCode == 200) {
+        final data = json.decode(literacyResponse.body);
+        if (data is List && data.length > 1 && data[1] is List) {
+          final litData = data[1];
+          if (litData.isNotEmpty && litData[0]['value'] != null) {
+            literacyRate = (litData[0]['value'] as num).toDouble();
+          }
+        }
+      }
+
+      // Simplified HDI calculation (bukan rumus resmi UNDP)
+      double? hdi;
+      if (lifeExpectancy != null && literacyRate != null) {
+        // Normalisasi sederhana (0-1)
+        double lifeIndex = (lifeExpectancy - 20) / 65; // Asumsi range 20-85
+        double eduIndex = literacyRate / 100; // Sudah dalam persen
+        hdi = (lifeIndex + eduIndex) / 2; // Average sederhana
+        hdi = hdi.clamp(0.0, 1.0); // Pastikan 0-1
+      }
+
+      return {
+        'success': true,
+        'hdi': hdi,
+        'lifeExpectancy': lifeExpectancy,
+        'literacyRate': literacyRate,
+      };
+    } catch (e) {
+      print('Error fetching HDI data: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
+    }
   }
 }

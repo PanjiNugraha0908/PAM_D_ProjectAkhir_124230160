@@ -304,6 +304,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
 
   // --- Helper Widgets (TIDAK BERUBAH) ---
 
+  // =======================================================================
+  // === INI ADALAH BAGIAN YANG DIPERBAIKI ===
+  // =======================================================================
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
@@ -319,15 +322,25 @@ class _CountryDetailPageState extends State<CountryDetailPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment:
+                CrossAxisAlignment.start, // <--- PERUBAHAN DI SINI
             children: [
-              Icon(icon, color: Color(0xFF66B3FF), size: 22), // accentColor
+              Padding(
+                padding:
+                    const EdgeInsets.only(top: 2.0), // <--- PERUBAHAN DI SINI
+                child: Icon(icon,
+                    color: Color(0xFF66B3FF), size: 22), // accentColor
+              ),
               SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF66B3FF), // accentColor
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF66B3FF), // accentColor
+                  ),
+                  // Tidak ada maxLines atau overflow
                 ),
               ),
             ],
@@ -342,6 +355,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
       ),
     );
   }
+  // =======================================================================
+  // === AKHIR DARI BAGIAN YANG DIPERBAIKI ===
+  // =======================================================================
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
