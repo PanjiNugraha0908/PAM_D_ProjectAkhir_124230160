@@ -1,14 +1,14 @@
-// lib/pages/country_detail_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/country.dart';
-import '../controllers/country_detail_controller.dart'; // Import controller
-import '../services/timezone_service.dart'; // Import timezone service
+import '../controllers/country_detail_controller.dart';
+import '../services/timezone_service.dart';
+import '../services/weather_service.dart';
+import '../services/news_service.dart';
 
-/// Halaman yang menampilkan informasi detail lengkap dari sebuah [Country] (Tampilan/View).
 class CountryDetailPage extends StatefulWidget {
   final Country country;
-
   CountryDetailPage({required this.country});
 
   @override
@@ -20,27 +20,19 @@ class _CountryDetailPageState extends State<CountryDetailPage>
   @override
   void initState() {
     super.initState();
-    onInit(); // Panggil onInit dari controller
+    onInit();
   }
 
   @override
   void dispose() {
-    onDispose(); // Panggil onDispose dari controller
+    onDispose();
     super.dispose();
   }
 
-  // --------------------------------------------------------------------------
-  // --- HELPER METHODS BARU UNTUK METRIK EKONOMI ---
-  // --------------------------------------------------------------------------
-
   String _formatLargeNumber(double number) {
-    if (number >= 1e12) {
-      return '${(number / 1e12).toStringAsFixed(2)} Triliun';
-    } else if (number >= 1e9) {
-      return '${(number / 1e9).toStringAsFixed(2)} Miliar';
-    } else if (number >= 1e6) {
-      return '${(number / 1e6).toStringAsFixed(2)} Juta';
-    }
+    if (number >= 1e12) return '${(number / 1e12).toStringAsFixed(2)} Triliun';
+    if (number >= 1e9) return '${(number / 1e9).toStringAsFixed(2)} Miliar';
+    if (number >= 1e6) return '${(number / 1e6).toStringAsFixed(2)} Juta';
     return _formatNumber(number);
   }
 
@@ -55,42 +47,33 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     return NumberFormat('#,##0.00', 'id_ID').format(number);
   }
 
-  // --------------------------------------------------------------------------
-  // --- AKHIR HELPER METHODS BARU ---
-  // --------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1A202C), // backgroundColor
+      backgroundColor: Color(0xFF1A202C),
       body: CustomScrollView(
         slivers: [
-          // --- 1. AppBar yang bisa mengecil (Bendera & Judul) ---
           SliverAppBar(
             expandedHeight: 250.0,
             floating: false,
             pinned: true,
-            backgroundColor: Color(0xFF2D3748), // surfaceColor
-            iconTheme: IconThemeData(color: Color(0xFFE2E8F0)), // textColor
-            // --- TAMBAHAN BARU: Tombol Favorit ---
+            backgroundColor: Color(0xFF2D3748),
+            iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
             actions: [
               IconButton(
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: isFavorite ? Colors.redAccent[200] : Color(0xFFE2E8F0),
                 ),
-                onPressed: toggleFavorite, // Panggil fungsi controller
+                onPressed: toggleFavorite,
                 tooltip: 'Tambah ke Favorit',
               ),
             ],
-            // --- AKHIR TAMBAHAN ---
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.country.name,
                 style: TextStyle(
-                  color: Color(0xFFE2E8F0), // textColor
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: Color(0xFFE2E8F0), fontWeight: FontWeight.bold),
               ),
               background: Image.network(
                 widget.country.flagUrl,
@@ -100,23 +83,22 @@ class _CountryDetailPageState extends State<CountryDetailPage>
               ),
             ),
           ),
-
-          // --- 2. Konten Halaman ---
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- 2A. Informasi Umum ---
+                  _buildWeatherSection(),
+                  SizedBox(height: 24),
+                  _buildNewsSection(),
+                  SizedBox(height: 24),
                   _buildSectionCard(
                     title: 'Informasi Umum',
                     icon: Icons.info_outline,
                     children: [
                       _buildDetailRow(
-                        'Nama Resmi',
-                        widget.country.officialName,
-                      ),
+                          'Nama Resmi', widget.country.officialName),
                       _buildDetailRow('Ibu Kota', widget.country.capital),
                       _buildDetailRow('Region', widget.country.region),
                       _buildDetailRow('Sub-region', widget.country.subregion),
@@ -132,63 +114,38 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                         '${widget.country.area.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')} km²',
                       ),
                       _buildDetailRow(
-                        'Bahasa',
-                        widget.country.languages.join(', '),
-                      ),
-                      _buildDetailRow(
-                        'Mata Uang',
-                        getCurrencyString(),
-                      ), // Panggil controller
+                          'Bahasa', widget.country.languages.join(', ')),
+                      _buildDetailRow('Mata Uang', getCurrencyString()),
                       SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          icon: Icon(
-                            Icons.map,
-                            color: Color(0xFFE2E8F0),
-                          ), // textColor
-                          label: Text(
-                            'Lihat di Peta',
-                            style: TextStyle(
-                              color: Color(0xFFE2E8F0),
-                            ), // textColor
-                          ),
-                          onPressed: openCountryMap, // Panggil controller
+                          icon: Icon(Icons.map, color: Color(0xFFE2E8F0)),
+                          label: Text('Lihat di Peta',
+                              style: TextStyle(color: Color(0xFFE2E8F0))),
+                          onPressed: openCountryMap,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(
-                              0xFF4299E1,
-                            ), // primaryButtonColor
+                            backgroundColor: Color(0xFF4299E1),
                             padding: EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                                borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: 24),
-
-                  // --- 2B. Konverter Mata Uang ---
                   _buildSectionCard(
                     title: 'Konversi Mata Uang',
                     icon: Icons.currency_exchange,
-                    children: [
-                      _buildCurrencyConverter(), // Panggil helper UI
-                    ],
+                    children: [_buildCurrencyConverter()],
                   ),
                   SizedBox(height: 24),
-
-                  // --- 2C. Waktu Real-time ---
                   _buildSectionCard(
                     title: 'Waktu Real-time',
                     icon: Icons.watch_later_outlined,
-                    children: [
-                      _buildTimezone(), // Panggil helper UI
-                    ],
+                    children: [_buildTimezone()],
                   ),
-
-                  // --- SECTION BARU: Metrik Ekonomi & Pembangunan (Diperbaiki) ---
                   SizedBox(height: 24),
                   _buildSectionCard(
                     title: 'Metrik Ekonomi & Pembangunan',
@@ -201,97 +158,62 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                           child: Column(
                             children: [
                               CircularProgressIndicator(
-                                color: Color(0xFF4299E1),
-                                strokeWidth: 2,
-                              ),
+                                  color: Color(0xFF4299E1), strokeWidth: 2),
                               SizedBox(height: 12),
-                              Text(
-                                'Memuat data dari World Bank...',
-                                style: TextStyle(
-                                  color: Color(0xFFA0AEC0),
-                                  fontSize: 12,
-                                ),
-                              ),
+                              Text('Memuat data dari World Bank...',
+                                  style: TextStyle(
+                                      color: Color(0xFFA0AEC0), fontSize: 12)),
                             ],
                           ),
                         ))
                       else if (enrichedCountry != null) ...[
-                        // GDP Total
                         if (enrichedCountry!.gdpTotal != null)
-                          _buildDetailRow(
-                            'GDP Total',
-                            '\$${_formatLargeNumber(enrichedCountry!.gdpTotal!)}',
-                          ),
-
-                        // GDP per Capita
+                          _buildDetailRow('GDP Total',
+                              '\$${_formatLargeNumber(enrichedCountry!.gdpTotal!)}'),
                         if (enrichedCountry!.gdpPerCapita != null)
-                          _buildDetailRow(
-                            'GDP per Kapita',
-                            '\$${_formatNumber(enrichedCountry!.gdpPerCapita!)}',
-                          ),
-
-                        // Income Level
+                          _buildDetailRow('GDP per Kapita',
+                              '\$${_formatNumber(enrichedCountry!.gdpPerCapita!)}'),
                         if (enrichedCountry!.incomeLevel != null)
-                          _buildDetailRow(
-                            'Level Pendapatan',
-                            enrichedCountry!.incomeLevel!,
-                          ),
-
-                        // HDI
+                          _buildDetailRow('Level Pendapatan',
+                              enrichedCountry!.incomeLevel!),
                         if (enrichedCountry!.hdi != null)
                           _buildDetailRow(
                             'Indeks Pembangunan Manusia (IPM)',
-                            // SINTAKS DI BAWAH SUDAH DIPERBAIKI DARI VERSI SEBELUMNYA
                             '${(enrichedCountry!.hdi! * 100).toStringAsFixed(1)}% (${_getHDICategory(enrichedCountry!.hdi!)})',
                           ),
-
-                        // Happiness Score
                         if (enrichedCountry!.happinessScore != null)
                           _buildDetailRow(
                             'Skor Kebahagiaan',
                             '${enrichedCountry!.happinessScore!.toStringAsFixed(2)}/10 (Peringkat #${enrichedCountry!.happinessRank})',
                           ),
-
-                        // Jika tidak ada data
                         if (enrichedCountry!.gdpTotal == null &&
                             enrichedCountry!.gdpPerCapita == null &&
                             enrichedCountry!.hdi == null &&
                             enrichedCountry!.happinessScore == null)
                           Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Text(
-                              'Data tidak tersedia untuk negara ini',
-                              style: TextStyle(
-                                color: Color(0xFFA0AEC0),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
+                            child: Text('Data tidak tersedia untuk negara ini',
+                                style: TextStyle(
+                                    color: Color(0xFFA0AEC0),
+                                    fontStyle: FontStyle.italic)),
                           ),
-
-                        // Info source
                         SizedBox(height: 12),
                         Text(
-                          'Sumber: World Bank API & World Happiness Report 2023',
-                          style: TextStyle(
-                            color: Color(0xFFA0AEC0),
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
+                            'Sumber: World Bank API & World Happiness Report 2023',
+                            style: TextStyle(
+                                color: Color(0xFFA0AEC0),
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic)),
                       ] else
                         Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
-                            'Gagal memuat data metrik',
-                            style: TextStyle(
-                              color: Colors.red.shade300,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
+                          child: Text('Gagal memuat data metrik',
+                              style: TextStyle(
+                                  color: Colors.red.shade300,
+                                  fontStyle: FontStyle.italic)),
                         ),
                     ],
                   ),
-
                   SizedBox(height: 16),
                 ],
               ),
@@ -302,11 +224,327 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     );
   }
 
-  // --- Helper Widgets (TIDAK BERUBAH) ---
+  Widget _buildWeatherSection() {
+    return _buildSectionCard(
+      title: 'Cuaca di ${widget.country.capital}',
+      icon: Icons.wb_sunny,
+      children: [
+        if (isLoadingWeather)
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  CircularProgressIndicator(
+                      color: Color(0xFF4299E1), strokeWidth: 2),
+                  SizedBox(height: 12),
+                  Text('Memuat data cuaca...',
+                      style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12)),
+                ],
+              ),
+            ),
+          )
+        else if (weatherError.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline,
+                    color: Colors.orange.shade300, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(weatherError,
+                      style: TextStyle(
+                          color: Color(0xFFA0AEC0),
+                          fontStyle: FontStyle.italic)),
+                ),
+              ],
+            ),
+          )
+        else if (weatherData != null)
+          Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4299E1), Color(0xFF66B3FF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${weatherData!['temperature'].toStringAsFixed(1)}°C',
+                              style: TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            Text(
+                              weatherData!['description']
+                                  .toString()
+                                  .toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.9)),
+                            ),
+                          ],
+                        ),
+                        Image.network(
+                          WeatherService.getWeatherIconUrl(
+                              weatherData!['icon']),
+                          width: 80,
+                          height: 80,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Text(
+                              WeatherService.getWeatherEmoji(
+                                  weatherData!['description']),
+                              style: TextStyle(fontSize: 60),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    Divider(color: Colors.white.withOpacity(0.3)),
+                    SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildWeatherInfo(Icons.thermostat, 'Terasa',
+                            '${weatherData!['feelsLike'].toStringAsFixed(1)}°C'),
+                        _buildWeatherInfo(Icons.water_drop, 'Kelembapan',
+                            '${weatherData!['humidity']}%'),
+                        _buildWeatherInfo(Icons.air, 'Angin',
+                            '${weatherData!['windSpeed']} m/s'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                      '🌡️ Min: ${weatherData!['tempMin'].toStringAsFixed(1)}°C',
+                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
+                  Text(
+                      '🌡️ Max: ${weatherData!['tempMax'].toStringAsFixed(1)}°C',
+                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
+                  Text('☁️ ${weatherData!['cloudiness']}%',
+                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text('Sumber: OpenWeatherMap',
+                  style: TextStyle(
+                      color: Color(0xFFA0AEC0),
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic)),
+            ],
+          ),
+      ],
+    );
+  }
 
-  // =======================================================================
-  // === INI ADALAH BAGIAN YANG DIPERBAIKI ===
-  // =======================================================================
+  Widget _buildWeatherInfo(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 24),
+        SizedBox(height: 4),
+        Text(label,
+            style:
+                TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11)),
+        Text(value,
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildNewsSection() {
+    return _buildSectionCard(
+      title: 'Berita Terkini',
+      icon: Icons.newspaper,
+      children: [
+        if (isLoadingNews)
+          Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  CircularProgressIndicator(
+                      color: Color(0xFF4299E1), strokeWidth: 2),
+                  SizedBox(height: 12),
+                  Text('Memuat berita...',
+                      style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12)),
+                ],
+              ),
+            ),
+          )
+        else if (newsError.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline,
+                    color: Colors.orange.shade300, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(newsError,
+                      style: TextStyle(
+                          color: Color(0xFFA0AEC0),
+                          fontStyle: FontStyle.italic)),
+                ),
+              ],
+            ),
+          )
+        else if (newsArticles.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text('Tidak ada berita tersedia untuk negara ini',
+                style: TextStyle(
+                    color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic)),
+          )
+        else
+          Column(
+            children: [
+              ...newsArticles.asMap().entries.map((entry) {
+                final index = entry.key;
+                final article = entry.value;
+                return _buildNewsCard(article, index);
+              }).toList(),
+              SizedBox(height: 8),
+              Text('Sumber: NewsAPI.org',
+                  style: TextStyle(
+                      color: Color(0xFFA0AEC0),
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic)),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildNewsCard(Map<String, dynamic> article, int index) {
+    return InkWell(
+      onTap: () async {
+        final url = article['url'];
+        if (url != null && url.isNotEmpty) {
+          try {
+            final uri = Uri.parse(url);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Tidak dapat membuka link')),
+              );
+            }
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${e.toString()}')),
+            );
+          }
+        }
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Color(0xFF1A202C).withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Color(0xFF2D3748)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Color(0xFF4299E1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Center(
+                child: Text('${index + 1}',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14)),
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    article['title'] ?? 'No Title',
+                    style: TextStyle(
+                        color: Color(0xFFE2E8F0),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (article['description'] != null &&
+                      article['description'].isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      article['description'],
+                      style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.source, color: Color(0xFF66B3FF), size: 12),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          article['source'] ?? 'Unknown',
+                          style:
+                              TextStyle(color: Color(0xFF66B3FF), fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text('•',
+                          style: TextStyle(
+                              color: Color(0xFFA0AEC0), fontSize: 11)),
+                      SizedBox(width: 4),
+                      Text(
+                        NewsService.formatPublishedDate(
+                            article['publishedAt'] ?? ''),
+                        style:
+                            TextStyle(color: Color(0xFFA0AEC0), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.open_in_new, color: Color(0xFF66B3FF), size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
@@ -315,49 +553,40 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     return Container(
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Color(0xFF2D3748), // surfaceColor
+        color: Color(0xFF2D3748),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start, // <--- PERUBAHAN DI SINI
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.only(top: 2.0), // <--- PERUBAHAN DI SINI
-                child: Icon(icon,
-                    color: Color(0xFF66B3FF), size: 22), // accentColor
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Icon(icon, color: Color(0xFF66B3FF), size: 22),
               ),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF66B3FF), // accentColor
-                  ),
-                  // Tidak ada maxLines atau overflow
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF66B3FF)),
                 ),
               ),
             ],
           ),
           Divider(
-            height: 24,
-            thickness: 1,
-            color: Color(0xFFA0AEC0).withOpacity(0.3), // hintColor
-          ),
+              height: 24,
+              thickness: 1,
+              color: Color(0xFFA0AEC0).withOpacity(0.3)),
           ...children,
         ],
       ),
     );
   }
-  // =======================================================================
-  // === AKHIR DARI BAGIAN YANG DIPERBAIKI ===
-  // =======================================================================
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
@@ -367,22 +596,15 @@ class _CountryDetailPageState extends State<CountryDetailPage>
         children: [
           SizedBox(
             width: 120,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFA0AEC0), // hintColor
-              ),
-            ),
+            child: Text('$label:',
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, color: Color(0xFFA0AEC0))),
           ),
           SizedBox(width: 8),
           Expanded(
             child: Text(
               value.isEmpty ? 'N/A' : value,
-              style: TextStyle(
-                color: Color(0xFFE2E8F0),
-                fontSize: 15,
-              ), // textColor
+              style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 15),
             ),
           ),
         ],
@@ -397,28 +619,23 @@ class _CountryDetailPageState extends State<CountryDetailPage>
   }) {
     return TextFormField(
       controller: controller,
-      style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+      style: TextStyle(color: Color(0xFFE2E8F0)),
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+        labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
         prefixIcon: icon != null
-            ? Icon(icon, color: Color(0xFF66B3FF), size: 20) // accentColor
+            ? Icon(icon, color: Color(0xFF66B3FF), size: 20)
             : null,
         filled: true,
-        fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
+        fillColor: Color(0xFF1A202C).withOpacity(0.5),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Color(0xFFA0AEC0).withOpacity(0.7),
-          ), // hintColor
+          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Color(0xFF4299E1),
-            width: 2,
-          ), // primaryButtonColor
+          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2),
         ),
       ),
     );
@@ -434,25 +651,20 @@ class _CountryDetailPageState extends State<CountryDetailPage>
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: Color(0xFF2D3748), // surfaceColor
-      style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+      dropdownColor: Color(0xFF2D3748),
+      style: TextStyle(color: Color(0xFFE2E8F0)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Color(0xFFA0AEC0)), // hintColor
+        labelStyle: TextStyle(color: Color(0xFFA0AEC0)),
         filled: true,
-        fillColor: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
+        fillColor: Color(0xFF1A202C).withOpacity(0.5),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Color(0xFFA0AEC0).withOpacity(0.7),
-          ), // hintColor
+          borderSide: BorderSide(color: Color(0xFFA0AEC0).withOpacity(0.7)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Color(0xFF4299E1),
-            width: 2,
-          ), // primaryButtonColor
+          borderSide: BorderSide(color: Color(0xFF4299E1), width: 2),
         ),
       ),
     );
@@ -462,10 +674,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     if (widget.country.currencies.isEmpty) {
       return Text(
         'Tidak ada informasi mata uang yang tersedia.',
-        style: TextStyle(
-          color: Color(0xFFA0AEC0),
-          fontStyle: FontStyle.italic,
-        ), // hintColor
+        style: TextStyle(color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic),
       );
     }
 
@@ -482,15 +691,12 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 items: widget.country.currencies.keys.map((currency) {
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(
-                      currency,
-                      style: TextStyle(color: Color(0xFFE2E8F0)),
-                    ), // textColor
+                    child: Text(currency,
+                        style: TextStyle(color: Color(0xFFE2E8F0))),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => selectedFromCurrency = value);
-                },
+                onChanged: (value) =>
+                    setState(() => selectedFromCurrency = value),
               ),
             ),
             SizedBox(width: 8),
@@ -499,61 +705,44 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 label: 'Ke',
                 value: selectedToCurrency,
                 items: getAvailableCurrencies().map((currency) {
-                  // Panggil controller
                   return DropdownMenuItem(
                     value: currency,
-                    child: Text(
-                      currency,
-                      style: TextStyle(color: Color(0xFFE2E8F0)),
-                    ), // textColor
+                    child: Text(currency,
+                        style: TextStyle(color: Color(0xFFE2E8F0))),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() => selectedToCurrency = value);
-                },
+                onChanged: (value) =>
+                    setState(() => selectedToCurrency = value),
               ),
             ),
           ],
         ),
         SizedBox(height: 12),
         _buildCustomTextField(
-          controller: amountController,
-          label: 'Jumlah',
-          icon: Icons.monetization_on,
-        ),
+            controller: amountController,
+            label: 'Jumlah',
+            icon: Icons.monetization_on),
         SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: isLoadingConversion
-                ? null
-                : convertCurrency, // Panggil controller
+            onPressed: isLoadingConversion ? null : convertCurrency,
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: Color(0xFF4299E1), // primaryButtonColor
-              disabledBackgroundColor: Color(
-                0xFF2D3748,
-              ).withOpacity(0.5), // surfaceColor
+              backgroundColor: Color(0xFF4299E1),
+              disabledBackgroundColor: Color(0xFF2D3748).withOpacity(0.5),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: isLoadingConversion
                 ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      color: Color(0xFFE2E8F0), // textColor
-                      strokeWidth: 2,
-                    ),
+                        color: Color(0xFFE2E8F0), strokeWidth: 2),
                   )
-                : Text(
-                    'Konversi',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFFE2E8F0),
-                    ), // textColor
-                  ),
+                : Text('Konversi',
+                    style: TextStyle(fontSize: 16, color: Color(0xFFE2E8F0))),
           ),
         ),
         if (conversionError.isNotEmpty) ...[
@@ -570,11 +759,8 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 Icon(Icons.error_outline, color: Colors.red.shade200, size: 20),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    conversionError,
-                    style: TextStyle(color: Colors.red.shade200),
-                  ),
-                ),
+                    child: Text(conversionError,
+                        style: TextStyle(color: Colors.red.shade200))),
               ],
             ),
           ),
@@ -585,7 +771,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             width: double.infinity,
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
+              color: Color(0xFF1A202C).withOpacity(0.5),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -593,35 +779,23 @@ class _CountryDetailPageState extends State<CountryDetailPage>
               children: [
                 Text(
                   formatInputAmount(
-                    amountController.text,
-                    selectedFromCurrency,
-                  ), // Panggil controller
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Color(0xFFA0AEC0), // hintColor
-                  ),
+                      amountController.text, selectedFromCurrency),
+                  style: TextStyle(fontSize: 18, color: Color(0xFFA0AEC0)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Icon(
-                    Icons.arrow_downward,
-                    color: Color(0xFF66B3FF), // accentColor
-                    size: 20,
-                  ),
+                  child: Icon(Icons.arrow_downward,
+                      color: Color(0xFF66B3FF), size: 20),
                 ),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    formatCurrency(
-                      convertedAmount,
-                      selectedToCurrency,
-                    ), // Panggil controller
+                    formatCurrency(convertedAmount, selectedToCurrency),
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4299E1), // primaryButtonColor
-                    ),
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4299E1)),
                     maxLines: 1,
                   ),
                 ),
@@ -629,10 +803,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 Text(
                   'Rate: 1 $selectedFromCurrency = ${exchangeRate.toStringAsFixed(4)} $selectedToCurrency',
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFA0AEC0), // hintColor
-                    fontStyle: FontStyle.italic,
-                  ),
+                      fontSize: 12,
+                      color: Color(0xFFA0AEC0),
+                      fontStyle: FontStyle.italic),
                 ),
               ],
             ),
@@ -646,40 +819,32 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     if (widget.country.timezones.isEmpty) {
       return Text(
         'Tidak ada informasi timezone untuk negara ini.',
-        style: TextStyle(
-          color: Color(0xFFA0AEC0),
-          fontStyle: FontStyle.italic,
-        ), // hintColor
+        style: TextStyle(color: Color(0xFFA0AEC0), fontStyle: FontStyle.italic),
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTimeCard(
-          widget.country.timezones[0],
-          'Waktu ${widget.country.name}',
-          countryTime,
-          Color(0xFF4299E1), // primaryButtonColor
-        ),
+        _buildTimeCard(widget.country.timezones[0],
+            'Waktu ${widget.country.name}', countryTime, Color(0xFF4299E1)),
         SizedBox(height: 16),
         _buildCustomDropdown(
           label: 'Bandingkan dengan...',
           value: selectedTimezone,
-          items: buildTimezoneItems(), // Panggil controller
+          items: buildTimezoneItems(),
           onChanged: (value) {
             setState(() => selectedTimezone = value);
-            updateTimes(); // Panggil controller
+            updateTimes();
           },
         ),
         if (selectedTimezone != null && convertedTime.isNotEmpty) ...[
           SizedBox(height: 12),
           _buildTimeCard(
-            selectedTimezone!,
-            TimezoneService.getTimezoneName(selectedTimezone!),
-            convertedTime,
-            Color(0xFF66B3FF), // accentColor
-          ),
+              selectedTimezone!,
+              TimezoneService.getTimezoneName(selectedTimezone!),
+              convertedTime,
+              Color(0xFF66B3FF)),
         ],
       ],
     );
@@ -689,7 +854,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF1A202C).withOpacity(0.5), // backgroundColor
+        color: Color(0xFF1A202C).withOpacity(0.5),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color, width: 1.5),
       ),
@@ -699,25 +864,19 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFFA0AEC0), // hintColor
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(name,
+                    style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFFA0AEC0),
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis),
                 SizedBox(height: 4),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE2E8F0), // textColor
-                    fontFamily: 'monospace',
-                  ),
-                ),
+                Text(time,
+                    style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE2E8F0),
+                        fontFamily: 'monospace')),
               ],
             ),
           ),

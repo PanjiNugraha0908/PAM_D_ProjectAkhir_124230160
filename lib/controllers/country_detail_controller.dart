@@ -1,28 +1,20 @@
-// lib/controllers/country_detail_controller.dart
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:intl/intl.dart';
 
-// --- INI ADALAH IMPORT YANG HILANG ---
 import '../services/currency_service.dart';
 import '../services/timezone_service.dart';
 import '../pages/country_map_page.dart';
 import '../pages/country_detail_page.dart';
-// --- AKHIR IMPORT ---
-
-// --- TAMBAHAN IMPORT UNTUK FITUR FAVORIT ---
 import '../models/history_item.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
-// --- AKHIR TAMBAHAN ---
+import '../services/enhanced_country_service.dart';
+import '../models/country.dart';
+import '../services/weather_service.dart';
+import '../services/news_service.dart';
 
-// TAMBAHKAN di bagian import:
-import '../services/enhanced_country_service.dart'; // <--- TAMBAHAN
-import '../models/country.dart'; // Pastikan model Country sudah diimpor jika diperlukan
-
-/// Controller (Logic) untuk [CountryDetailPage].
 mixin CountryDetailController on State<CountryDetailPage> {
-  // --- State Konverter Mata Uang ---
   String? selectedFromCurrency;
   String? selectedToCurrency;
   final amountController = TextEditingController(text: '1');
@@ -31,22 +23,25 @@ mixin CountryDetailController on State<CountryDetailPage> {
   bool isLoadingConversion = false;
   String conversionError = '';
 
-  // --- State Zona Waktu Real-time ---
   Timer? timer;
   String? selectedTimezone;
   String countryTime = '';
   String convertedTime = '';
 
-  // --- TAMBAHAN STATE FAVORIT ---
   bool isFavorite = false;
-  HistoryItem? historyEntry; // Untuk menyimpan referensi ke item di database
-  // --- AKHIR TAMBAHAN ---
+  HistoryItem? historyEntry;
 
-  // TAMBAHKAN state baru di dalam mixin:
-  bool isLoadingMetrics = false; // <--- TAMBAHAN
-  Country? enrichedCountry; // <--- TAMBAHAN
+  bool isLoadingMetrics = false;
+  Country? enrichedCountry;
 
-  // --- Lifecycle Methods ---
+  bool isLoadingWeather = false;
+  Map<String, dynamic>? weatherData;
+  String weatherError = '';
+
+  bool isLoadingNews = false;
+  List<Map<String, dynamic>> newsArticles = [];
+  String newsError = '';
+
   void onInit() {
     if (widget.country.currencies.isNotEmpty) {
       selectedFromCurrency = widget.country.currencies.keys.first;
@@ -56,7 +51,9 @@ mixin CountryDetailController on State<CountryDetailPage> {
     updateTimes();
     timer = Timer.periodic(Duration(seconds: 1), (_) => updateTimes());
     _loadFavoriteStatus();
-    loadEnhancedMetrics(); // <--- TAMBAHKAN INI
+    loadEnhancedMetrics();
+    loadWeatherData();
+    loadNewsData();
   }
 
   void onDispose() {
@@ -64,64 +61,130 @@ mixin CountryDetailController on State<CountryDetailPage> {
     amountController.dispose();
   }
 
-  // TAMBAHKAN fungsi baru di dalam mixin:
-  Future<void> loadEnhancedMetrics() async {
-    // <--- TAMBAHAN FUNGSI
+  Future<void> loadWeatherData() async {
     if (mounted) {
       setState(() {
-        isLoadingMetrics = true;
+        isLoadingWeather = true;
+        weatherError = '';
       });
     }
-    try {
-      final enhanced = await EnhancedCountryService.enrichCountryData(
-        widget.country,
-      );
 
+    try {
+      final result = await WeatherService.getCurrentWeather(widget.country.capital);
+      
       if (mounted) {
         setState(() {
-          enrichedCountry = enhanced;
-          isLoadingMetrics = false;
+          if (result['success']) {
+            weatherData = result;
+            weatherError = '';
+          } else {
+            weatherData = null;
+            weatherError = result['error'] ?? 'Gagal memuat cuaca';
+          }
+          isLoadingWeather = false;
         });
       }
     } catch (e) {
-      print('Error loading enhanced metrics: $e');
       if (mounted) {
         setState(() {
-          isLoadingMetrics = false;
+          weatherData = null;
+          weatherError = 'Terjadi kesalahan';
+          isLoadingWeather = false;
         });
       }
     }
   }
 
-  // --- FUNGSI BARU UNTUK FAVORIT ---
+  Future<void> loadNewsData() async {
+    if (mounted) {
+      setState(() {
+        isLoadingNews = true;
+        newsError = '';
+      });
+    }
+
+    try {
+      String countryCode = _getNewsCountryCode(widget.country.name);
+      Map<String, dynamic> result;
+      
+      if (countryCode.isNotEmpty) {
+        result = await NewsService.getTopHeadlines(countryCode);
+      } else {
+        result = await NewsService.searchNews(widget.country.name);
+      }
+      
+      if (mounted) {
+        setState(() {
+          if (result['success']) {
+            newsArticles = List<Map<String, dynamic>>.from(result['articles']);
+            newsError = '';
+          } else {
+            newsArticles = [];
+            newsError = result['error'] ?? 'Tidak ada berita tersedia';
+          }
+          isLoadingNews = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          newsArticles = [];
+          newsError = 'Terjadi kesalahan';
+          isLoadingNews = false;
+        });
+      }
+    }
+  }
+
+  String _getNewsCountryCode(String countryName) {
+    const Map<String, String> codes = {
+      'Argentina': 'ar', 'Australia': 'au', 'Austria': 'at', 'Belgium': 'be',
+      'Brazil': 'br', 'Bulgaria': 'bg', 'Canada': 'ca', 'China': 'cn',
+      'Colombia': 'co', 'Cuba': 'cu', 'Czechia': 'cz', 'Egypt': 'eg',
+      'France': 'fr', 'Germany': 'de', 'Greece': 'gr', 'Hong Kong': 'hk',
+      'Hungary': 'hu', 'India': 'in', 'Indonesia': 'id', 'Ireland': 'ie',
+      'Israel': 'il', 'Italy': 'it', 'Japan': 'jp', 'Latvia': 'lv',
+      'Lithuania': 'lt', 'Malaysia': 'my', 'Mexico': 'mx', 'Morocco': 'ma',
+      'Netherlands': 'nl', 'New Zealand': 'nz', 'Nigeria': 'ng', 'Norway': 'no',
+      'Philippines': 'ph', 'Poland': 'pl', 'Portugal': 'pt', 'Romania': 'ro',
+      'Russia': 'ru', 'Saudi Arabia': 'sa', 'Serbia': 'rs', 'Singapore': 'sg',
+      'Slovakia': 'sk', 'Slovenia': 'si', 'South Africa': 'za', 'South Korea': 'kr',
+      'Sweden': 'se', 'Switzerland': 'ch', 'Taiwan': 'tw', 'Thailand': 'th',
+      'Turkey': 'tr', 'Ukraine': 'ua', 'United Arab Emirates': 'ae',
+      'United Kingdom': 'gb', 'United States': 'us', 'Venezuela': 've',
+    };
+    return codes[countryName] ?? '';
+  }
+
+  Future<void> loadEnhancedMetrics() async {
+    if (mounted) setState(() => isLoadingMetrics = true);
+    try {
+      final enhanced = await EnhancedCountryService.enrichCountryData(widget.country);
+      if (mounted) setState(() {
+        enrichedCountry = enhanced;
+        isLoadingMetrics = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => isLoadingMetrics = false);
+    }
+  }
+
   Future<void> _loadFavoriteStatus() async {
     String? username = AuthService.getCurrentUsername();
     if (username == null) return;
 
-    // Saat halaman detail dibuka, home_controller SUDAH menambahkan
-    // item history. Kita hanya perlu menemukannya.
     final history = DatabaseService.getHistoryForUser(username);
     try {
-      historyEntry = history.firstWhere(
-        (h) => h.countryName == widget.country.name,
-      );
-      if (mounted) {
-        setState(() {
-          isFavorite = historyEntry!.isFavorite;
-        });
-      }
+      historyEntry = history.firstWhere((h) => h.countryName == widget.country.name);
+      if (mounted) setState(() => isFavorite = historyEntry!.isFavorite);
     } catch (e) {
-      // Seharusnya tidak terjadi, tapi sebagai pengaman
-      print('Error: History item tidak ditemukan untuk ${widget.country.name}');
       historyEntry = null;
       if (mounted) setState(() => isFavorite = false);
     }
   }
 
-  // --- FUNGSI BARU UNTUK FAVORIT ---
   Future<void> toggleFavorite() async {
     if (historyEntry == null) {
-      // Jika history-nya tidak ada (kasus aneh), panggil _loadFavoriteStatus lagi
       await _loadFavoriteStatus();
       if (historyEntry == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -131,15 +194,9 @@ mixin CountryDetailController on State<CountryDetailPage> {
       }
     }
 
-    if (mounted) {
-      setState(() {
-        isFavorite = !isFavorite;
-      });
-    }
-
-    // Update nilai di database
+    if (mounted) setState(() => isFavorite = !isFavorite);
     historyEntry!.isFavorite = isFavorite;
-    await historyEntry!.save(); // HiveObject bisa langsung di-save
+    await historyEntry!.save();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -154,15 +211,10 @@ mixin CountryDetailController on State<CountryDetailPage> {
     );
   }
 
-  // --- Logika Halaman ---
   void updateTimes() {
-    if (widget.country.timezones.isEmpty) return;
-    if (!mounted) return;
-
+    if (widget.country.timezones.isEmpty || !mounted) return;
     setState(() {
-      countryTime = TimezoneService.getCurrentTimeForCountry(
-        widget.country.timezones[0],
-      );
+      countryTime = TimezoneService.getCurrentTimeForCountry(widget.country.timezones[0]);
       if (selectedTimezone != null) {
         convertedTime = TimezoneService.getTimeForSelectedTimezone(
           widget.country.timezones[0],
@@ -174,9 +226,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
 
   Future<void> convertCurrency() async {
     if (selectedFromCurrency == null || selectedToCurrency == null) {
-      setState(() {
-        conversionError = 'Pilih mata uang terlebih dahulu';
-      });
+      setState(() => conversionError = 'Pilih mata uang terlebih dahulu');
       return;
     }
     setState(() {
@@ -208,9 +258,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
     if (widget.country.latitude == 0.0 && widget.country.longitude == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Koordinat lokasi untuk ${widget.country.name} tidak tersedia.',
-          ),
+          content: Text('Koordinat lokasi untuk ${widget.country.name} tidak tersedia.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -219,22 +267,15 @@ mixin CountryDetailController on State<CountryDetailPage> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => CountryMapPage(country: widget.country),
-      ),
+      MaterialPageRoute(builder: (context) => CountryMapPage(country: widget.country)),
     );
   }
 
-  // --- Helper Getters (Formatter) ---
-  // ... (Sisa fungsi helper tidak berubah) ...
   String formatCurrency(double amount, String? currencyCode) {
     final formatter = NumberFormat("#,##0.00", "id_ID");
     String symbol = getCurrencySymbol(currencyCode);
     String formattedAmount = formatter.format(amount);
-
-    if (currencyCode == 'IDR') {
-      return '$symbol$formattedAmount';
-    }
+    if (currencyCode == 'IDR') return '$symbol$formattedAmount';
     return '$symbol $formattedAmount';
   }
 
@@ -242,10 +283,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
     final double amount = double.tryParse(amountStr) ?? 0.0;
     final formatter = NumberFormat("#,##0", "id_ID");
     String symbol = getCurrencySymbol(currencyCode);
-
-    if (currencyCode == 'IDR') {
-      return '$symbol${formatter.format(amount)}';
-    }
+    if (currencyCode == 'IDR') return '$symbol${formatter.format(amount)}';
     return '$symbol ${formatter.format(amount)}';
   }
 
@@ -255,7 +293,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
         value: timezone,
         child: Text(
           '${TimezoneService.getTimezoneName(timezone)}',
-          style: TextStyle(color: Color(0xFFE2E8F0)), // textColor
+          style: TextStyle(color: Color(0xFFE2E8F0)),
         ),
       );
     }).toList();
@@ -266,29 +304,15 @@ mixin CountryDetailController on State<CountryDetailPage> {
     try {
       if (widget.country.currencies.containsKey(code)) {
         final v = widget.country.currencies[code];
-        if (v is Map &&
-            v['symbol'] != null &&
-            v['symbol'].toString().isNotEmpty) {
+        if (v is Map && v['symbol'] != null && v['symbol'].toString().isNotEmpty) {
           return v['symbol'].toString();
         }
       }
-    } catch (e) {
-      // Abaikan
-    }
+    } catch (e) {}
     const fallbacks = {
-      'USD': '\$',
-      'EUR': '€',
-      'GBP': '£',
-      'JPY': '¥',
-      'IDR': 'Rp',
-      'AUD': 'A\$',
-      'CAD': 'C\$',
-      'SGD': 'S\$',
-      'MYR': 'RM',
-      'THB': '฿',
-      'CNY': '¥',
-      'KRW': '₩',
-      'INR': '₹',
+      'USD': '\$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'IDR': 'Rp',
+      'AUD': 'A\$', 'CAD': 'C\$', 'SGD': 'S\$', 'MYR': 'RM', 'THB': '฿',
+      'CNY': '¥', 'KRW': '₩', 'INR': '₹',
     };
     return fallbacks[code] ?? code;
   }
@@ -300,7 +324,23 @@ mixin CountryDetailController on State<CountryDetailPage> {
         .join(', ');
   }
 
-  List<String> getAvailableCurrencies() {
-    return ['IDR', 'USD', 'EUR'];
+  List<String> getAvailableCurrencies() => ['IDR', 'USD', 'EUR'];
+
+  String _formatLargeNumber(double number) {
+    if (number >= 1e12) return '${(number / 1e12).toStringAsFixed(2)} Triliun';
+    if (number >= 1e9) return '${(number / 1e9).toStringAsFixed(2)} Miliar';
+    if (number >= 1e6) return '${(number / 1e6).toStringAsFixed(2)} Juta';
+    return _formatNumber(number);
+  }
+
+  String _getHDICategory(double hdi) {
+    if (hdi >= 0.8) return 'Sangat Tinggi';
+    if (hdi >= 0.7) return 'Tinggi';
+    if (hdi >= 0.55) return 'Menengah';
+    return 'Rendah';
+  }
+
+  String _formatNumber(double number) {
+    return NumberFormat('#,##0.00', 'id_ID').format(number);
   }
 }
