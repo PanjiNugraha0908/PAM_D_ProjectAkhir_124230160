@@ -16,7 +16,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with HomeController {
-  // Data benua untuk filter horizontal (TANPA "Semua")
+  // Data benua untuk filter horizontal
   final List<Map<String, String>> _continentsData = [
     {'name': 'Asia', 'key': 'Asia'},
     {'name': 'Afrika', 'key': 'Africa'},
@@ -254,7 +254,6 @@ class _HomePageState extends State<HomePage> with HomeController {
     super.dispose();
   }
 
-  // Load berita global
   Future<void> _loadNews() async {
     setState(() {
       _isLoadingNews = true;
@@ -262,7 +261,7 @@ class _HomePageState extends State<HomePage> with HomeController {
     });
 
     try {
-      final result = await NewsService.getGlobalNews(pageSize: 5);
+      final result = await NewsService.getGlobalNews(pageSize: 8);
 
       if (mounted) {
         setState(() {
@@ -294,22 +293,47 @@ class _HomePageState extends State<HomePage> with HomeController {
     });
   }
 
-  // Copy nama negara dan tutup dialog
   void _copyCountryName(String name, BuildContext dialogContext) {
     Clipboard.setData(ClipboardData(text: name));
-    Navigator.of(dialogContext).pop(); // Tutup dialog
+    Navigator.of(dialogContext).pop();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('✅ "$name" disalin! Paste di Search Bar ⬆️'),
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '✅ "$name" disalin!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Paste di kolom pencarian di atas dan tekan Enter',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Color(0xFF4299E1),
-        duration: Duration(seconds: 2),
+        duration: Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.only(bottom: 70, left: 16, right: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  // Tampilkan dialog daftar negara
   void _showCountryCopyDialog(String continentKey) {
     final List<String> namesList = _countriesByContinent[continentKey] ?? [];
 
@@ -408,11 +432,17 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
-  // Launch URL berita
   Future<void> _launchURL(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tidak dapat membuka link berita'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -440,7 +470,6 @@ class _HomePageState extends State<HomePage> with HomeController {
       body: SafeArea(
         child: Column(
           children: [
-            // === HEADER (FIXED) ===
             Padding(
               padding: EdgeInsets.fromLTRB(12, 6, 12, 0),
               child: Row(
@@ -487,8 +516,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                 ],
               ),
             ),
-
-            // === SEARCH BAR (FIXED) ===
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: TextField(
@@ -522,8 +549,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                 onSubmitted: (value) => searchCountriesByName(value),
               ),
             ),
-
-            // === FILTER BENUA HORIZONTAL (TANPA EMOJI, TANPA "SEMUA") ===
             Container(
               height: 45,
               margin: EdgeInsets.symmetric(vertical: 8),
@@ -533,7 +558,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                 itemCount: _continentsData.length,
                 itemBuilder: (context, index) {
                   final continent = _continentsData[index];
-                  final isSelected = _selectedContinent == continent['key'];
 
                   return GestureDetector(
                     onTap: () => _showCountryCopyDialog(continent['key']!),
@@ -568,12 +592,9 @@ class _HomePageState extends State<HomePage> with HomeController {
                 },
               ),
             ),
-
-            // === SCROLLABLE CONTENT ===
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  // --- LOADING STATE ---
                   if (isLoading)
                     SliverFillRemaining(
                       child: Center(
@@ -590,15 +611,12 @@ class _HomePageState extends State<HomePage> with HomeController {
                         ),
                       ),
                     )
-                  // --- STATE 1: ADA HASIL PENCARIAN ---
                   else if (filteredCountries.isNotEmpty &&
                       searchController.text.isNotEmpty) ...[
                     _buildResultHeader(
                         '${filteredCountries.length} hasil ditemukan'),
                     _buildCountrySliverList(),
-                  ]
-                  // --- STATE 2: TIDAK ADA HASIL ---
-                  else if (searchController.text.isNotEmpty &&
+                  ] else if (searchController.text.isNotEmpty &&
                       filteredCountries.isEmpty)
                     SliverFillRemaining(
                       hasScrollBody: false,
@@ -622,9 +640,7 @@ class _HomePageState extends State<HomePage> with HomeController {
                         ],
                       ),
                     )
-                  // --- STATE 3: HALAMAN AWAL (BERITA + INFO) ---
                   else ...[
-                    // === BERITA SECTION ===
                     SliverToBoxAdapter(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -646,54 +662,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                           ),
                           _buildNewsSection(),
                           SizedBox(height: 24),
-                          // INFO: Cara Menggunakan
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Color(0xFF2D3748),
-                                    Color(0xFF4A5568)
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Color(0xFF4299E1).withOpacity(0.3),
-                                    width: 1.5),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.info_outline,
-                                          color: Color(0xFF66B3FF), size: 20),
-                                      SizedBox(width: 8),
-                                      Text('Cara Cepat Mencari Negara',
-                                          style: TextStyle(
-                                              color: Color(0xFF66B3FF),
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                  SizedBox(height: 12),
-                                  _buildInfoStep('1',
-                                      'Klik tombol benua di atas (contoh: Asia)'),
-                                  _buildInfoStep(
-                                      '2', 'Pilih nama negara dari daftar'),
-                                  _buildInfoStep('3',
-                                      'Nama otomatis disalin, paste di Search Bar ⬆️'),
-                                  _buildInfoStep(
-                                      '4', 'Tekan Enter untuk mencari!'),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -707,51 +675,18 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
-  // === WIDGET HELPER ===
-  Widget _buildInfoStep(String number, String text) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: Color(0xFF4299E1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(number,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(text,
-                style: TextStyle(
-                    color: Color(0xFFE2E8F0), fontSize: 13, height: 1.4)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildNewsSection() {
     if (_isLoadingNews) {
       return Container(
-        height: 180,
-        child:
-            Center(child: CircularProgressIndicator(color: Color(0xFF4299E1))),
+        height: 150,
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF4299E1)),
+        ),
       );
     }
 
     if (_newsError.isNotEmpty) {
       return Container(
-        height: 120,
         margin: EdgeInsets.symmetric(horizontal: 16),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -782,76 +717,74 @@ class _HomePageState extends State<HomePage> with HomeController {
       return SizedBox.shrink();
     }
 
-    return Container(
-      height: 180,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _newsArticles.length,
-        itemBuilder: (context, index) {
-          final article = _newsArticles[index];
-          return GestureDetector(
-            onTap: () => _launchURL(article['url'] ?? ''),
-            child: Container(
-              width: 280,
-              margin: EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: Color(0xFF2D3748),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.network(
-                      article['urlToImage'] ?? '',
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 100,
-                          color: Color(0xFF1A202C),
-                          child: Icon(Icons.image_not_supported,
-                              color: Color(0xFFA0AEC0)),
-                        );
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            article['title'] ?? 'No title',
-                            style: TextStyle(
-                                color: Color(0xFFE2E8F0),
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Spacer(),
-                          Text(
-                            NewsService.formatPublishedDate(
-                                article['publishedAt']),
-                            style: TextStyle(
-                                color: Color(0xFFA0AEC0), fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _newsArticles.length,
+      itemBuilder: (context, index) {
+        final article = _newsArticles[index];
+        return GestureDetector(
+          onTap: () => _launchURL(article['url'] ?? ''),
+          child: Container(
+            margin: EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Color(0xFF2D3748),
+              borderRadius: BorderRadius.circular(12),
             ),
-          );
-        },
-      ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius:
+                      BorderRadius.horizontal(left: Radius.circular(12)),
+                  child: Image.network(
+                    article['urlToImage'] ?? '',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 100,
+                        height: 100,
+                        color: Color(0xFF1A202C),
+                        child: Icon(Icons.image_not_supported,
+                            color: Color(0xFFA0AEC0)),
+                      );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          article['title'] ?? 'No title',
+                          style: TextStyle(
+                              color: Color(0xFFE2E8F0),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          NewsService.formatPublishedDate(
+                              article['publishedAt']),
+                          style:
+                              TextStyle(color: Color(0xFFA0AEC0), fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
