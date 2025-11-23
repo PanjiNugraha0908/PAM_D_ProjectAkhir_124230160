@@ -1,15 +1,15 @@
+// lib/services/news_service.dart
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class NewsService {
-  // API Key GRATIS dari NewsAPI.org (Ganti dengan API key Anda)
-  // Daftar di: https://newsapi.org/register
-  static const String _apiKey = 'af3497dfe2774fcaa42f2015e16bfa07'; // ⚠️ GANTI INI!
+  // API Key GRATIS dari NewsAPI.org
+  static const String _apiKey = 'af3497dfe2774fcaa42f2015e16bfa07';
   static const String _baseUrl = 'https://newsapi.org/v2';
 
   /// Mendapatkan berita global top headlines (bahasa Inggris)
   static Future<Map<String, dynamic>> getGlobalNews({
-    int pageSize = 10,
+    int pageSize = 5,
     String category = 'general',
   }) async {
     try {
@@ -21,13 +21,13 @@ class NewsService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['status'] == 'ok') {
           final articles = (data['articles'] as List)
-              .where((article) => 
-                article['title'] != null && 
-                article['title'] != '[Removed]' &&
-                article['urlToImage'] != null)
+              .where((article) =>
+                  article['title'] != null &&
+                  article['title'] != '[Removed]' &&
+                  article['urlToImage'] != null)
               .toList();
 
           return {
@@ -44,7 +44,7 @@ class NewsService {
       } else if (response.statusCode == 401) {
         return {
           'success': false,
-          'error': 'Invalid API key. Please check your NewsAPI key.',
+          'error': 'Invalid API key',
         };
       } else {
         return {
@@ -56,7 +56,7 @@ class NewsService {
       print('Error fetching news: $e');
       return {
         'success': false,
-        'error': 'Connection error: ${e.toString()}',
+        'error': 'Connection error',
       };
     }
   }
@@ -64,7 +64,7 @@ class NewsService {
   /// Format tanggal artikel menjadi relatif (contoh: "2 hours ago")
   static String formatPublishedDate(String? dateStr) {
     if (dateStr == null) return 'Unknown date';
-    
+
     try {
       final date = DateTime.parse(dateStr);
       final now = DateTime.now();
