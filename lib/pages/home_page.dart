@@ -432,17 +432,91 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tidak dapat membuka link berita'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  // ==========================================
+  // PERBAIKAN FUNGSI LAUNCH URL (Sesuai Request)
+  // ==========================================
+  Future<void> _launchURL(String? url) async {
+    // Validasi URL tidak null/kosong
+    if (url == null || url.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('Link artikel tidak valid'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+
+      // Cek apakah URL bisa diluncurkan
+      final canLaunch = await canLaunchUrl(uri);
+
+      if (canLaunch) {
+        // Luncurkan dengan mode externalApplication (buka di browser)
+        final launched = await launchUrl(
+          uri,
+          mode: LaunchMode
+              .externalApplication, // Penting: buka di browser eksternal
+        );
+
+        if (!launched) {
+          throw Exception('Gagal membuka browser');
+        }
+      } else {
+        throw Exception('Tidak ada aplikasi yang bisa membuka link ini');
+      }
+    } catch (e) {
+      print('❌ Error launching URL: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Tidak dapat membuka link berita',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Pastikan Anda memiliki browser terinstal',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            duration: Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'TUTUP',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -675,12 +749,25 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
+  // ==========================================
+  // PERBAIKAN TAMPILAN NEWS (Sesuai Request)
+  // ==========================================
   Widget _buildNewsSection() {
     if (_isLoadingNews) {
       return Container(
         height: 150,
         child: Center(
-          child: CircularProgressIndicator(color: Color(0xFF4299E1)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF4299E1)),
+              SizedBox(height: 12),
+              Text(
+                'Memuat berita terbaru...',
+                style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -699,13 +786,29 @@ class _HomePageState extends State<HomePage> with HomeController {
             children: [
               Icon(Icons.error_outline, color: Colors.orange, size: 32),
               SizedBox(height: 8),
-              Text('Gagal memuat berita',
-                  style: TextStyle(color: Color(0xFFA0AEC0))),
-              SizedBox(height: 8),
-              TextButton(
+              Text(
+                'Gagal memuat berita',
+                style: TextStyle(
+                  color: Color(0xFFE2E8F0),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                _newsError,
+                style: TextStyle(color: Color(0xFFA0AEC0), fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12),
+              ElevatedButton.icon(
                 onPressed: _loadNews,
-                child: Text('Coba Lagi',
-                    style: TextStyle(color: Color(0xFF66B3FF))),
+                icon: Icon(Icons.refresh, size: 18),
+                label: Text('Coba Lagi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF4299E1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
               ),
             ],
           ),
@@ -714,77 +817,202 @@ class _HomePageState extends State<HomePage> with HomeController {
     }
 
     if (_newsArticles.isEmpty) {
-      return SizedBox.shrink();
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Color(0xFF2D3748),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            'Tidak ada berita tersedia saat ini',
+            style: TextStyle(color: Color(0xFFA0AEC0)),
+          ),
+        ),
+      );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _newsArticles.length,
-      itemBuilder: (context, index) {
-        final article = _newsArticles[index];
-        return GestureDetector(
-          onTap: () => _launchURL(article['url'] ?? ''),
-          child: Container(
-            margin: EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: Color(0xFF2D3748),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius:
-                      BorderRadius.horizontal(left: Radius.circular(12)),
-                  child: Image.network(
-                    article['urlToImage'] ?? '',
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+    return Column(
+      children: [
+        // Info real-time status
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Color(0xFF4299E1).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Color(0xFF4299E1).withOpacity(0.5)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.update, color: Color(0xFF66B3FF), size: 14),
+              SizedBox(width: 6),
+              Text(
+                'Diperbarui otomatis setiap 15-30 menit',
+                style: TextStyle(
+                  color: Color(0xFFE2E8F0),
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12),
+
+        // List berita
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          itemCount: _newsArticles.length,
+          itemBuilder: (context, index) {
+            final article = _newsArticles[index];
+            final url = article['url'] as String?;
+
+            return GestureDetector(
+              onTap: () => _launchURL(url),
+              child: Container(
+                margin: EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Color(0xFF2D3748),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Gambar
+                    ClipRRect(
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        article['urlToImage'] ?? '',
                         width: 100,
                         height: 100,
-                        color: Color(0xFF1A202C),
-                        child: Icon(Icons.image_not_supported,
-                            color: Color(0xFFA0AEC0)),
-                      );
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          article['title'] ?? 'No title',
-                          style: TextStyle(
-                              color: Color(0xFFE2E8F0),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          NewsService.formatPublishedDate(
-                              article['publishedAt']),
-                          style:
-                              TextStyle(color: Color(0xFFA0AEC0), fontSize: 11),
-                        ),
-                      ],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 100,
+                            height: 100,
+                            color: Color(0xFF1A202C),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Color(0xFFA0AEC0),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 100,
+                            height: 100,
+                            color: Color(0xFF1A202C),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                                strokeWidth: 2,
+                                color: Color(0xFF4299E1),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
+
+                    // Konten teks
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Judul
+                            Text(
+                              article['title'] ?? 'No title',
+                              style: TextStyle(
+                                color: Color(0xFFE2E8F0),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 8),
+
+                            // Sumber & Waktu
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.source,
+                                  size: 12,
+                                  color: Color(0xFF66B3FF),
+                                ),
+                                SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    // Menggunakan nama source jika tersedia
+                                    article['source'] != null
+                                        ? (article['source']['name'] ??
+                                            'Unknown Source')
+                                        : 'Unknown',
+                                    style: TextStyle(
+                                      color: Color(0xFF66B3FF),
+                                      fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 12,
+                                  color: Color(0xFFA0AEC0),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  NewsService.formatPublishedDate(
+                                    article['publishedAt'],
+                                  ),
+                                  style: TextStyle(
+                                    color: Color(0xFFA0AEC0),
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Indikator link
+                    Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.open_in_new,
+                        size: 16,
+                        color: Color(0xFF66B3FF),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
