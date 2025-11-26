@@ -6,7 +6,6 @@ import '../services/currency_service.dart';
 import '../services/timezone_service.dart';
 import '../pages/country_map_page.dart';
 import '../pages/country_detail_page.dart';
-import '../models/history_item.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../services/enhanced_country_service.dart';
@@ -27,8 +26,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
   String countryTime = '';
   String convertedTime = '';
 
-  bool isFavorite = false;
-  HistoryItem? historyEntry;
+  bool isFavorite = false; // Status favorit
 
   bool isLoadingMetrics = false;
   Country? enrichedCountry;
@@ -45,7 +43,7 @@ mixin CountryDetailController on State<CountryDetailPage> {
     selectedTimezone = 'WIB';
     updateTimes();
     timer = Timer.periodic(Duration(seconds: 1), (_) => updateTimes());
-    _loadFavoriteStatus();
+    _loadFavoriteStatus(); // DIPERBARUI
     loadEnhancedMetrics();
     loadWeatherData();
   }
@@ -105,47 +103,63 @@ mixin CountryDetailController on State<CountryDetailPage> {
     }
   }
 
+  // FUNGSI INI DIPERBARUI UNTUK MENGGUNAKAN SISTEM FAVORIT BARU
   Future<void> _loadFavoriteStatus() async {
     String? username = AuthService.getCurrentUsername();
     if (username == null) return;
 
-    final history = DatabaseService.getHistoryForUser(username);
-    try {
-      historyEntry =
-          history.firstWhere((h) => h.countryName == widget.country.name);
-      if (mounted) setState(() => isFavorite = historyEntry!.isFavorite);
-    } catch (e) {
-      historyEntry = null;
-      if (mounted) setState(() => isFavorite = false);
+    // Cek status favorit dari box favorites (bukan history)
+    final isCurrentlyFavorite = DatabaseService.isFavorite(
+      username,
+      widget.country.name,
+    );
+
+    if (mounted) {
+      setState(() {
+        isFavorite = isCurrentlyFavorite;
+      });
     }
   }
 
+  // FUNGSI INI DIPERBARUI UNTUK MENGGUNAKAN TOGGLE FAVORIT BARU
   Future<void> toggleFavorite() async {
-    if (historyEntry == null) {
-      await _loadFavoriteStatus();
-      if (historyEntry == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan favorit, coba lagi.')),
-        );
-        return;
-      }
+    String? username = AuthService.getCurrentUsername();
+    if (username == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Anda harus login terlebih dahulu'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
 
-    if (mounted) setState(() => isFavorite = !isFavorite);
-    historyEntry!.isFavorite = isFavorite;
-    await historyEntry!.save();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isFavorite
-              ? '${widget.country.name} ditambahkan ke favorit'
-              : '${widget.country.name} dihapus dari favorit',
-        ),
-        backgroundColor: Color(0xFF4299E1),
-        duration: Duration(seconds: 1),
-      ),
+    // Toggle status favorit menggunakan DatabaseService
+    final newFavoriteStatus = await DatabaseService.toggleFavorite(
+      username: username,
+      countryName: widget.country.name,
+      flagUrl: widget.country.flagUrl,
+      capital: widget.country.capital,
+      region: widget.country.region,
     );
+
+    if (mounted) {
+      setState(() {
+        isFavorite = newFavoriteStatus;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isFavorite
+                ? '${widget.country.name} ditambahkan ke favorit'
+                : '${widget.country.name} dihapus dari favorit',
+          ),
+          backgroundColor: Color(0xFF4299E1),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   void updateTimes() {
@@ -277,4 +291,4 @@ mixin CountryDetailController on State<CountryDetailPage> {
   }
 
   List<String> getAvailableCurrencies() => ['IDR', 'USD', 'EUR'];
-}
+  }

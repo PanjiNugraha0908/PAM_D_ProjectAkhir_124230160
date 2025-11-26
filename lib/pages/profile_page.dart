@@ -8,9 +8,8 @@ import 'edit_profile_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'home_page.dart';
-// --- TAMBAHAN IMPORT ---
-import '../models/history_item.dart';
-// --- AKHIR TAMBAHAN ---
+import '../models/history_item.dart'; // Tetap dibutuhkan untuk statistik "Negara Dilihat"
+import '../models/favorite_item.dart'; // TAMBAHAN: Dibutuhkan untuk logika baru
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -177,7 +176,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   // Saran dan Kesan (Statis)
                   Container(
-                    // ... (Widget Saran dan Kesan tidak berubah) ...
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -219,7 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
-                  // --- TAMBAHAN BARU: GALERI FAVORIT ---
+                  // --- BAGIAN GALERI FAVORIT (DIPERBARUI) ---
                   SizedBox(height: 24),
                   Container(
                     width: double.infinity,
@@ -253,18 +251,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         // Gunakan Builder agar query dieksekusi saat build
                         Builder(
                           builder: (context) {
-                            // Ambil data favorit dari HistoryItem
-                            final List<HistoryItem> favorites =
-                                DatabaseService.getHistoryForUser(
-                                  _user!.username,
-                                ).where((item) => item.isFavorite).toList();
+                            // DIUBAH: Ambil dari box favorites, bukan history
+                            final List<FavoriteItem> favorites =
+                                DatabaseService.getFavoritesForUser(
+                                    _user!.username);
 
                             if (favorites.isEmpty) {
                               return Center(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 16.0,
-                                  ),
+                                      vertical: 16.0),
                                   child: Text(
                                     'Belum ada negara favorit.\nTekan ikon hati di halaman detail negara.',
                                     style: TextStyle(
@@ -282,13 +278,11 @@ class _ProfilePageState extends State<ProfilePage> {
                               physics: NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount:
-                                        3, // Tampilkan 3 negara per baris
-                                    crossAxisSpacing: 10,
-                                    mainAxisSpacing: 10,
-                                    childAspectRatio:
-                                        3 / 2.8, // Sesuaikan rasio
-                                  ),
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                                childAspectRatio: 3 / 2.8,
+                              ),
                               itemCount: favorites.length,
                               itemBuilder: (context, index) {
                                 final item = favorites[index];
@@ -329,11 +323,11 @@ class _ProfilePageState extends State<ProfilePage> {
                               },
                             );
                           },
-                        ),
+                        )
                       ],
                     ),
                   ),
-                  // --- AKHIR TAMBAHAN ---
+                  // --- AKHIR BAGIAN FAVORIT ---
                 ],
               ),
             ),
