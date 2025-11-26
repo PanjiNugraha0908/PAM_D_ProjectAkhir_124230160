@@ -191,6 +191,7 @@ mixin HomeController on State<HomePage> {
     );
     var negaraUnikSebelum =
         historySebelum.map((item) => item.countryName).toSet();
+    // ignore: unused_local_variable
     final int totalUnikSebelum = negaraUnikSebelum.length;
 
     await DatabaseService.addHistory(
@@ -212,7 +213,7 @@ mixin HomeController on State<HomePage> {
     final int totalUnikSesudah = negaraUnikSesudah.length;
 
     if (totalUnikSesudah > 0 && totalUnikSesudah % 3 == 0) {
-      if (totalUnikSebelum % 3 != 0) {
+      if (negaraUnikSebelum.length % 3 != 0) {
         NotificationService.showNotification(
           id: totalUnikSesudah,
           title: 'Wawasan Bertambah! 🌍',

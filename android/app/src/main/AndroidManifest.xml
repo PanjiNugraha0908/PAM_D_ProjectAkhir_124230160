@@ -6,8 +6,18 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-    <!-- TAMBAHAN: Izin internet (sudah ada di debug, ditambahkan di main juga) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
     
     <application
         android:label="mobileprojek"
@@ -30,7 +40,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             
-            <!-- TAMBAHAN PENTING: Intent filter untuk membuka URL -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -50,17 +59,5 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-            
-        <!-- TAMBAHAN: Queries untuk url_launcher -->
-        <queries>
-            <intent>
-                <action android:name="android.intent.action.VIEW" />
-                <data android:scheme="https" />
-            </intent>
-            <intent>
-                <action android:name="android.intent.action.VIEW" />
-                <data android:scheme="http" />
-            </intent>
-        </queries>
     </application>
 </manifest>

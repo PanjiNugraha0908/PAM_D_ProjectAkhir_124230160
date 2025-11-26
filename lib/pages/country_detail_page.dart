@@ -19,6 +19,8 @@ class _CountryDetailPageState extends State<CountryDetailPage>
   @override
   void initState() {
     super.initState();
+    // Menginisialisasi controller dengan negara yang sedang dibuka
+    // Pastikan controller Anda memanggil DatabaseService.isFavorite(widget.country.name)
     onInit();
   }
 
@@ -60,12 +62,14 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
             actions: [
               IconButton(
+                // Menggunakan getter isFavorite dari controller
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: isFavorite ? Colors.redAccent[200] : Color(0xFFE2E8F0),
                 ),
                 onPressed: toggleFavorite,
-                tooltip: 'Tambah ke Favorit',
+                tooltip:
+                    isFavorite ? 'Hapus dari Favorit' : 'Tambah ke Favorit',
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -221,6 +225,7 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     );
   }
 
+  // --- BAGIAN INI YANG DIPERBAIKI (DESAIN CUACA) ---
   Widget _buildWeatherSection() {
     return _buildSectionCard(
       title: 'Cuaca di ${widget.country.capital}',
@@ -270,12 +275,21 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
+                  // Tambahkan shadow halus
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.center, // Ubah ke Center
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,22 +307,39 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                                   .toUpperCase(),
                               style: TextStyle(
                                   fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                   color: Colors.white.withOpacity(0.9)),
                             ),
                           ],
                         ),
-                        Image.network(
-                          WeatherService.getWeatherIconUrl(
-                              weatherData!['icon']),
+                        // PERBAIKAN: Container bulat dengan background transparan untuk icon
+                        Container(
                           width: 80,
                           height: 80,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Text(
-                              WeatherService.getWeatherEmoji(
-                                  weatherData!['description']),
-                              style: TextStyle(fontSize: 60),
-                            );
-                          },
+                          decoration: BoxDecoration(
+                            color:
+                                Colors.white.withOpacity(0.2), // Glassmorphism
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          padding: EdgeInsets.all(8),
+                          child: Image.network(
+                            WeatherService.getWeatherIconUrl(
+                                weatherData!['icon']),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Text(
+                                  WeatherService.getWeatherEmoji(
+                                      weatherData!['description']),
+                                  style: TextStyle(fontSize: 40),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
