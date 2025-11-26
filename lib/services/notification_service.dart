@@ -2,52 +2,42 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Kelas helper statis untuk mengelola semua fungsionalitas notifikasi lokal.
-///
-/// Menggunakan [flutter_local_notifications] untuk menampilkan dan
-/// menjadwalkan notifikasi, serta [timezone] untuk penjadwalan yang akurat.
 class NotificationService {
-  // Constructor privat untuk mencegah instansiasi
   NotificationService._();
 
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  /// Menginisialisasi service notifikasi dan data timezone.
-  ///
-  /// Harus dipanggil sekali saat startup aplikasi (misal: di `main.dart`).
-  /// Ini juga menangani pengaturan timezone lokal untuk penjadwalan.
   static Future<void> initialize() async {
     try {
-      // 1. Inisialisasi data Timezone
-      tzdata.initializeTimeZones();
+      print("🔧 NotificationService: Menginisialisasi...");
 
-      // 2. Set lokasi/timezone lokal
+      tzdata.initializeTimeZones();
+      print("✅ Timezone data initialized");
+
       try {
         final String timeZoneName = DateTime.now().timeZoneName;
+        print("🌍 Timezone sistem: $timeZoneName");
 
-        // Fallback khusus untuk timezone Indonesia (WIB, WITA, WIT)
-        // yang mungkin tidak dikenali oleh package 'timezone'
         if (timeZoneName == 'WIB' ||
             timeZoneName == 'WITA' ||
             timeZoneName == 'WIT') {
-          print('⚠️ Indonesian timezone detected, using Asia/Jakarta');
+          print("🇮🇩 Indonesian timezone detected, using Asia/Jakarta");
           tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
         } else {
-          // Coba gunakan timezone dari sistem
           try {
             tz.setLocalLocation(tz.getLocation(timeZoneName));
+            print("✅ Timezone set to: $timeZoneName");
           } catch (e) {
-            print('⚠️ Unknown timezone "$timeZoneName", defaulting to UTC');
+            print("⚠️ Unknown timezone, using UTC");
             tz.setLocalLocation(tz.getLocation('UTC'));
           }
         }
       } catch (e) {
-        print('⚠️ Error setting local timezone: $e, using UTC');
+        print("⚠️ Error setting timezone: $e");
         tz.setLocalLocation(tz.getLocation('UTC'));
       }
 
-      // 3. Inisialisasi plugin notifikasi
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -57,36 +47,35 @@ class NotificationService {
       await _plugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (response) async {
-          // Handle logika saat notifikasi diketuk di sini (jika diperlukan)
+          print("🔔 Notifikasi diketuk: ${response.payload}");
         },
       );
+
+      print("✅ NotificationService initialized successfully");
     } catch (e) {
-      print('❌ NotificationService initialization error: $e');
+      print("❌ NotificationService initialization error: $e");
       rethrow;
     }
   }
 
-  /// Meminta izin notifikasi kepada pengguna (diperlukan untuk Android 13+).
-  ///
-  /// Mengembalikan `true` jika izin diberikan atau tidak diperlukan (Android < 13).
   static Future<bool> requestPermission() async {
     try {
+      // --- PERBAIKAN DI SINI (Menambahkan '<') ---
       final platform = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
+      // ---------------------------------------------
+
       if (platform != null) {
-        // Meminta izin notifikasi (baru di Android 13)
         final granted = await platform.requestNotificationsPermission();
+        print("🔐 Permission request result: ${granted ?? true}");
         return granted ?? true;
       }
     } catch (e) {
-      print('⚠️ Permission request error: $e');
+      print("⚠️ Permission request error: $e");
     }
-    return true; // Asumsikan true jika bukan platform Android
+    return true;
   }
 
-  /// Menampilkan notifikasi instan (langsung).
-  ///
-  /// Digunakan untuk notifikasi umum, misal: "Anda telah melihat 3 negara baru!".
   static Future<void> showNotification({
     required int id,
     required String title,
@@ -94,8 +83,8 @@ class NotificationService {
   }) async {
     try {
       const androidDetails = AndroidNotificationDetails(
-        'general_channel', // ID Channel
-        'General Notifications', // Nama Channel
+        'general_channel',
+        'General Notifications',
         channelDescription: 'Channel default untuk notifikasi aplikasi',
         importance: Importance.high,
         priority: Priority.high,
@@ -105,75 +94,87 @@ class NotificationService {
 
       final details = NotificationDetails(android: androidDetails);
       await _plugin.show(id, title, body, details);
+      print("✅ Notifikasi ditampilkan: $title");
     } catch (e) {
-      print('❌ Error showing notification: $e');
+      print("❌ Error showing notification: $e");
     }
   }
 
-  /// Menjadwalkan notifikasi pengingat inaktivitas satu kali.
-  ///
-  /// Notifikasi akan dikirim setelah durasi [after] (default 24 jam).
-  /// Menggunakan ID notifikasi statis (1000) sehingga penjadwalan
-  /// baru akan menimpa (memperbarui) penjadwalan yang lama.
-  //
-  // --- PERUBAHAN DI SINI ---
-  // Menambahkan parameter {required String username}
   static Future<void> scheduleInactivityReminder({
     Duration? after,
     required String username,
   }) async {
-    // --- AKHIR PERUBAHAN ---
     try {
       final now = tz.TZDateTime.now(tz.local);
       final when = now.add(after ?? Duration(hours: 24));
 
+      print("⏰ === SCHEDULING NOTIFICATION ===");
+      print("👤 Username: $username");
+      print("📅 Current time: ${now.toString()}");
+      print("🔔 Scheduled for: ${when.toString()}");
+      print("⏱️ Duration: ${after ?? Duration(hours: 24)}");
+
       const androidDetails = AndroidNotificationDetails(
-        'inactivity_channel', // ID Channel
-        'Inactivity reminders', // Nama Channel
+        'inactivity_channel',
+        'Inactivity reminders',
         channelDescription: 'Pengingat jika pengguna tidak aktif',
         importance: Importance.high,
         priority: Priority.high,
         playSound: true,
+        enableVibration: true,
+        visibility: NotificationVisibility.public,
       );
 
       final details = NotificationDetails(android: androidDetails);
 
-      // --- PERUBAHAN DI SINI ---
-      // Menggunakan username di dalam body notifikasi
       final String notificationBody =
           'Hai $username, masih banyak negara menarik untuk kamu jelajahi! ✈️🌍';
-      // --- AKHIR PERUBAHAN ---
 
       await _plugin.zonedSchedule(
-        1000, // ID notifikasi (statis agar bisa ditimpa/dibatalkan)
+        1000,
         'Kami merindukanmu!',
-        notificationBody, // <-- Menggunakan body yang sudah dipersonalisasi
+        notificationBody,
         when,
         details,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+
+      // Verifikasi penjadwalan
+      final pendingNotifications = await _plugin.pendingNotificationRequests();
+      print("📋 Pending notifications: ${pendingNotifications.length}");
+      for (var notif in pendingNotifications) {
+        print("   - ID: ${notif.id}, Title: ${notif.title}");
+      }
+
+      print("✅ Notifikasi berhasil dijadwalkan!");
     } catch (e) {
-      print('❌ Error scheduling notification: $e');
+      print("❌ Error scheduling notification: $e");
+      print("Stack trace: ${StackTrace.current}");
     }
   }
 
-  /// Membatalkan notifikasi terjadwal berdasarkan [id] uniknya.
   static Future<void> cancelNotification(int id) async {
     try {
       await _plugin.cancel(id);
+      print("🚫 Notifikasi $id dibatalkan");
     } catch (e) {
-      print('❌ Error cancelling notification: $e');
+      print("❌ Error cancelling notification: $e");
     }
   }
 
-  /// Membatalkan SEMUA notifikasi terjadwal dari aplikasi ini.
   static Future<void> cancelAllNotifications() async {
     try {
       await _plugin.cancelAll();
+      print("🚫 Semua notifikasi dibatalkan");
     } catch (e) {
-      print('❌ Error cancelling all notifications: $e');
+      print("❌ Error cancelling all notifications: $e");
     }
+  }
+
+  static Future<List<PendingNotificationRequest>>
+      getPendingNotifications() async {
+    return await _plugin.pendingNotificationRequests();
   }
 }

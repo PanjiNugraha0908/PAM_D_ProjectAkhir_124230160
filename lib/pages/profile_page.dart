@@ -1,4 +1,3 @@
-// lib/pages/profile_page.dart
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/user.dart';
@@ -8,8 +7,8 @@ import 'edit_profile_page.dart';
 import 'history_page.dart';
 import 'location_page.dart';
 import 'home_page.dart';
-import '../models/history_item.dart'; // Tetap dibutuhkan untuk statistik "Negara Dilihat"
-import '../models/favorite_item.dart'; // TAMBAHAN: Dibutuhkan untuk logika baru
+import '../models/history_item.dart';
+import '../models/favorite_item.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -18,6 +17,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   User? _user;
+
+  // ===== TAMBAHAN BARU: State untuk show/hide saran kesan =====
+  bool _showSaranKesan = false;
+  // =============================================================
 
   @override
   void initState() {
@@ -172,12 +175,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
+
                   SizedBox(height: 24),
 
-                  // Saran dan Kesan (Statis)
+                  // ===== PERUBAHAN: Saran dan Kesan dengan Toggle =====
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Color(0xFF2D3748),
                       borderRadius: BorderRadius.circular(12),
@@ -185,40 +188,80 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.comment_outlined,
-                              color: Color(0xFF66B3FF),
-                              size: 20,
+                        // Header yang bisa diklik
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _showSaranKesan = !_showSaranKesan;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.comment_outlined,
+                                  color: Color(0xFF66B3FF),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Saran dan Kesan',
+                                    style: TextStyle(
+                                      color: Color(0xFF66B3FF),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  _showSaranKesan
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Color(0xFFA0AEC0),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  _showSaranKesan ? 'Sembunyikan' : 'Lihat',
+                                  style: TextStyle(
+                                    color: Color(0xFFA0AEC0),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Saran dan Kesan',
-                              style: TextStyle(
-                                color: Color(0xFF66B3FF),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 12),
-                        Text(
-                          "Kesan saya untuk mata kuliah Pemrograman Aplikasi Mobile ini... jujur, tugasnya 'sangat mudah'. Mengurus state management, integrasi API, notifikasi, dan database Hive itu ternyata ringan sekali.\n\nPesan saya, terima kasih banyak kepada Pak Bagus atas bimbingan dan materi yang diberikan. Pengalaman mengerjakan project akhir ini sungguh tak terlupakan.\n\nSEGAMPANG ITU!!",
-                          style: TextStyle(
-                            color: Color(0xFFE2E8F0),
-                            fontSize: 14,
-                            height: 1.5,
-                            fontStyle: FontStyle.italic,
                           ),
                         ),
+                        // Konten yang muncul/hilang
+                        if (_showSaranKesan) ...[
+                          Divider(
+                            height: 1,
+                            color: Color(0xFFA0AEC0).withOpacity(0.3),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              "Kesan saya untuk mata kuliah Pemrograman Aplikasi Mobile ini... jujur, tugasnya 'sangat mudah'. Mengurus state management, integrasi API, notifikasi, dan database Hive itu ternyata ringan sekali.\n\nPesan saya, terima kasih banyak kepada Pak Bagus atas bimbingan dan materi yang diberikan. Pengalaman mengerjakan project akhir ini sungguh tak terlupakan.\n\nSEGAMPANG ITU!!",
+                              style: TextStyle(
+                                color: Color(0xFFE2E8F0),
+                                fontSize: 14,
+                                height: 1.5,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
+                  // ===== AKHIR PERUBAHAN =====
 
-                  // --- BAGIAN GALERI FAVORIT (DIPERBARUI) ---
                   SizedBox(height: 24),
+
+                  // Bagian Negara Favorit
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(16),
@@ -248,10 +291,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                         SizedBox(height: 12),
-                        // Gunakan Builder agar query dieksekusi saat build
                         Builder(
                           builder: (context) {
-                            // DIUBAH: Ambil dari box favorites, bukan history
                             final List<FavoriteItem> favorites =
                                 DatabaseService.getFavoritesForUser(
                                     _user!.username);
@@ -327,7 +368,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-                  // --- AKHIR BAGIAN FAVORIT ---
                 ],
               ),
             ),

@@ -1,3 +1,6 @@
+// ============================================================================
+// FILE 1: lib/pages/home_page.dart
+// ============================================================================
 // lib/pages/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -432,11 +435,7 @@ class _HomePageState extends State<HomePage> with HomeController {
     );
   }
 
-  // ==========================================
-  // PERBAIKAN FUNGSI LAUNCH URL (Sesuai Request)
-  // ==========================================
   Future<void> _launchURL(String? url) async {
-    // Validasi URL tidak null/kosong
     if (url == null || url.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -460,16 +459,12 @@ class _HomePageState extends State<HomePage> with HomeController {
 
     try {
       final uri = Uri.parse(url);
-
-      // Cek apakah URL bisa diluncurkan
       final canLaunch = await canLaunchUrl(uri);
 
       if (canLaunch) {
-        // Luncurkan dengan mode externalApplication (buka di browser)
         final launched = await launchUrl(
           uri,
-          mode: LaunchMode
-              .externalApplication, // Penting: buka di browser eksternal
+          mode: LaunchMode.externalApplication,
         );
 
         if (!launched) {
@@ -750,7 +745,7 @@ class _HomePageState extends State<HomePage> with HomeController {
   }
 
   // ==========================================
-  // PERBAIKAN TAMPILAN NEWS (Sesuai Request)
+  // PERBAIKAN TAMPILAN NEWS
   // ==========================================
   Widget _buildNewsSection() {
     if (_isLoadingNews) {
@@ -835,32 +830,9 @@ class _HomePageState extends State<HomePage> with HomeController {
 
     return Column(
       children: [
-        // Info real-time status
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 16),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Color(0xFF4299E1).withOpacity(0.2),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Color(0xFF4299E1).withOpacity(0.5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.update, color: Color(0xFF66B3FF), size: 14),
-              SizedBox(width: 6),
-              Text(
-                'Diperbarui otomatis setiap 15-30 menit',
-                style: TextStyle(
-                  color: Color(0xFFE2E8F0),
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 12),
+        // ===== BARIS INI DIHAPUS =====
+        // Container info real-time status sudah DIHAPUS
+        // ==============================
 
         // List berita
         ListView.builder(
@@ -883,7 +855,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Gambar
                     ClipRRect(
                       borderRadius: BorderRadius.horizontal(
                         left: Radius.circular(12),
@@ -925,15 +896,12 @@ class _HomePageState extends State<HomePage> with HomeController {
                         },
                       ),
                     ),
-
-                    // Konten teks
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Judul
                             Text(
                               article['title'] ?? 'No title',
                               style: TextStyle(
@@ -945,8 +913,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                               overflow: TextOverflow.ellipsis,
                             ),
                             SizedBox(height: 8),
-
-                            // Sumber & Waktu
                             Row(
                               children: [
                                 Icon(
@@ -957,7 +923,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                                 SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    // Menggunakan nama source jika tersedia
                                     article['source'] != null
                                         ? (article['source']['name'] ??
                                             'Unknown Source')
@@ -996,8 +961,6 @@ class _HomePageState extends State<HomePage> with HomeController {
                         ),
                       ),
                     ),
-
-                    // Indikator link
                     Padding(
                       padding: EdgeInsets.all(12),
                       child: Icon(
@@ -1033,7 +996,6 @@ class _HomePageState extends State<HomePage> with HomeController {
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
         final country = filteredCountries[index];
-
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Card(
