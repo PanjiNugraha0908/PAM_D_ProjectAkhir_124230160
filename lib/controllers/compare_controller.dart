@@ -1,9 +1,11 @@
 // lib/controllers/compare_controller.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // <-- Pastikan 'intl' ada di pubspec.yaml
+import 'package:intl/intl.dart';
+import 'package:hive_flutter/hive_flutter.dart'; // Import Hive
 import '../models/country.dart';
+import '../models/history_item.dart'; // Import HistoryItem
 import '../pages/compare_page.dart';
-import '../services/country_service.dart'; // Service baru kita
+import '../services/country_service.dart';
 import '../services/enhanced_country_service.dart';
 
 /// Controller (Logic) untuk [ComparePage].
@@ -18,12 +20,64 @@ mixin CompareController on State<ComparePage> {
   final List<bool> isLoading = [false, false, false];
   final List<String?> errors = [null, null, null];
 
+  // TAMBAHAN: Variabel untuk menyimpan riwayat
+  List<HistoryItem> recentHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadHistory(); // Load riwayat saat halaman dibuka
+  }
+
   @override
   void dispose() {
     for (var controller in searchControllers) {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  // TAMBAHAN: Fungsi mengambil riwayat dari Hive
+  void loadHistory() {
+    try {
+      // Pastikan box 'history' sudah dibuka di main.dart, jika belum kita buka aman
+      if (Hive.isBoxOpen('history')) {
+        final box = Hive.box<HistoryItem>('history');
+        // Ambil 10 item terakhir, balik urutannya (terbaru di awal)
+        setState(() {
+          recentHistory = box.values.toList().reversed.take(10).toList();
+        });
+      }
+    } catch (e) {
+      print("Error loading history: $e");
+    }
+  }
+
+  // TAMBAHAN: Fungsi memilih dari riwayat
+  void selectFromHistory(String countryName) {
+    // Cari kolom input pertama yang masih kosong
+    int targetIndex = -1;
+    for (int i = 0; i < 3; i++) {
+      if (searchControllers[i].text.isEmpty) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    // Jika ada kolom kosong, isi dan cari
+    if (targetIndex != -1) {
+      searchControllers[targetIndex].text = countryName;
+      searchCountry(targetIndex);
+    } else {
+      // Jika semua penuh, beritahu pengguna (opsional)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Semua kolom perbandingan sudah terisi'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   Future<void> searchCountry(int index) async {
@@ -45,12 +99,12 @@ mixin CompareController on State<ComparePage> {
     try {
       final country = await CountryService.searchCountryByName(query);
 
-      // TAMBAHAN BARU: Enrich dengan metrik
+      // Enrich dengan metrik
       final enrichedCountry =
           await EnhancedCountryService.enrichCountryData(country);
 
       setState(() {
-        selectedCountries[index] = enrichedCountry; // Gunakan enriched data
+        selectedCountries[index] = enrichedCountry;
         isLoading[index] = false;
       });
     } catch (e) {

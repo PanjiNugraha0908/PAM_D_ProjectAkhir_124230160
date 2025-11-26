@@ -25,9 +25,8 @@ class ActivityTracker {
   static const String _lastActiveKey = 'last_active';
   static const String _notificationEnabledKey = 'notification_enabled';
 
-  // ⚠️ PERUBAHAN UTAMA: TRIGGER NOTIFIKASI 5 MENIT (UNTUK TESTING)
-  static final Duration _inactivityDuration = const Duration(minutes: 5);
-  // Untuk production, kembalikan ke: const Duration(days: 1)
+  // ✅ PERUBAHAN: Durasi dikembalikan ke 1 Hari untuk Production
+  static final Duration _inactivityDuration = const Duration(days: 1);
 
   static const int _inactivityNotificationId = 1000;
 
@@ -54,7 +53,7 @@ class ActivityTracker {
   }
 
   static Future<void> updateLastActive() async {
-    // Fungsi deprecated - tidak melakukan apa-apa
+    // Fungsi deprecated - tidak melakukan apa-apa karena otomatis di handle observer
   }
 
   static Future<void> setNotificationEnabled(bool enabled) async {
@@ -95,10 +94,6 @@ class ActivityTracker {
     return getDaysSinceLastActive() >= 1;
   }
 
-  static bool isInactiveForFiveMinutes() {
-    return getMinutesSinceLastActive() >= 5;
-  }
-
   static Future<void> _scheduleInactivityNotification() async {
     if (_box == null) {
       print("⚠️ Box belum siap, skip schedule");
@@ -115,17 +110,16 @@ class ActivityTracker {
       String? username = AuthService.getCurrentUsername();
 
       if (username != null) {
+        // Cancel notifikasi sebelumnya untuk menghindari duplikasi
         await NotificationService.cancelNotification(_inactivityNotificationId);
+        
+        // Jadwalkan baru
         await NotificationService.scheduleInactivityReminder(
           after: _inactivityDuration,
           username: username,
         );
 
-        final scheduledTime = now.add(_inactivityDuration);
-        print("⏰ Notifikasi DIJADWALKAN untuk $username");
-        print("📅 Waktu sekarang: ${now.toString()}");
-        print("🔔 Notifikasi akan muncul pada: ${scheduledTime.toString()}");
-        print("⏱️ Durasi: $_inactivityDuration");
+        print("✅ Notifikasi dijadwalkan otomatis untuk 1 hari ke depan");
       } else {
         print("⚠️ User belum login, notifikasi tidak dijadwalkan");
       }
@@ -136,6 +130,6 @@ class ActivityTracker {
 
   static Future<void> _cancelScheduledNotification() async {
     await NotificationService.cancelNotification(_inactivityNotificationId);
-    print("🚫 Notifikasi terjadwal DIBATALKAN");
+    print("🚫 Notifikasi terjadwal DIBATALKAN (User aktif kembali)");
   }
 }

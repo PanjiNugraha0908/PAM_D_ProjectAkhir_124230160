@@ -11,29 +11,44 @@ class ComparePage extends StatefulWidget {
 }
 
 class _ComparePageState extends State<ComparePage> with CompareController {
+  // Warna Dasar
   final Color bgColor = Color(0xFF1A202C);
   final Color surfaceColor = Color(0xFF2D3748);
   final Color textColor = Color(0xFFE2E8F0);
   final Color hintColor = Color(0xFFA0AEC0);
-  final Color accentColor = Color(0xFF66B3FF);
+  // Warna Ikon Seragam (Abu-abu Terang / Putih Tulang)
+  final Color iconColor = Color(0xFFE2E8F0);
 
   bool _showChart = false;
+
+  final double labelColumnWidth = 120.0;
+  final double countryColumnWidth = 160.0;
+  final double fixedRowHeight = 65.0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('Perbandingan Negara', style: TextStyle(color: textColor)),
+        // Judul dihapus dari AppBar agar tidak sempit/kepotong
+        title: null,
         backgroundColor: surfaceColor,
-        iconTheme: IconThemeData(color: textColor),
         elevation: 0,
+        iconTheme: IconThemeData(color: iconColor), // Warna back button
         actions: [
+          // 1. Ikon HISTORY (Seragam)
+          IconButton(
+            icon: Icon(Icons.history, color: iconColor),
+            onPressed: _showHistoryModal,
+            tooltip: 'Riwayat Pencarian',
+          ),
+
+          // 2. Ikon CHART (Seragam)
           if (validCountries.length >= 2)
             IconButton(
               icon: Icon(
                 _showChart ? Icons.table_chart : Icons.bar_chart,
-                color: accentColor,
+                color: iconColor,
               ),
               onPressed: () {
                 setState(() {
@@ -42,8 +57,10 @@ class _ComparePageState extends State<ComparePage> with CompareController {
               },
               tooltip: _showChart ? 'Tampilkan Tabel' : 'Tampilkan Grafik',
             ),
+
+          // 3. Ikon CLEAR (Seragam)
           IconButton(
-            icon: Icon(Icons.clear_all, color: hintColor),
+            icon: Icon(Icons.clear_all, color: iconColor),
             onPressed: clearSelection,
             tooltip: 'Bersihkan Pilihan',
           ),
@@ -52,8 +69,23 @@ class _ComparePageState extends State<ComparePage> with CompareController {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // JUDUL HALAMAN DI SINI (Pindah dari AppBar)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24.0, left: 4.0),
+              child: Text(
+                'Perbandingan Negara',
+                style: TextStyle(
+                  fontSize: 28, // Ukuran besar
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ),
+
             _buildCountrySelectors(),
+
             SizedBox(height: 24),
             validCountries.isEmpty
                 ? _buildEmptyState()
@@ -64,6 +96,96 @@ class _ComparePageState extends State<ComparePage> with CompareController {
         ),
       ),
     );
+  }
+
+  // --- Modal Bottom Sheet History ---
+  void _showHistoryModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surfaceColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Riwayat Pencarian',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: hintColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              Divider(color: hintColor.withOpacity(0.3)),
+              recentHistory.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(
+                        child: Text(
+                          'Belum ada riwayat',
+                          style: TextStyle(color: hintColor),
+                        ),
+                      ),
+                    )
+                  : Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: recentHistory.length,
+                        itemBuilder: (context, index) {
+                          final item = recentHistory[index];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: NetworkImage(item.flagUrl),
+                              backgroundColor: Colors.transparent,
+                            ),
+                            title: Text(
+                              item.countryName,
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Terakhir dilihat: ${_formatDate(item.viewedAt)}',
+                              style: TextStyle(color: hintColor, fontSize: 12),
+                            ),
+                            onTap: () {
+                              selectFromHistory(item.countryName);
+                              Navigator.pop(context);
+                            },
+                            trailing: Icon(Icons.add_circle_outline,
+                                color: iconColor),
+                          );
+                        },
+                      ),
+                    ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year}";
   }
 
   Widget _buildEmptyState() {
@@ -88,7 +210,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
             ),
             SizedBox(height: 8),
             Text(
-              'Gunakan kolom di atas untuk mencari negara yang ingin Anda bandingkan.',
+              'Ketik nama negara di kolom atas atau pilih dari icon History.',
               style: TextStyle(fontSize: 14, color: hintColor),
               textAlign: TextAlign.center,
             ),
@@ -113,21 +235,22 @@ class _ComparePageState extends State<ComparePage> with CompareController {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: accentColor,
+              color: Color(0xFF66B3FF), // Judul Section Biru
             ),
           ),
           SizedBox(height: 16),
-          _buildCountrySearchField(0, 'Negara 1'),
+          // Warna Kolom Input tetap Biru Langit (Seragam)
+          _buildCountrySearchField(0, 'Negara 1', Color(0xFF66B3FF)),
           SizedBox(height: 12),
-          _buildCountrySearchField(1, 'Negara 2'),
+          _buildCountrySearchField(1, 'Negara 2', Color(0xFF66B3FF)),
           SizedBox(height: 12),
-          _buildCountrySearchField(2, 'Negara 3 (Opsional)'),
+          _buildCountrySearchField(2, 'Negara 3 (Opsional)', Color(0xFF66B3FF)),
         ],
       ),
     );
   }
 
-  Widget _buildCountrySearchField(int index, String label) {
+  Widget _buildCountrySearchField(int index, String label, Color fieldColor) {
     return TextFormField(
       controller: searchControllers[index],
       style: TextStyle(color: textColor),
@@ -144,7 +267,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
         suffixIcon: isLoading[index]
             ? Transform.scale(
                 scale: 0.5,
-                child: CircularProgressIndicator(color: accentColor),
+                child: CircularProgressIndicator(color: fieldColor),
               )
             : IconButton(
                 icon: Icon(Icons.search, color: hintColor),
@@ -152,11 +275,11 @@ class _ComparePageState extends State<ComparePage> with CompareController {
               ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: hintColor.withOpacity(0.7)),
+          borderSide: BorderSide(color: hintColor.withOpacity(0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: accentColor, width: 2),
+          borderSide: BorderSide(color: fieldColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -173,86 +296,88 @@ class _ComparePageState extends State<ComparePage> with CompareController {
   Widget _buildComparisonTable() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minWidth: MediaQuery.of(context).size.width - 32,
+      child: DataTable(
+        columnSpacing: 0,
+        horizontalMargin: 0,
+        dataRowMinHeight: fixedRowHeight,
+        dataRowMaxHeight: fixedRowHeight,
+        headingRowHeight: fixedRowHeight,
+        headingRowColor: MaterialStateProperty.all(surfaceColor),
+        border: TableBorder.all(
+          color: hintColor.withOpacity(0.3),
+          width: 1,
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: DataTable(
-          columnSpacing: 16.0,
-          dataRowMinHeight: 48.0,
-          dataRowMaxHeight: 64.0,
-          headingRowColor: MaterialStateProperty.all(surfaceColor),
-          border: TableBorder.all(
-            color: hintColor.withOpacity(0.3),
-            width: 1,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          columns: [
-            DataColumn(
-              label: Text(
+        columns: [
+          DataColumn(
+            label: Container(
+              width: labelColumnWidth,
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              alignment: Alignment.centerLeft,
+              child: Text(
                 'Data',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: accentColor,
+                  color: Color(0xFF66B3FF),
                   fontSize: 16,
                 ),
               ),
             ),
-            ...validCountries.map((country) => DataColumn(
-                  label: Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.network(country.flagUrl,
-                            width: 30, height: 20, fit: BoxFit.cover),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            country.name,
-                            style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+          ),
+          ...validCountries.map((country) {
+            return DataColumn(
+              label: Container(
+                width: countryColumnWidth,
+                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.network(country.flagUrl,
+                          width: 32, height: 22, fit: BoxFit.cover),
                     ),
-                  ),
-                )),
-          ],
-          rows: [
-            _buildDataRow(
-                'Ibu Kota', (c) => c.capital.isEmpty ? 'N/A' : c.capital),
-            _buildDataRow('Region', (c) => c.region),
-            _buildDataRow('Sub-Region', (c) => c.subregion),
-            _buildDataRow('Populasi', (c) => formatNumber(c.population)),
-            _buildDataRow('Luas (km²)', (c) => formatNumber(c.area)),
-            _buildDataRow('Bahasa', (c) => getJoinedString(c.languages)),
-            _buildDataRow('Mata Uang',
-                (c) => getJoinedString(c.currencies.keys.toList())),
-            // TAMBAHAN BARU: Metrik Ekonomi & Pembangunan
-            _buildDataRow(
-              'GDP per Kapita',
-              (c) => c.gdpPerCapita != null
-                  ? '\$${formatNumber(c.gdpPerCapita!.round())}'
-                  : 'N/A',
-            ),
-            _buildDataRow(
-              'IPM',
-              (c) => c.hdi != null
-                  ? '${(c.hdi! * 100).toStringAsFixed(1)}%'
-                  : 'N/A',
-            ),
-            _buildDataRow(
-              'Skor Kebahagiaan',
-              (c) => c.happinessScore != null
-                  ? '${c.happinessScore!.toStringAsFixed(2)}/10'
-                  : 'N/A',
-            ),
-          ],
-        ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        country.name,
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ],
+        rows: [
+          _buildDataRow(
+              'Ibu Kota', (c) => c.capital.isEmpty ? 'N/A' : c.capital),
+          _buildDataRow('Region', (c) => c.region),
+          _buildDataRow('Sub-Region', (c) => c.subregion),
+          _buildDataRow('Populasi', (c) => formatNumber(c.population)),
+          _buildDataRow('Luas (km²)', (c) => formatNumber(c.area)),
+          _buildDataRow('Bahasa', (c) => getJoinedString(c.languages)),
+          _buildDataRow(
+              'Mata Uang', (c) => getJoinedString(c.currencies.keys.toList())),
+          _buildDataRow(
+            'GDP per Kapita',
+            (c) => c.gdpPerCapita != null
+                ? '\$${formatNumber(c.gdpPerCapita!.round())}'
+                : 'N/A',
+          ),
+          _buildDataRow(
+            'Skor Kebahagiaan',
+            (c) => c.happinessScore != null
+                ? '${c.happinessScore!.toStringAsFixed(2)}/10'
+                : 'N/A',
+          ),
+        ],
       ),
     );
   }
@@ -261,20 +386,36 @@ class _ComparePageState extends State<ComparePage> with CompareController {
     return DataRow(
       color: MaterialStateProperty.all(bgColor.withOpacity(0.5)),
       cells: [
-        DataCell(Text(
-          label,
-          style: TextStyle(
-            color: hintColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
+        DataCell(
+          Container(
+            width: labelColumnWidth,
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: hintColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        )),
+        ),
         ...validCountries.map((country) => DataCell(
-              Text(
-                getValue(country),
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
+              Container(
+                width: countryColumnWidth,
+                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  getValue(country),
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             )),
@@ -309,7 +450,6 @@ class _ComparePageState extends State<ComparePage> with CompareController {
               ? '${(value / 1000000).toStringAsFixed(1)}M'
               : '${(value / 1000).toStringAsFixed(0)}K',
         ),
-        // TAMBAHAN BARU: Chart GDP per Kapita
         SizedBox(height: 24),
         _buildBarChart(
           title: 'Perbandingan GDP per Kapita (USD)',
@@ -318,14 +458,6 @@ class _ComparePageState extends State<ComparePage> with CompareController {
               ? '${(value / 1000).toStringAsFixed(0)}K'
               : '${value.toStringAsFixed(0)}',
         ),
-        // TAMBAHAN BARU: Chart IPM
-        SizedBox(height: 24),
-        _buildBarChart(
-          title: 'Perbandingan Indeks Pembangunan Manusia',
-          getData: (c) => (c.hdi ?? 0) * 100, // Konversi ke persen
-          yAxisFormatter: (value) => '${value.toStringAsFixed(0)}%',
-        ),
-        // TAMBAHAN BARU: Chart Kebahagiaan
         SizedBox(height: 24),
         _buildBarChart(
           title: 'Perbandingan Skor Kebahagiaan',
@@ -341,6 +473,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
     required double Function(Country) getData,
     required String Function(double) yAxisFormatter,
   }) {
+    // Warna standar Chart (Biru, Oranye, Hijau)
     final List<Color> barColors = [
       Color(0xFF4299E1),
       Color(0xFFED8936),
@@ -364,8 +497,9 @@ class _ComparePageState extends State<ComparePage> with CompareController {
       );
     }
 
-    double maxY =
+    double calculatedMaxY =
         validCountries.map((c) => getData(c)).reduce((a, b) => a > b ? a : b);
+    double effectiveMaxY = calculatedMaxY == 0 ? 1.0 : calculatedMaxY;
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -381,7 +515,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: accentColor,
+              color: Color(0xFF66B3FF),
             ),
           ),
           SizedBox(height: 24),
@@ -390,7 +524,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: maxY * 1.1,
+                maxY: effectiveMaxY * 1.1,
                 barTouchData: BarTouchData(
                   enabled: true,
                   touchTooltipData: BarTouchTooltipData(
@@ -405,7 +539,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
                           TextSpan(
                             text: formatNumber(rod.toY),
                             style: TextStyle(
-                              color: accentColor,
+                              color: rod.color,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -464,7 +598,7 @@ class _ComparePageState extends State<ComparePage> with CompareController {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxY / 5,
+                  horizontalInterval: effectiveMaxY / 5,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
                       color: hintColor.withOpacity(0.2),

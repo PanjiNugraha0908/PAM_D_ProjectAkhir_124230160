@@ -19,8 +19,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
   @override
   void initState() {
     super.initState();
-    // Menginisialisasi controller dengan negara yang sedang dibuka
-    // Pastikan controller Anda memanggil DatabaseService.isFavorite(widget.country.name)
     onInit();
   }
 
@@ -62,7 +60,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
             iconTheme: IconThemeData(color: Color(0xFFE2E8F0)),
             actions: [
               IconButton(
-                // Menggunakan getter isFavorite dari controller
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: isFavorite ? Colors.redAccent[200] : Color(0xFFE2E8F0),
@@ -225,7 +222,9 @@ class _CountryDetailPageState extends State<CountryDetailPage>
     );
   }
 
-  // --- BAGIAN INI YANG DIPERBAIKI (DESAIN CUACA) ---
+  // ========================================
+  // PERBAIKAN UTAMA: WIDGET CUACA
+  // ========================================
   Widget _buildWeatherSection() {
     return _buildSectionCard(
       title: 'Cuaca di ${widget.country.capital}',
@@ -275,7 +274,6 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(12),
-                  // Tambahkan shadow halus
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.2),
@@ -286,59 +284,94 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                 ),
                 child: Column(
                   children: [
+                    // BARIS UTAMA: Suhu + Icon
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment:
-                          CrossAxisAlignment.center, // Ubah ke Center
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${weatherData!['temperature'].toStringAsFixed(1)}°C',
-                              style: TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white),
-                            ),
-                            Text(
-                              weatherData!['description']
-                                  .toString()
-                                  .toUpperCase(),
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.9)),
-                            ),
-                          ],
-                        ),
-                        // PERBAIKAN: Container bulat dengan background transparan untuk icon
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color:
-                                Colors.white.withOpacity(0.2), // Glassmorphism
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
-                          ),
-                          padding: EdgeInsets.all(8),
-                          child: Image.network(
-                            WeatherService.getWeatherIconUrl(
-                                weatherData!['icon']),
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
+                        // KOLOM KIRI: Suhu dan Deskripsi
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
                                 child: Text(
-                                  WeatherService.getWeatherEmoji(
-                                      weatherData!['description']),
-                                  style: TextStyle(fontSize: 40),
+                                  '${weatherData!['temperature'].toStringAsFixed(1)}°C',
+                                  style: TextStyle(
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
                                 ),
-                              );
-                            },
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                weatherData!['description']
+                                    .toString()
+                                    .toUpperCase(),
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white.withOpacity(0.9)),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        // KOLOM KANAN: Icon Cuaca (DIPERBAIKI)
+                        Flexible(
+                          flex: 2,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                WeatherService.getWeatherIconUrl(
+                                    weatherData!['icon']),
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.white.withOpacity(0.1),
+                                    child: Center(
+                                      child: Text(
+                                        WeatherService.getWeatherEmoji(
+                                            weatherData!['description']),
+                                        style: TextStyle(fontSize: 40),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -346,33 +379,69 @@ class _CountryDetailPageState extends State<CountryDetailPage>
                     SizedBox(height: 16),
                     Divider(color: Colors.white.withOpacity(0.3)),
                     SizedBox(height: 12),
+                    // INFO CUACA DETAIL
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildWeatherInfo(Icons.thermostat, 'Terasa',
-                            '${weatherData!['feelsLike'].toStringAsFixed(1)}°C'),
-                        _buildWeatherInfo(Icons.water_drop, 'Kelembapan',
-                            '${weatherData!['humidity']}%'),
-                        _buildWeatherInfo(Icons.air, 'Angin',
-                            '${weatherData!['windSpeed']} m/s'),
+                        Expanded(
+                          child: _buildWeatherInfo(
+                            Icons.thermostat,
+                            'Terasa',
+                            '${weatherData!['feelsLike'].toStringAsFixed(1)}°C',
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildWeatherInfo(
+                            Icons.water_drop,
+                            'Kelembapan',
+                            '${weatherData!['humidity']}%',
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildWeatherInfo(
+                            Icons.air,
+                            'Angin',
+                            '${weatherData!['windSpeed']} m/s',
+                          ),
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                      '🌡️ Min: ${weatherData!['tempMin'].toStringAsFixed(1)}°C',
-                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
-                  Text(
-                      '🌡️ Max: ${weatherData!['tempMax'].toStringAsFixed(1)}°C',
-                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
-                  Text('☁️ ${weatherData!['cloudiness']}%',
-                      style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12)),
-                ],
+              // INFO TAMBAHAN (Min/Max/Cloudiness)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '🌡️ Min: ${weatherData!['tempMin'].toStringAsFixed(1)}°C',
+                        style:
+                            TextStyle(color: Color(0xFFE2E8F0), fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        '🌡️ Max: ${weatherData!['tempMax'].toStringAsFixed(1)}°C',
+                        style:
+                            TextStyle(color: Color(0xFFE2E8F0), fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        '☁️ ${weatherData!['cloudiness']}%',
+                        style:
+                            TextStyle(color: Color(0xFFE2E8F0), fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 8),
               Text('Sumber: OpenWeatherMap',
