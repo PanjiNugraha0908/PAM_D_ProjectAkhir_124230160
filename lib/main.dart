@@ -1,73 +1,111 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
+import 'pages/home_page.dart';
 import 'services/database_service.dart';
 import 'services/activity_tracker.dart';
 import 'services/notification_service.dart';
+import 'services/auth_service.dart'; // TAMBAHAN
 
-/// Titik masuk (entry point) utama aplikasi Flutter.
-///
-/// Fungsi [main] ini bertanggung jawab untuk menginisialisasi
-/// semua layanan penting (seperti Database dan Notifikasi)
-/// sebelum menjalankan UI aplikasi [MyApp].
 void main() async {
   try {
-    // 1. Pastikan Flutter Binding siap
-    // Ini wajib dipanggil sebelum `await` untuk layanan platform.
     WidgetsFlutterBinding.ensureInitialized();
 
-    // 2. Inisialisasi Database (Wajib)
-    // Inisialisasi Hive untuk penyimpanan lokal (user, history, dll.)
+    // Inisialisasi Database
     await DatabaseService.init();
 
-    // 3. Inisialisasi Layanan Pendukung (Opsional)
-    // Menggunakan try-catch terpisah agar kegagalan di sini
-    // tidak menghentikan aplikasi (misal: gagal init notifikasi).
+    // Inisialisasi Layanan Pendukung
     try {
       await ActivityTracker.initialize();
       await NotificationService.initialize();
-      // Meminta izin notifikasi (penting untuk Android 13+)
       await NotificationService.requestPermission();
     } catch (e) {
-      // Catat error layanan opsional tetapi jangan hentikan aplikasi
       print('Warning: Gagal inisialisasi layanan pendukung: $e');
     }
 
-    // 4. Jalankan UI Aplikasi
     runApp(MyApp());
   } catch (e, stackTrace) {
-    // Tangani kesalahan fatal saat inisialisasi (misal: Hive gagal)
     print('Fatal error during initialization: $e');
     print('Stack trace: $stackTrace');
-    // Tampilkan UI Error sederhana jika inisialisasi inti gagal
     runApp(ErrorApp(error: e));
   }
 }
 
-/// Widget root (akar) dari aplikasi.
-///
-/// Mengatur [MaterialApp], tema, dan halaman awal aplikasi.
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Country Explorer',
       theme: ThemeData(
-        // Tema utama aplikasi
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // Halaman awal aplikasi adalah LoginPage
-      home: LoginPage(),
-      // Menyembunyikan banner 'Debug'
+      // ============== PERUBAHAN KUNCI DI SINI ==============
+      home: FutureBuilder<bool>(
+        // Cek apakah user sudah login
+        future: _checkLoginStatus(),
+        builder: (context, snapshot) {
+          // Tampilkan loading saat mengecek
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              backgroundColor: Color(0xFF1A202C),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/Logoprojek.png',
+                      height: 100,
+                      width: 100,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                    SizedBox(height: 24),
+                    CircularProgressIndicator(color: Color(0xFF4299E1)),
+                    SizedBox(height: 16),
+                    Text(
+                      'Memuat...',
+                      style: TextStyle(color: Color(0xFFE2E8F0)),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Jika sudah login, langsung ke HomePage
+          if (snapshot.data == true) {
+            String? username = AuthService.getCurrentUsername();
+            if (username != null) {
+              return HomePage(username: username);
+            }
+          }
+
+          // Jika belum login, ke LoginPage
+          return LoginPage();
+        },
+      ),
+      // =====================================================
       debugShowCheckedModeBanner: false,
     );
   }
+
+  // Fungsi helper untuk mengecek status login
+  Future<bool> _checkLoginStatus() async {
+    // Tunggu sebentar untuk memastikan database sudah siap
+    await Future.delayed(Duration(milliseconds: 100));
+
+    // Cek apakah ada user yang sedang login
+    String? currentUser = AuthService.getCurrentUsername();
+
+    if (currentUser != null && currentUser.isNotEmpty) {
+      print('✅ User sudah login: $currentUser');
+      return true;
+    }
+
+    print('❌ User belum login');
+    return false;
+  }
 }
 
-/// [Widget] StatelessWidget yang ditampilkan jika terjadi error fatal
-/// saat proses inisialisasi di [main].
 class ErrorApp extends StatelessWidget {
   final Object error;
 

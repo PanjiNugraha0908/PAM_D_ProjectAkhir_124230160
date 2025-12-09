@@ -18,7 +18,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   User? _user;
 
-  // ===== TAMBAHAN BARU: State untuk show/hide saran kesan =====
+  // ===== State untuk show/hide saran kesan =====
   bool _showSaranKesan = false;
   // =============================================================
 
@@ -244,7 +244,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Padding(
                             padding: EdgeInsets.all(16),
                             child: Text(
-                              "Kesan saya untuk mata kuliah Pemrograman Aplikasi Mobile ini... jujur, tugasnya 'sangat mudah'. Mengurus state management, integrasi API, notifikasi, dan database Hive itu ternyata ringan sekali.\n\nPesan saya, terima kasih banyak kepada Pak Bagus atas bimbingan dan materi yang diberikan. Pengalaman mengerjakan project akhir ini sungguh tak terlupakan.\n\nSEGAMPANG ITU!!",
+                              "Saran dari saya, kalau misalnya proyek kayak gini dikasih lagi, tenggat waktu di SPADA itu mending diatur dari jauh-jauh hari. Soalnya, mahasiswa kayak saya ini pasti nunggu tenggat di SPADA dulu baru mulai ngerjain. Terus, semoga Bapak sadar ya kalau tugas ini tidak cocok dibilang 'SEGAMPANG ITU'. Mendingan diganti  jadi 'SEMENGERIKAN ITU'.\n\nSaya mau ngucapin terima kasih banyak buat teman-teman dekat yang udah bantuin, dan orang-orang terdekat yang sudah kasih support, termasuk juga buat AI yang ikut ngebantu tugas yang sangat memorable ini. Tugas ini dari awal udah ngasih kesan yang susah banget dilupain. Saking memorable-nya, memori-memori indah saya waktu kecil itu kayaknya langsung hilang dan kelupaan gara-gara tugas ini saking memorable-nya, tapi sayangnya ke arah memori buruk. Semoga setelah saya berhasil mempresentasikan tugas ini, memori indah saya bisa kembali.",
                               style: TextStyle(
                                 color: Color(0xFFE2E8F0),
                                 fontSize: 14,

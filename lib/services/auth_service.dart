@@ -10,7 +10,6 @@ class AuthService {
     return digest.toString();
   }
 
-  // REGISTER - Hanya username, email, password
   static Future<Map<String, dynamic>> register(
     String username,
     String password, {
@@ -39,13 +38,12 @@ class AuthService {
       return {'success': false, 'message': 'Email sudah terdaftar'};
     }
 
-    // Buat user dengan fullName dan noHp kosong (diisi saat edit profil)
     User newUser = User(
       username: username,
       passwordHash: hashPassword(password),
       email: email,
-      noHp: '', // Kosong, diisi saat edit profil
-      fullName: '', // Kosong, diisi saat edit profil
+      noHp: '',
+      fullName: '',
       createdAt: DateTime.now(),
       lastLogin: DateTime.now(),
       profilePicturePath: null,
@@ -78,7 +76,7 @@ class AuthService {
       return {'success': false, 'message': 'Password salah'};
     }
 
-    // Update user melalui DatabaseService (bukan user.save())
+    // Update last login
     User updatedUser = User(
       username: user.username,
       passwordHash: user.passwordHash,
@@ -86,26 +84,38 @@ class AuthService {
       noHp: user.noHp,
       fullName: user.fullName,
       createdAt: user.createdAt,
-      lastLogin: DateTime.now(), // Update lastLogin
+      lastLogin: DateTime.now(),
       profilePicturePath: user.profilePicturePath,
       saranKesan: user.saranKesan,
     );
 
     await DatabaseService.updateUser(updatedUser);
+
+    // ========== PENTING: SIMPAN SESSION ==========
     await DatabaseService.setCurrentUser(username);
+    print('✅ Session tersimpan untuk user: $username');
+    // =============================================
 
     return {'success': true, 'message': 'Login berhasil', 'username': username};
   }
 
   static Future<void> logout() async {
+    String? username = getCurrentUsername();
+    print('🚪 Logout user: $username');
     await DatabaseService.clearCurrentUser();
+    print('✅ Session dihapus');
   }
 
   static bool isLoggedIn() {
-    return DatabaseService.getCurrentUsername() != null;
+    String? username = DatabaseService.getCurrentUsername();
+    bool loggedIn = username != null && username.isNotEmpty;
+    print('🔍 Cek login status: $loggedIn (username: $username)');
+    return loggedIn;
   }
 
   static String? getCurrentUsername() {
-    return DatabaseService.getCurrentUsername();
+    String? username = DatabaseService.getCurrentUsername();
+    print('👤 Current username: $username');
+    return username;
   }
 }

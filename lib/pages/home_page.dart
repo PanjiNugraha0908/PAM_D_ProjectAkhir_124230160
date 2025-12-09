@@ -830,11 +830,6 @@ class _HomePageState extends State<HomePage> with HomeController {
 
     return Column(
       children: [
-        // ===== BARIS INI DIHAPUS =====
-        // Container info real-time status sudah DIHAPUS
-        // ==============================
-
-        // List berita
         ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
@@ -946,13 +941,17 @@ class _HomePageState extends State<HomePage> with HomeController {
                                   color: Color(0xFFA0AEC0),
                                 ),
                                 SizedBox(width: 4),
-                                Text(
-                                  NewsService.formatPublishedDate(
-                                    article['publishedAt'],
-                                  ),
-                                  style: TextStyle(
-                                    color: Color(0xFFA0AEC0),
-                                    fontSize: 10,
+                                Expanded(
+                                  child: Text(
+                                    NewsService.formatPublishedDate(
+                                      article['publishedAt'],
+                                    ),
+                                    style: TextStyle(
+                                      color: Color(0xFFA0AEC0),
+                                      fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

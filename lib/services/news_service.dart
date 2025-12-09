@@ -2,17 +2,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class NewsService {
-  // API Key GRATIS dari NewsAPI.org
   static const String _apiKey = 'af3497dfe2774fcaa42f2015e16bfa07';
   static const String _baseUrl = 'https://newsapi.org/v2';
 
-  /// Mendapatkan berita global top headlines (bahasa Inggris)
-  ///
-  /// CATATAN PENTING tentang Real-time:
-  /// - API NewsAPI versi GRATIS memiliki delay ~15-30 menit dari publikasi asli
-  /// - Artikel ditandai dengan timestamp 'publishedAt'
-  /// - Untuk berita truly real-time, perlu versi berbayar ($449/bulan)
-  /// - Versi gratis: max 100 request/hari, hanya top headlines
   static Future<Map<String, dynamic>> getGlobalNews({
     int pageSize = 5,
     String category = 'general',
@@ -39,14 +31,13 @@ class NewsService {
         final data = json.decode(response.body);
 
         if (data['status'] == 'ok') {
-          // Filter artikel yang valid (ada title, url, dan gambar)
           final articles = (data['articles'] as List)
               .where((article) =>
                   article['title'] != null &&
                   article['title'] != '[Removed]' &&
                   article['url'] != null &&
                   article['url'].toString().isNotEmpty &&
-                  _isValidUrl(article['url']) && // Validasi URL
+                  _isValidUrl(article['url']) &&
                   article['urlToImage'] != null)
               .toList();
 
@@ -87,46 +78,53 @@ class NewsService {
     }
   }
 
-  /// Validasi apakah URL valid dan aman untuk dibuka
   static bool _isValidUrl(String? url) {
     if (url == null || url.isEmpty) return false;
 
     try {
       final uri = Uri.parse(url);
-      // Hanya terima http/https
       return uri.scheme == 'http' || uri.scheme == 'https';
     } catch (e) {
       return false;
     }
   }
 
-  /// Format tanggal artikel menjadi relatif (contoh: "2 hours ago")
-  ///
-  /// CATATAN: Timestamp dari API adalah waktu publikasi asli artikel,
-  /// bukan waktu saat API mengindeks artikel tersebut
+  // ============== PERBAIKAN TIMESTAMP DI SINI ==============
   static String formatPublishedDate(String? dateStr) {
-    if (dateStr == null) return 'Unknown date';
+    if (dateStr == null) return 'Waktu tidak diketahui';
 
     try {
-      final date = DateTime.parse(dateStr);
+      final publishedDate = DateTime.parse(dateStr);
       final now = DateTime.now();
-      final diff = now.difference(date);
+      final diff = now.difference(publishedDate);
 
-      if (diff.inDays > 0) {
-        return '${diff.inDays} day${diff.inDays > 1 ? 's' : ''} ago';
-      } else if (diff.inHours > 0) {
-        return '${diff.inHours} hour${diff.inHours > 1 ? 's' : ''} ago';
-      } else if (diff.inMinutes > 0) {
-        return '${diff.inMinutes} minute${diff.inMinutes > 1 ? 's' : ''} ago';
+      // TAMBAHKAN KETERANGAN UNTUK API DELAY
+      String timeAgo;
+
+      if (diff.inMinutes < 1) {
+        timeAgo = 'Baru saja';
+      } else if (diff.inMinutes < 60) {
+        timeAgo = '${diff.inMinutes} menit yang lalu';
+      } else if (diff.inHours < 24) {
+        timeAgo = '${diff.inHours} jam yang lalu';
+      } else if (diff.inDays < 7) {
+        timeAgo = '${diff.inDays} hari yang lalu';
       } else {
-        return 'Just now';
+        // Untuk berita lebih dari seminggu, tampilkan tanggal
+        return '${publishedDate.day}/${publishedDate.month}/${publishedDate.year}';
       }
+
+      // TAMBAHAN: Tampilkan jam publikasi untuk konteks
+      final hour = publishedDate.hour.toString().padLeft(2, '0');
+      final minute = publishedDate.minute.toString().padLeft(2, '0');
+
+      return '$timeAgo ($hour:$minute)';
     } catch (e) {
       return dateStr;
     }
   }
+  // =========================================================
 
-  /// Mendapatkan nama sumber berita yang lebih rapi
   static String getSourceName(Map<String, dynamic> article) {
     try {
       if (article['source'] != null && article['source']['name'] != null) {
